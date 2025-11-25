@@ -1,7 +1,9 @@
 // src/app/layout.tsx
 import { Geist, Geist_Mono } from 'next/font/google'
 
-import type { Metadata } from 'next'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+
+import type { Metadata, Viewport } from 'next'
 
 import './globals.css'
 
@@ -24,14 +26,23 @@ export const metadata: Metadata = {
   keywords: ['AI', 'debate', 'LLM', 'ChatGPT', 'Claude', 'Grok'],
 }
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'white' },
+    { media: '(prefers-color-scheme: dark)', color: 'black' },
+  ],
+}
+
 interface RootLayoutProps {
   children: React.ReactNode
 }
 
 export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   )
 }
