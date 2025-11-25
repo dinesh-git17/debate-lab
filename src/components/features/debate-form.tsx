@@ -2,14 +2,13 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronDown, ExternalLink, Plus, Trash2 } from 'lucide-react'
-import Link from 'next/link'
+import { ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 
+import { CustomRulesInput } from '@/components/features/custom-rules-input'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
-import { Input } from '@/components/ui/input'
 import { RadioGroup } from '@/components/ui/radio-group'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -45,14 +44,8 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
     watch,
     setValue,
     reset,
-    control,
     formState: { errors },
   } = form
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'customRules' as never,
-  })
 
   const topicValue = watch('topic')
   const turnsValue = watch('turns')
@@ -98,10 +91,8 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
     setSubmitError(null)
   }
 
-  const handleAddRule = () => {
-    if ((customRulesValue?.length ?? 0) < 5) {
-      append('' as never)
-    }
+  const handleCustomRulesChange = (rules: string[]) => {
+    setValue('customRules', rules, { shouldValidate: true })
   }
 
   const formatSelectOptions = formatOptions.map((opt) => ({
@@ -177,66 +168,16 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
         </button>
 
         {showCustomRules && (
-          <div id="custom-rules-section" className="space-y-4 rounded-lg border border-border p-4">
-            <p className="text-sm text-muted-foreground">
-              Custom rules supplement the{' '}
-              <Link
-                href="/debate/rules"
-                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-              >
-                default rules
-                <ExternalLink className="h-3 w-3" aria-hidden="true" />
-              </Link>
-              . The moderator will validate and enforce them during the debate.
-            </p>
-
-            {fields.length > 0 && (
-              <div className="space-y-3">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
-                    <div className="flex-1">
-                      <Input
-                        placeholder={`Rule ${index + 1} (5-200 characters)`}
-                        maxLength={200}
-                        error={!!errors.customRules?.[index]}
-                        aria-label={`Custom rule ${index + 1}`}
-                        {...register(`customRules.${index}`)}
-                      />
-                      {errors.customRules?.[index] && (
-                        <p className="mt-1 text-sm text-destructive">
-                          {errors.customRules[index]?.message}
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => remove(index)}
-                      aria-label={`Remove rule ${index + 1}`}
-                      className="h-10 w-10 shrink-0 p-0"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddRule}
-              disabled={(customRulesValue?.length ?? 0) >= 5}
-              className="w-full"
-            >
-              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-              Add Rule ({customRulesValue?.length ?? 0}/5)
-            </Button>
-
+          <div id="custom-rules-section" className="rounded-lg border border-border p-4">
+            <CustomRulesInput
+              value={customRulesValue ?? []}
+              onChange={handleCustomRulesChange}
+              maxRules={5}
+              maxLength={200}
+              disabled={isSubmitting}
+            />
             {errors.customRules?.message && (
-              <p className="text-sm text-destructive">{errors.customRules.message}</p>
+              <p className="mt-3 text-sm text-destructive">{errors.customRules.message}</p>
             )}
           </div>
         )}
