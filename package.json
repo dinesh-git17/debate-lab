@@ -6,22 +6,38 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prepare": "husky"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "@tanstack/react-query": "^5.90.10",
+    "next": "15.5.6",
+    "openai": "^6.9.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.6"
+    "react-hook-form": "^7.66.1",
+    "zod": "^4.1.13",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@eslint/eslintrc": "^3",
+    "@hookform/resolvers": "^5.2.2",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.6",
-    "@eslint/eslintrc": "^3"
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
