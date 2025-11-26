@@ -43,8 +43,8 @@ describe('debate-schema', () => {
     })
 
     describe('turns validation', () => {
-      it('should accept valid turns (2, 4, 6, 8, 10)', () => {
-        for (const turns of [2, 4, 6, 8, 10]) {
+      it('should accept valid turns (4, 6, 8, 10)', () => {
+        for (const turns of [4, 6, 8, 10]) {
           const result = debateFormSchema.safeParse({
             ...defaultValues,
             topic: 'Valid topic here for testing',
@@ -54,11 +54,11 @@ describe('debate-schema', () => {
         }
       })
 
-      it('should reject turns less than 2', () => {
+      it('should reject turns less than 4', () => {
         const result = debateFormSchema.safeParse({
           ...defaultValues,
           topic: 'Valid topic here for testing',
-          turns: 1,
+          turns: 2,
         })
         expect(result.success).toBe(false)
       })

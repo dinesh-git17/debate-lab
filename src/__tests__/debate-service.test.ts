@@ -210,8 +210,9 @@ describe('debate-service', () => {
 
       const assignment = await revealAssignment(createResult.debateId!)
       expect(assignment).not.toBeNull()
-      expect(['ChatGPT', 'Grok']).toContain(assignment?.forModel)
-      expect(['ChatGPT', 'Grok']).toContain(assignment?.againstModel)
+      // revealAssignment returns model identifiers in 'provider:model' format
+      expect(['openai:gpt-4', 'xai:grok']).toContain(assignment?.forModel)
+      expect(['openai:gpt-4', 'xai:grok']).toContain(assignment?.againstModel)
       expect(assignment?.forModel).not.toBe(assignment?.againstModel)
     })
 
