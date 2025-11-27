@@ -1,63 +1,62 @@
 // src/instrumentation.ts
-// Next.js instrumentation file for Sentry initialization
+// Next.js instrumentation file for server-side initialization and error handling
+// https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
 
-export async function register() {
+import * as Sentry from '@sentry/nextjs'
+
+export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { init } = await import('@sentry/nextjs')
-
-    const dsn = process.env.SENTRY_DSN
-    const release = process.env.SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA
-
-    if (dsn) {
-      const { extraErrorDataIntegration } = await import('@sentry/nextjs')
-
-      init({
-        dsn,
-        environment: process.env.NODE_ENV ?? 'development',
-        ...(release ? { release } : {}),
-        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-        profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
-        debug: false,
-        integrations: [extraErrorDataIntegration({ depth: 5 })],
-        beforeSend(event, hint) {
-          const error = hint.originalException
-
-          if (error instanceof Error) {
-            if (error.message.includes('NEXT_NOT_FOUND')) {
-              return null
-            }
-            if (error.message.includes('NEXT_REDIRECT')) {
-              return null
-            }
-            if (error.message.includes('ECONNRESET')) {
-              return null
-            }
-            if (error.message.includes('ECONNREFUSED')) {
-              return null
-            }
-          }
-
-          return event
-        },
-        ignoreErrors: ['NEXT_NOT_FOUND', 'NEXT_REDIRECT'],
-      })
-    }
+    // Server-side Sentry initialization
+    await import('../sentry.server.config')
   }
 
   if (process.env.NEXT_RUNTIME === 'edge') {
-    const { init } = await import('@sentry/nextjs')
-
-    const dsn = process.env.SENTRY_DSN
-    const release = process.env.SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA
-
-    if (dsn) {
-      init({
-        dsn,
-        environment: process.env.NODE_ENV ?? 'development',
-        ...(release ? { release } : {}),
-        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-        debug: false,
-      })
-    }
+    // Edge runtime Sentry initialization
+    await import('../sentry.edge.config')
   }
+}
+
+// Capture errors from React Server Components and other server-side errors
+// https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#errors-from-nested-react-server-components
+export function onRequestError(
+  error: { digest: string } & Error,
+  request: {
+    path: string
+    method: string
+    headers: { [key: string]: string }
+  },
+  context: {
+    routerKind: 'Pages Router' | 'App Router'
+    routePath: string
+    routeType: 'render' | 'route' | 'action' | 'middleware'
+    renderSource?: 'react-server-components' | 'react-client-components'
+    revalidateReason?: 'on-demand' | 'stale' | undefined
+    renderType?: 'dynamic' | 'dynamic-resume' | undefined
+  }
+): void {
+  // Skip expected Next.js errors
+  if (error.message?.includes('NEXT_NOT_FOUND') || error.message?.includes('NEXT_REDIRECT')) {
+    return
+  }
+
+  Sentry.withScope((scope) => {
+    scope.setTag('routerKind', context.routerKind)
+    scope.setTag('routePath', context.routePath)
+    scope.setTag('routeType', context.routeType)
+    if (context.renderSource) {
+      scope.setTag('renderSource', context.renderSource)
+    }
+    if (context.revalidateReason) {
+      scope.setTag('revalidateReason', context.revalidateReason)
+    }
+    if (context.renderType) {
+      scope.setTag('renderType', context.renderType)
+    }
+
+    scope.setExtra('digest', error.digest)
+    scope.setExtra('path', request.path)
+    scope.setExtra('method', request.method)
+
+    Sentry.captureException(error)
+  })
 }

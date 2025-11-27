@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { logger } from '@/lib/logging'
 import { validateCustomRules } from '@/services/rule-validation-service'
 
 import type { ValidationResponse } from '@/types/validation'
@@ -46,7 +47,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<Validatio
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Validate rules API error:', error)
+    logger.error('Validate rules API error', error instanceof Error ? error : null, {
+      endpoint: '/api/validate-rules',
+    })
 
     if (error instanceof SyntaxError) {
       return NextResponse.json(

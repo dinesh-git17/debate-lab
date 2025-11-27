@@ -12,6 +12,7 @@ export function initSentry(): void {
 
   const dsn = process.env.SENTRY_DSN
   if (!dsn) {
+    // eslint-disable-next-line no-console
     console.warn('Sentry DSN not configured, skipping initialization')
     return
   }

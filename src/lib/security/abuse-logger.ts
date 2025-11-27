@@ -3,6 +3,8 @@
 
 import { nanoid } from 'nanoid'
 
+import { logger } from '@/lib/logging'
+
 import type {
   AbuseLogEntry,
   ContentFilterResult,
@@ -126,16 +128,22 @@ export function logInjectionAttempt(
 }
 
 function logToConsole(entry: AbuseLogEntry): void {
-  const logData = {
-    level: entry.severity === 'critical' ? 'error' : entry.severity === 'high' ? 'warn' : 'info',
+  const context = {
     logCategory: 'security_event',
-    ...entry,
+    entryId: entry.id,
+    type: entry.type,
+    severity: entry.severity,
+    ip: entry.ip,
+    endpoint: entry.endpoint,
+    details: entry.details,
   }
 
-  if (entry.severity === 'critical' || entry.severity === 'high') {
-    console.error(JSON.stringify(logData))
+  if (entry.severity === 'critical') {
+    logger.error(`Security event: ${entry.type}`, null, context)
+  } else if (entry.severity === 'high') {
+    logger.warn(`Security event: ${entry.type}`, context)
   } else {
-    console.warn(JSON.stringify(logData))
+    logger.info(`Security event: ${entry.type}`, context)
   }
 }
 

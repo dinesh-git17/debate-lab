@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
@@ -24,12 +24,15 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
   const markMessageDisplayed = useDebateViewStore((s) => s.markMessageDisplayed)
 
   // Get visible messages: all displayed + the first non-displayed (currently animating)
-  // We need allMessages and displayedIds subscriptions above for reactivity
-  const messages: DebateMessage[] = []
-  for (const msg of allMessages) {
-    messages.push(msg)
-    if (!displayedIds.has(msg.id)) break
-  }
+  // Memoize to prevent unnecessary re-renders and useEffect triggers
+  const messages = useMemo(() => {
+    const result: DebateMessage[] = []
+    for (const msg of allMessages) {
+      result.push(msg)
+      if (!displayedIds.has(msg.id)) break
+    }
+    return result
+  }, [allMessages, displayedIds])
 
   // Create stable callback for marking messages as displayed
   const handleAnimationComplete = useCallback(

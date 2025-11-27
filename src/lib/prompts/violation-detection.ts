@@ -1,5 +1,7 @@
 // src/lib/prompts/violation-detection.ts
 
+import { logger } from '@/lib/logging'
+
 import type { InterventionTrigger, ViolationDetectionResult } from '@/types/prompts'
 
 /**
@@ -87,7 +89,10 @@ export function parseViolationResponse(response: string): InterventionTrigger[] 
       suggestedAction: getSuggestedAction(v.severity),
     }))
   } catch (error) {
-    console.error('[ViolationDetection] Failed to parse response:', error)
+    logger.error(
+      'ViolationDetection failed to parse response',
+      error instanceof Error ? error : null
+    )
     return []
   }
 }

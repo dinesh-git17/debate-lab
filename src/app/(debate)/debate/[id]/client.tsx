@@ -9,6 +9,7 @@ import { FloatingControls } from '@/components/debate/floating-controls'
 import { MessageList } from '@/components/debate/message-list'
 import { ShortcutsHelp } from '@/components/debate/shortcuts-help'
 import { useDebateStream } from '@/hooks/use-debate-stream'
+import { clientLogger } from '@/lib/client-logger'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
 import type { DebateHistoryResponse } from '@/app/api/debate/[id]/history/route'
@@ -65,10 +66,10 @@ export function DebatePageClient({
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string }
-        console.error('Auto-start failed:', data.error ?? 'Unknown error')
+        clientLogger.error('Auto-start failed', null, { error: data.error ?? 'Unknown error' })
       }
     } catch (error) {
-      console.error('Auto-start error:', error)
+      clientLogger.error('Auto-start error', error)
     }
   }, [debateId])
 

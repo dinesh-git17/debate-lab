@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 
+import { clientLogger } from '@/lib/client-logger'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
 import type {
@@ -131,7 +132,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
           })
         }
       } catch (err) {
-        console.error('[SSE] Failed to parse debate_started event:', err)
+        clientLogger.error('SSE: Failed to parse debate_started event', err)
       }
     })
 
@@ -155,7 +156,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
         s.addMessage(message)
         s.setCurrentTurn(data.turnId)
       } catch (err) {
-        console.error('[SSE] Failed to parse turn_started event:', err)
+        clientLogger.error('SSE: Failed to parse turn_started event', err)
       }
     })
 
@@ -165,7 +166,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
         if (!data.turnId || !data.chunk) return
         useDebateViewStore.getState().appendToMessage(data.turnId, data.chunk)
       } catch (err) {
-        console.error('[SSE] Failed to parse turn_streaming event:', err)
+        clientLogger.error('SSE: Failed to parse turn_streaming event', err)
       }
     })
 
@@ -177,7 +178,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
         s.completeMessage(data.turnId, data.content ?? '', data.tokenCount ?? 0)
         s.setCurrentTurn(null)
       } catch (err) {
-        console.error('[SSE] Failed to parse turn_completed event:', err)
+        clientLogger.error('SSE: Failed to parse turn_completed event', err)
       }
     })
 
@@ -188,7 +189,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
         useDebateViewStore.getState().setError(errorMsg)
         onErrorRef.current?.(errorMsg)
       } catch (err) {
-        console.error('[SSE] Failed to parse turn_error event:', err)
+        clientLogger.error('SSE: Failed to parse turn_error event', err)
       }
     })
 
@@ -206,7 +207,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
           })
         }
       } catch (err) {
-        console.error('[SSE] Failed to parse violation_detected event:', err)
+        clientLogger.error('SSE: Failed to parse violation_detected event', err)
       }
     })
 
@@ -225,7 +226,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
         }
         useDebateViewStore.getState().addMessage(interventionMessage)
       } catch (err) {
-        console.error('[SSE] Failed to parse intervention event:', err)
+        clientLogger.error('SSE: Failed to parse intervention event', err)
       }
     })
 
@@ -240,16 +241,16 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
           })
         }
       } catch (err) {
-        console.error('[SSE] Failed to parse progress_update event:', err)
+        clientLogger.error('SSE: Failed to parse progress_update event', err)
       }
     })
 
     eventSource.addEventListener('budget_warning', (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data) as SSEMessageData
-        console.warn('[Budget Warning]', data)
+        clientLogger.warn('Budget warning received', data)
       } catch (err) {
-        console.error('[SSE] Failed to parse budget_warning event:', err)
+        clientLogger.error('SSE: Failed to parse budget_warning event', err)
       }
     })
 
@@ -283,7 +284,7 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
         s.setError(errorMsg)
         onErrorRef.current?.(errorMsg)
       } catch (err) {
-        console.error('[SSE] Failed to parse debate_error event:', err)
+        clientLogger.error('SSE: Failed to parse debate_error event', err)
       }
     })
   }, [clearReconnectTimeout])

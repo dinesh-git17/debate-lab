@@ -10,6 +10,7 @@ import { ShareSection } from '@/components/summary/share-section'
 import { StatisticsDashboard } from '@/components/summary/statistics-dashboard'
 import { SummaryCard } from '@/components/summary/summary-card'
 import { SummaryNavigation } from '@/components/summary/summary-navigation'
+import { clientLogger } from '@/lib/client-logger'
 import { cn } from '@/lib/utils'
 import { useSummaryStore } from '@/store/summary-store'
 
@@ -38,7 +39,7 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
     try {
       const response = await fetch(`/api/debate/${initialData.debateId}/judge`)
       if (!response.ok) {
-        console.error('[Summary] Failed to fetch judge analysis')
+        clientLogger.error('Summary: Failed to fetch judge analysis')
         store.setSummaryLoading(false)
         return
       }
@@ -50,7 +51,7 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
         store.setSummaryLoading(false)
       }
     } catch (err) {
-      console.error('[Summary] Error fetching judge analysis:', err)
+      clientLogger.error('Summary: Error fetching judge analysis', err)
       store.setSummaryLoading(false)
     }
   }, [initialData.debateId])

@@ -1,6 +1,7 @@
 // src/services/rule-validation-service.ts
 import Anthropic from '@anthropic-ai/sdk'
 
+import { logger } from '@/lib/logging'
 import {
   buildRuleValidationPrompt,
   extractDefaultRuleSummaries,
@@ -97,7 +98,7 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    console.error('ANTHROPIC_API_KEY is not configured')
+    logger.error('ANTHROPIC_API_KEY is not configured')
     return {
       success: false,
       results: [],
@@ -129,7 +130,10 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
     const results = parseClaudeResponse(textBlock.text, sanitizedRules)
 
     if (results.length !== sanitizedRules.length) {
-      console.warn('Mismatch between input rules and validation results')
+      logger.warn('Mismatch between input rules and validation results', {
+        inputCount: sanitizedRules.length,
+        resultCount: results.length,
+      })
     }
 
     return {
@@ -137,7 +141,7 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
       results,
     }
   } catch (error) {
-    console.error('Rule validation error:', error)
+    logger.error('Rule validation error', error instanceof Error ? error : null)
 
     if (error instanceof Anthropic.APIError) {
       if (error.status === 429) {

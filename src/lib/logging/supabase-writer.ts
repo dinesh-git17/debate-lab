@@ -337,6 +337,7 @@ class SupabaseLogWriter {
       await this.client.from('alerts').insert(batch)
     } catch {
       // Alerts are critical - log to console if Supabase fails
+      // eslint-disable-next-line no-console
       console.error('[SupabaseLogWriter] Failed to persist alerts:', batch)
     }
   }

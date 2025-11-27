@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 
 import { isValidDebateId } from '@/lib/id-generator'
+import { logger } from '@/lib/logging'
 import {
   canStartDebate,
   getCurrentTurnInfo,
@@ -74,7 +75,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams): Prom
   // Start the debate loop in the background (don't await)
   // This allows the endpoint to return immediately while turns execute
   runDebateLoop(id).catch((error) => {
-    console.error(`[Engine Route] Debate loop failed for ${id}:`, error)
+    logger.error('Debate loop failed', error instanceof Error ? error : null, { debateId: id })
   })
 
   const turnInfo = await getCurrentTurnInfo(id)

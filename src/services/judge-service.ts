@@ -1,6 +1,7 @@
 // src/services/judge-service.ts
 
 import { getEngineState } from '@/lib/engine-store'
+import { logger } from '@/lib/logging'
 import {
   buildJudgeAnalysisPrompt,
   JUDGE_DISCLAIMER,
@@ -120,7 +121,13 @@ export async function getJudgeAnalysis(
       generationTimeMs: Date.now() - startTime,
     }
   } catch (error) {
-    console.error(`[JudgeService] Failed to generate analysis:`, error)
+    logger.error(
+      'JudgeService failed to generate analysis',
+      error instanceof Error ? error : null,
+      {
+        debateId,
+      }
+    )
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to generate analysis',

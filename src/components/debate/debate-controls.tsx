@@ -9,6 +9,7 @@ import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { ConfirmModal } from '@/components/ui/confirm-modal'
 import { useKeyboardShortcuts, formatShortcut } from '@/hooks/use-keyboard-shortcuts'
+import { clientLogger } from '@/lib/client-logger'
 import { exportTranscript } from '@/lib/export-transcript'
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
@@ -50,7 +51,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         throw new Error(data.error ?? 'Failed to start debate')
       }
     } catch (error) {
-      console.error('Start error:', error)
+      clientLogger.error('Debate start failed', error)
     } finally {
       setIsLoading(false)
     }
@@ -70,7 +71,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         throw new Error(data.error ?? 'Failed to pause debate')
       }
     } catch (error) {
-      console.error('Pause error:', error)
+      clientLogger.error('Debate pause failed', error)
     } finally {
       setIsLoading(false)
     }
@@ -90,7 +91,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         throw new Error(data.error ?? 'Failed to resume debate')
       }
     } catch (error) {
-      console.error('Resume error:', error)
+      clientLogger.error('Debate resume failed', error)
     } finally {
       setIsLoading(false)
     }
@@ -110,7 +111,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         throw new Error(data.error ?? 'Failed to end debate')
       }
     } catch (error) {
-      console.error('End error:', error)
+      clientLogger.error('Debate end failed', error)
     } finally {
       setIsLoading(false)
     }

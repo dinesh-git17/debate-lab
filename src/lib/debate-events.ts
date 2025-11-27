@@ -1,5 +1,7 @@
 // src/lib/debate-events.ts
 
+import { logger } from '@/lib/logging'
+
 import type { SSEEvent, SSEEventType } from '@/types/execution'
 
 type EventCallback = (event: SSEEvent) => void
@@ -61,7 +63,14 @@ class DebateEventEmitter {
       try {
         subscriber.callback(event)
       } catch (error) {
-        console.error(`[DebateEvents] Error in subscriber callback:`, error)
+        logger.error(
+          'DebateEvents error in subscriber callback',
+          error instanceof Error ? error : null,
+          {
+            debateId: event.debateId,
+            eventType: event.type,
+          }
+        )
       }
     }
 

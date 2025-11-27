@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { clientLogger } from '@/lib/client-logger'
 import { cn } from '@/lib/utils'
 import { useSummaryStore } from '@/store/summary-store'
 
@@ -131,7 +132,7 @@ export function ShareSection({
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
           } catch {
-            console.error('Failed to copy to clipboard')
+            clientLogger.error('Failed to copy to clipboard')
           }
           break
         }
@@ -149,7 +150,7 @@ export function ShareSection({
       setEmbedCopied(true)
       setTimeout(() => setEmbedCopied(false), 2000)
     } catch {
-      console.error('Failed to copy embed code')
+      clientLogger.error('Failed to copy embed code')
     }
   }, [debateId])
 

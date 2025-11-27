@@ -7,6 +7,37 @@ import type { NextRequest } from 'next/server'
 
 const isDev = process.env.NODE_ENV === 'development'
 
+// Edge-compatible structured logging for middleware
+// (pino/logger module may not work in Edge Runtime)
+/* eslint-disable no-console */
+function logSecurityEvent(
+  level: 'error' | 'warn' | 'info',
+  event: string,
+  context: Record<string, unknown>
+): void {
+  const logData = {
+    timestamp: new Date().toISOString(),
+    level,
+    type: 'security_event',
+    event,
+    ...context,
+  }
+  if (level === 'error') {
+    console.error(JSON.stringify(logData))
+  } else if (level === 'warn') {
+    console.warn(JSON.stringify(logData))
+  } else {
+    console.info(JSON.stringify(logData))
+  }
+}
+
+// For CSP, we also need to check if running on localhost (for production builds tested locally)
+function isDevEnvironment(request: NextRequest): boolean {
+  if (isDev) return true
+  const host = request.headers.get('host') || ''
+  return host.includes('localhost') || host.includes('127.0.0.1')
+}
+
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
 const RATE_LIMIT_MAX_REQUESTS = 100
 const DEBATE_CREATION_WINDOW_MS = 60 * 60 * 1000
@@ -46,16 +77,17 @@ function checkRateLimit(
   }
 }
 
-function buildCsp(): string {
+function buildCsp(request: NextRequest): string {
+  const isLocal = isDevEnvironment(request)
   const directives: string[] = [
     "default-src 'self'",
-    isDev
+    isLocal
       ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com"
       : "script-src 'self' https://vercel.live https://*.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.x.ai https://vercel.live https://*.vercel.com https://*.sentry.io${isDev ? ' ws://localhost:* http://localhost:*' : ''}`,
+    `connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.x.ai https://vercel.live https://*.vercel.com https://*.sentry.io${isLocal ? ' ws://localhost:* http://localhost:*' : ''}`,
     "frame-src 'self'",
     "frame-ancestors 'none'",
     "form-action 'self'",
@@ -63,15 +95,16 @@ function buildCsp(): string {
     "object-src 'none'",
   ]
 
-  if (!isDev) {
+  if (!isLocal) {
     directives.push('upgrade-insecure-requests')
   }
 
   return directives.join('; ')
 }
 
-function applySecurityHeaders(response: NextResponse): void {
-  response.headers.set('Content-Security-Policy', buildCsp())
+function applySecurityHeaders(response: NextResponse, request: NextRequest): void {
+  const isLocal = isDevEnvironment(request)
+  response.headers.set('Content-Security-Policy', buildCsp(request))
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -81,7 +114,7 @@ function applySecurityHeaders(response: NextResponse): void {
     'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
   )
 
-  if (!isDev) {
+  if (!isLocal) {
     response.headers.set(
       'Strict-Transport-Security',
       'max-age=31536000; includeSubDomains; preload'
@@ -116,17 +149,12 @@ export function middleware(request: NextRequest): NextResponse {
   if (pathname.startsWith('/api/')) {
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       if (!validateOrigin(request)) {
-        console.error(
-          JSON.stringify({
-            level: 'error',
-            type: 'security_event',
-            event: 'csrf_violation',
-            ip,
-            origin: request.headers.get('origin'),
-            referer: request.headers.get('referer'),
-            pathname,
-          })
-        )
+        logSecurityEvent('error', 'csrf_violation', {
+          ip,
+          origin: request.headers.get('origin'),
+          referer: request.headers.get('referer'),
+          pathname,
+        })
         return NextResponse.json({ error: 'Invalid origin' }, { status: 403 })
       }
     }
@@ -139,15 +167,7 @@ export function middleware(request: NextRequest): NextResponse {
     )
 
     if (!rateLimit.allowed) {
-      console.warn(
-        JSON.stringify({
-          level: 'warn',
-          type: 'security_event',
-          event: 'rate_limit_exceeded',
-          ip,
-          pathname,
-        })
-      )
+      logSecurityEvent('warn', 'rate_limit_exceeded', { ip, pathname })
 
       const response = NextResponse.json({ error: 'Too many requests' }, { status: 429 })
       response.headers.set(
@@ -157,7 +177,7 @@ export function middleware(request: NextRequest): NextResponse {
       response.headers.set('X-RateLimit-Limit', RATE_LIMIT_MAX_REQUESTS.toString())
       response.headers.set('X-RateLimit-Remaining', '0')
       response.headers.set('X-RateLimit-Reset', Math.ceil(rateLimit.resetAt / 1000).toString())
-      applySecurityHeaders(response)
+      applySecurityHeaders(response, request)
       return response
     }
 
@@ -170,14 +190,7 @@ export function middleware(request: NextRequest): NextResponse {
       )
 
       if (!debateLimit.allowed) {
-        console.warn(
-          JSON.stringify({
-            level: 'warn',
-            type: 'security_event',
-            event: 'debate_creation_limit_exceeded',
-            ip,
-          })
-        )
+        logSecurityEvent('warn', 'debate_creation_limit_exceeded', { ip })
 
         const response = NextResponse.json(
           { error: 'Debate creation limit exceeded. Try again later.' },
@@ -187,14 +200,14 @@ export function middleware(request: NextRequest): NextResponse {
           'Retry-After',
           Math.ceil((debateLimit.resetAt - Date.now()) / 1000).toString()
         )
-        applySecurityHeaders(response)
+        applySecurityHeaders(response, request)
         return response
       }
     }
   }
 
   const response = NextResponse.next()
-  applySecurityHeaders(response)
+  applySecurityHeaders(response, request)
 
   response.headers.set('X-RateLimit-Limit', RATE_LIMIT_MAX_REQUESTS.toString())
   response.headers.set(
