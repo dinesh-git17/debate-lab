@@ -3,6 +3,12 @@
 import { getProviderForPosition } from '@/lib/debate-assignment'
 import { debateEvents } from '@/lib/debate-events'
 import { getEngineState, storeEngineState } from '@/lib/engine-store'
+import {
+  createDebateLogger,
+  logDebateEvent,
+  recordDebateCompleted,
+  recordDebateError,
+} from '@/lib/logging'
 import { estimateTurnInputTokens } from '@/lib/token-counter'
 import {
   checkBudget,
@@ -55,9 +61,10 @@ export interface CurrentTurnInfo {
  * Creates new or resumes existing engine state.
  */
 export async function initializeEngine(debateId: string): Promise<DebateEngineContext | null> {
+  const log = createDebateLogger(debateId)
   const session = await getFullDebateSession(debateId)
   if (!session) {
-    console.error(`[Engine] Session not found: ${debateId}`)
+    log.warn('Session not found')
     return null
   }
 
@@ -103,9 +110,12 @@ export async function startDebate(debateId: string): Promise<StartDebateResult> 
       format: context.session.format,
     })
 
+    logDebateEvent('debate_started', debateId, { format: context.session.format })
     return { success: true }
   } catch (error) {
-    console.error(`[Engine] Failed to start debate:`, error)
+    const log = createDebateLogger(debateId)
+    log.error('Failed to start debate', error instanceof Error ? error : null)
+    recordDebateError()
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -208,7 +218,8 @@ export async function recordCompletedTurn(
 
     return { success: true, isComplete }
   } catch (error) {
-    console.error(`[Engine] Failed to record turn:`, error)
+    const log = createDebateLogger(debateId)
+    log.error('Failed to record turn', error instanceof Error ? error : null)
     return {
       success: false,
       isComplete: false,
@@ -259,7 +270,8 @@ export async function recordCompletedTurnWithTiming(
 
     return { success: true, isComplete }
   } catch (error) {
-    console.error(`[Engine] Failed to record turn:`, error)
+    const log = createDebateLogger(debateId)
+    log.error('Failed to record turn with timing', error instanceof Error ? error : null)
     return {
       success: false,
       isComplete: false,
@@ -284,9 +296,11 @@ export async function insertModeratorIntervention(
   try {
     context.sequencer.insertIntervention(content, reason)
     await storeEngineState(debateId, context.sequencer.getState())
+    logDebateEvent('moderator_intervention', debateId, { reason })
     return { success: true }
   } catch (error) {
-    console.error(`[Engine] Failed to insert intervention:`, error)
+    const log = createDebateLogger(debateId)
+    log.error('Failed to insert intervention', error instanceof Error ? error : null)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -393,7 +407,10 @@ export async function setDebateError(debateId: string, error: string): Promise<b
     fatal: true,
   })
 
-  console.error(`[Engine] Debate error: ${debateId} - ${error}`)
+  const log = createDebateLogger(debateId)
+  log.error('Debate error', new Error(error))
+  logDebateEvent('debate_error', debateId, { error, fatal: true })
+  recordDebateError()
 
   return true
 }
@@ -551,7 +568,8 @@ export async function recordCompletedTurnWithUsage(
 
     return { success: true, isComplete }
   } catch (error) {
-    console.error(`[Engine] Failed to record turn with usage:`, error)
+    const log = createDebateLogger(debateId)
+    log.error('Failed to record turn with usage', error instanceof Error ? error : null)
     return {
       success: false,
       isComplete: false,
@@ -752,10 +770,17 @@ export async function executeNextTurn(debateId: string): Promise<{
       })
     }
 
+    logDebateEvent('turn_completed', debateId, {
+      turnId,
+      speaker: currentTurn.speaker,
+      durationMs: Date.now() - startTime,
+    })
+
     return { success: true, isComplete: recordResult.isComplete }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error(`[Engine] Turn execution failed:`, error)
+    const log = createDebateLogger(debateId)
+    log.error('Turn execution failed', error instanceof Error ? error : null, { turnId })
 
     debateEvents.emitEvent(debateId, 'turn_error', {
       turnId,
@@ -800,8 +825,19 @@ export async function runDebateLoop(debateId: string): Promise<{
 
       // Preload judge analysis in background so it's ready when user visits summary
       getJudgeAnalysis(debateId).catch((err) => {
-        console.error(`[Engine] Failed to preload judge analysis for ${debateId}:`, err)
+        const log = createDebateLogger(debateId)
+        log.warn('Failed to preload judge analysis', {
+          error: err instanceof Error ? err.message : String(err),
+        })
       })
+
+      const completedTurns = context.sequencer.getProgress().currentTurn
+      const completedDurationMs = Date.now() - loopStartTime
+      logDebateEvent('debate_completed', debateId, {
+        totalTurns: completedTurns,
+        durationMs: completedDurationMs,
+      })
+      recordDebateCompleted(completedTurns, completedDurationMs)
 
       return { success: true }
     }
@@ -829,17 +865,28 @@ export async function runDebateLoop(debateId: string): Promise<{
     }
 
     if (result.isComplete) {
+      const finalTurnCount = turnCount + 1
+      const finalDurationMs = Date.now() - loopStartTime
       const budgetStatus = getBudgetStatus(debateId)
       debateEvents.emitEvent(debateId, 'debate_completed', {
-        totalTurns: turnCount + 1,
-        durationMs: Date.now() - loopStartTime,
+        totalTurns: finalTurnCount,
+        durationMs: finalDurationMs,
         totalTokens: budgetStatus.usage?.totalTokens ?? 0,
         totalCost: budgetStatus.usage?.totalCostUsd ?? 0,
       })
 
+      logDebateEvent('debate_completed', debateId, {
+        totalTurns: finalTurnCount,
+        durationMs: finalDurationMs,
+      })
+      recordDebateCompleted(finalTurnCount, finalDurationMs)
+
       // Preload judge analysis in background so it's ready when user visits summary
       getJudgeAnalysis(debateId).catch((err) => {
-        console.error(`[Engine] Failed to preload judge analysis for ${debateId}:`, err)
+        const log = createDebateLogger(debateId)
+        log.warn('Failed to preload judge analysis', {
+          error: err instanceof Error ? err.message : String(err),
+        })
       })
 
       return { success: true }

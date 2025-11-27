@@ -1,6 +1,12 @@
 // src/services/debate-service.ts
 import { generateDebateAssignment, getProviderForPosition } from '@/lib/debate-assignment'
 import { generateDebateId } from '@/lib/id-generator'
+import {
+  createDebateLogger,
+  logDebateEvent,
+  recordDebateStarted,
+  recordDebateError,
+} from '@/lib/logging'
 import { getSession, storeSession, toPublicSession, updateSession } from '@/lib/session-store'
 
 import type { DebateFormValues } from '@/lib/schemas/debate-schema'
@@ -25,8 +31,10 @@ export interface CreateDebateResult {
  * Creates a new debate session with random LLM assignment.
  */
 export async function createDebateSession(formData: DebateFormValues): Promise<CreateDebateResult> {
+  const debateId = generateDebateId()
+  const log = createDebateLogger(debateId)
+
   try {
-    const debateId = generateDebateId()
     const assignment = generateDebateAssignment()
     const now = new Date()
 
@@ -45,13 +53,23 @@ export async function createDebateSession(formData: DebateFormValues): Promise<C
 
     await storeSession(session)
 
+    // Log debate creation
+    logDebateEvent('debate_created', debateId, {
+      topic: formData.topic,
+      turns: formData.turns,
+      format: formData.format,
+    })
+    recordDebateStarted()
+    log.info('Debate session created', { topic: formData.topic, turns: formData.turns })
+
     return {
       success: true,
       debateId,
       session: toPublicSession(session),
     }
   } catch (error) {
-    console.error('Failed to create debate session:', error)
+    log.error('Failed to create debate session', error instanceof Error ? error : null)
+    recordDebateError()
     return {
       success: false,
       error: 'Failed to create debate session',
@@ -95,6 +113,17 @@ export async function getProviderForTurn(
  */
 export async function updateDebateStatus(debateId: string, status: DebatePhase): Promise<boolean> {
   const updated = await updateSession(debateId, { status })
+
+  if (updated) {
+    logDebateEvent('status_changed', debateId, { status })
+
+    // Note: recordDebateCompleted is called by debate-engine with proper metrics
+    // recordDebateError is called here for errors not caught by the engine
+    if (status === 'error') {
+      recordDebateError()
+    }
+  }
+
   return updated !== null
 }
 

@@ -1,5 +1,11 @@
 // src/services/llm/llm-service.ts
 
+import {
+  createProviderLogger,
+  recordLLMRequest,
+  recordLLMFailure,
+  recordLLMSuccess,
+} from '@/lib/logging'
 import { consumeCapacity, waitForCapacity } from '@/lib/rate-limiter'
 import { withRetry } from '@/lib/retry'
 import { LLMError } from '@/types/llm'
@@ -40,6 +46,9 @@ export async function generate(options: GenerateOptions): Promise<GenerateResult
     await waitForCapacity(provider.providerType, estimatedTokens)
   }
 
+  const log = createProviderLogger(provider.providerType)
+  const startTime = Date.now()
+
   const generateFn = async () => {
     try {
       const result = await provider.generate(params)
@@ -48,12 +57,25 @@ export async function generate(options: GenerateOptions): Promise<GenerateResult
         consumeCapacity(provider.providerType, result.totalTokens)
       }
 
+      // Record successful LLM request
+      recordLLMRequest(
+        provider.providerType,
+        result.inputTokens,
+        result.outputTokens,
+        result.latencyMs,
+        0, // costCents - calculated elsewhere
+        true
+      )
+      recordLLMSuccess(provider.providerType)
+
       return result
     } catch (error) {
-      console.error(`[LLM] ${provider.providerType} error:`, {
-        error: error instanceof Error ? error.message : 'Unknown',
-        type: error instanceof LLMError ? error.type : 'unknown',
+      const latencyMs = Date.now() - startTime
+      log.error('LLM request failed', error instanceof Error ? error : null, {
+        errorType: error instanceof LLMError ? error.type : 'unknown',
       })
+      recordLLMRequest(provider.providerType, 0, 0, latencyMs, 0, false)
+      recordLLMFailure(provider.providerType)
       throw error
     }
   }
@@ -92,6 +114,7 @@ export async function* generateStream(
     await waitForCapacity(provider.providerType, estimatedTokens)
   }
 
+  const log = createProviderLogger(provider.providerType)
   const startTime = Date.now()
   let fullContent = ''
   let outputTokens = 0
@@ -104,10 +127,15 @@ export async function* generateStream(
     }
 
     const inputTokens = provider.countMessagesTokens(params.systemPrompt, params.messages)
+    const latencyMs = Date.now() - startTime
 
     if (enableRateLimit) {
       consumeCapacity(provider.providerType, inputTokens + outputTokens)
     }
+
+    // Record successful streaming request
+    recordLLMRequest(provider.providerType, inputTokens, outputTokens, latencyMs, 0, true)
+    recordLLMSuccess(provider.providerType)
 
     return {
       content: fullContent,
@@ -115,14 +143,15 @@ export async function* generateStream(
       outputTokens,
       totalTokens: inputTokens + outputTokens,
       finishReason: 'stop',
-      latencyMs: Date.now() - startTime,
+      latencyMs,
       provider: provider.providerType,
       model: provider.info.model,
     }
   } catch (error) {
-    console.error(`[LLM] ${provider.providerType} stream error:`, {
-      error: error instanceof Error ? error.message : 'Unknown',
-    })
+    const latencyMs = Date.now() - startTime
+    log.error('LLM stream request failed', error instanceof Error ? error : null)
+    recordLLMRequest(provider.providerType, 0, 0, latencyMs, 0, false)
+    recordLLMFailure(provider.providerType)
     throw error
   }
 }

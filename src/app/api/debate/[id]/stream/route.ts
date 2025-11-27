@@ -2,6 +2,12 @@
 
 import { debateEvents, formatSSEComment, formatSSEMessage } from '@/lib/debate-events'
 import { isValidDebateId } from '@/lib/id-generator'
+import {
+  generateRequestId,
+  createDebateLogger,
+  incrementConnections,
+  decrementConnections,
+} from '@/lib/logging'
 import { getDebateSession } from '@/services/debate-service'
 
 import type { SSEEvent } from '@/types/execution'
@@ -19,6 +25,8 @@ const HEARTBEAT_INTERVAL = 30000
  */
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { id: debateId } = await params
+  const connectionId = generateRequestId()
+  const log = createDebateLogger(debateId)
 
   if (!isValidDebateId(debateId)) {
     return new Response(JSON.stringify({ error: 'Invalid debate ID' }), {
@@ -34,6 +42,11 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
+  // Track SSE connection
+  incrementConnections()
+  log.info('SSE connection opened', { connectionId })
+  const connectionStartTime = Date.now()
 
   const encoder = new TextEncoder()
   let heartbeatInterval: ReturnType<typeof setInterval> | null = null
@@ -72,6 +85,11 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
         if (isClosed) return
         isClosed = true
 
+        // Track connection close
+        decrementConnections()
+        const connectionDuration = Date.now() - connectionStartTime
+        log.info('SSE connection closed', { connectionId, durationMs: connectionDuration })
+
         if (heartbeatInterval) {
           clearInterval(heartbeatInterval)
           heartbeatInterval = null
@@ -105,7 +123,13 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     },
 
     cancel() {
+      if (isClosed) return
       isClosed = true
+
+      // Track connection close on cancel
+      decrementConnections()
+      const connectionDuration = Date.now() - connectionStartTime
+      log.info('SSE connection cancelled', { connectionId, durationMs: connectionDuration })
 
       if (heartbeatInterval) {
         clearInterval(heartbeatInterval)
