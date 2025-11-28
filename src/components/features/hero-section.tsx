@@ -9,7 +9,7 @@ import LiquidEther from '@/components/ui/liquid-ether'
 
 export function HeroSection() {
   return (
-    <section className="relative flex min-h-[calc(100vh-3.5rem)] items-center overflow-hidden">
+    <section className="relative flex min-h-screen items-center overflow-hidden">
       {/* Liquid Ether WebGL Background */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <LiquidEther

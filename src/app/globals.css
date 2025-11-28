@@ -1,6 +1,9 @@
 /* src/app/globals.css */
 @import 'tailwindcss';
 
+/* Configure dark mode to use class-based selector for next-themes */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
@@ -71,6 +74,19 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  /* Smooth theme transitions */
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease;
+}
+
+/* Smooth theme transitions for color-dependent elements */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.4s;
+  transition-timing-function: ease;
 }
 
 ::selection {
@@ -163,6 +179,18 @@ body {
   }
 }
 
+/* Button ripple fade effect */
+@keyframes ripple-fade {
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
 .animate-card-flip {
   animation: card-flip 0.7s ease-in-out forwards;
 }
@@ -219,4 +247,19 @@ body {
 
 .rotate-y-180 {
   transform: rotateY(180deg);
+}
+
+/* Nav link underline animation */
+.underline-animation {
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.3s ease-out !important;
+}
+
+.group:hover .underline-animation[data-active='false'] {
+  transform: scaleX(1);
+}
+
+.underline-animation[data-active='true'] {
+  transform: scaleX(0) !important;
 }

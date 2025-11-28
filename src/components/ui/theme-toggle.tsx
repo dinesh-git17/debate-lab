@@ -1,82 +1,114 @@
 // src/components/ui/theme-toggle.tsx
+// iOS-style sliding toggle for light/dark mode
+
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
-
-import { VisuallyHidden } from '@/components/ui/visually-hidden'
-
-function SunIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2" />
-      <path d="M12 20v2" />
-      <path d="m4.93 4.93 1.41 1.41" />
-      <path d="m17.66 17.66 1.41 1.41" />
-      <path d="M2 12h2" />
-      <path d="M20 12h2" />
-      <path d="m6.34 17.66-1.41 1.41" />
-      <path d="m19.07 4.93-1.41 1.41" />
-    </svg>
-  )
-}
-
-function MoonIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-    </svg>
-  )
-}
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { IoMoon, IoSunny } from 'react-icons/io5'
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  // Local visual state - decoupled from theme to allow animation
+  const [visualState, setVisualState] = useState<'light' | 'dark'>('light')
+  const isAnimating = useRef(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Sync visual state with theme on mount and when theme changes externally
+  useEffect(() => {
+    if (mounted && !isAnimating.current) {
+      setVisualState(resolvedTheme === 'dark' ? 'dark' : 'light')
+    }
+  }, [mounted, resolvedTheme])
+
+  const handleToggle = useCallback(() => {
+    if (isAnimating.current) return
+
+    const newState = visualState === 'dark' ? 'light' : 'dark'
+
+    // Start animation
+    isAnimating.current = true
+    setVisualState(newState)
+
+    // Update theme after spring animation completes
+    setTimeout(() => {
+      setTheme(newState)
+      isAnimating.current = false
+    }, 500)
+  }, [visualState, setTheme])
+
   if (!mounted) {
     return (
-      <button
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:bg-accent"
-        aria-label="Toggle theme"
-      >
-        <span className="h-5 w-5" />
-      </button>
+      <div className="w-[52px] h-[28px] rounded-full bg-black/10 dark:bg-white/10 animate-pulse" />
     )
   }
 
-  const isDark = resolvedTheme === 'dark'
+  const isDark = visualState === 'dark'
 
   return (
     <button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:bg-accent"
+      type="button"
+      role="switch"
+      aria-checked={isDark}
+      onClick={handleToggle}
+      className="relative w-[52px] h-[28px] rounded-full cursor-pointer p-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-foreground/50"
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
     >
-      {isDark ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-      <VisuallyHidden>{isDark ? 'Switch to light theme' : 'Switch to dark theme'}</VisuallyHidden>
+      {/* Track background with subtle glow */}
+      <span
+        className="absolute inset-0 rounded-full"
+        style={{
+          backgroundColor: isDark ? '#6366f1' : '#facc15',
+          boxShadow: isDark
+            ? '0 0 12px rgba(99, 102, 241, 0.4), inset 0 1px 2px rgba(0,0,0,0.1)'
+            : '0 0 12px rgba(250, 204, 21, 0.35), inset 0 1px 2px rgba(0,0,0,0.05)',
+          transition: 'background-color 0.4s ease, box-shadow 0.4s ease',
+        }}
+      />
+
+      {/* Sliding thumb with reflective highlight */}
+      <span
+        className="relative block w-6 h-6 rounded-full"
+        style={{
+          transform: isDark ? 'translateX(24px)' : 'translateX(0px)',
+          // Spring animation with overshoot
+          transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          // Layered shadows: outer shadow + inner glossy highlight
+          background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
+          boxShadow: `
+            0 2px 8px rgba(0,0,0,0.18),
+            0 1px 3px rgba(0,0,0,0.12),
+            inset 0 1px 0 rgba(255,255,255,0.9),
+            inset 0 -1px 2px rgba(0,0,0,0.05)
+          `,
+        }}
+      >
+        {/* Icon container */}
+        <span className="absolute inset-0 flex items-center justify-center">
+          {/* Sun icon */}
+          <IoSunny
+            className="absolute w-4 h-4 text-amber-500"
+            style={{
+              opacity: isDark ? 0 : 1,
+              transform: isDark ? 'rotate(90deg) scale(0)' : 'rotate(0deg) scale(1)',
+              transition: 'opacity 0.3s ease, transform 0.3s ease',
+            }}
+          />
+          {/* Moon icon */}
+          <IoMoon
+            className="absolute w-4 h-4 text-indigo-500"
+            style={{
+              opacity: isDark ? 1 : 0,
+              transform: isDark ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0)',
+              transition: 'opacity 0.3s ease, transform 0.3s ease',
+            }}
+          />
+        </span>
+      </span>
     </button>
   )
 }
