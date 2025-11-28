@@ -8,9 +8,11 @@ const isDev = process.env.NODE_ENV === 'development'
 function buildCsp(): string {
   const directives: Record<string, string[]> = {
     'default-src': ["'self'"],
+    // Next.js requires 'unsafe-inline' for hydration scripts
     'script-src': [
       "'self'",
-      ...(isDev ? ["'unsafe-eval'", "'unsafe-inline'"] : []),
+      "'unsafe-inline'",
+      ...(isDev ? ["'unsafe-eval'"] : []),
       'https://vercel.live',
       'https://*.vercel-scripts.com',
     ],

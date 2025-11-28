@@ -81,9 +81,10 @@ function buildCsp(request: NextRequest): string {
   const isLocal = isDevEnvironment(request)
   const directives: string[] = [
     "default-src 'self'",
+    // Next.js requires 'unsafe-inline' for hydration scripts
     isLocal
       ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com"
-      : "script-src 'self' https://vercel.live https://*.vercel-scripts.com",
+      : "script-src 'self' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
