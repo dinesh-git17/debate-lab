@@ -60,19 +60,19 @@ export function Navbar({ showCta = true }: NavbarProps) {
           'fixed top-5 left-1/2 -translate-x-1/2 z-50',
           'max-w-[1100px] w-[90%]',
           'rounded-full',
-          'px-6 md:px-8 lg:px-10 py-4',
-          'bg-white/65 dark:bg-white/[0.04]',
-          'backdrop-blur-[20px] backdrop-saturate-[1.8]',
-          'border border-white/[0.12] dark:border-white/[0.10]',
-          'shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08),inset_0_0_0_0.5px_rgba(255,255,255,0.1)]',
-          'dark:shadow-[0_8px_24px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2),inset_0_0_0_0.5px_rgba(255,255,255,0.05)]',
+          'px-5 md:px-6 lg:px-8 py-3',
+          'bg-white/75 dark:bg-white/[0.03]',
+          'backdrop-blur-[28px] backdrop-saturate-[1.9]',
+          'border border-neutral-200/60 dark:border-white/[0.08]',
+          'shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_12px_rgba(0,0,0,0.04)]',
+          'dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_2px_12px_rgba(0,0,0,0.25),inset_0_0_0_0.5px_rgba(255,255,255,0.05)]',
           'flex items-center justify-between',
           'transition-all duration-300 ease-out',
           scrolled && [
-            'bg-white/70 dark:bg-white/[0.06]',
-            'shadow-[0_10px_30px_rgba(0,0,0,0.15),0_4px_10px_rgba(0,0,0,0.1),inset_0_0_0_0.5px_rgba(255,255,255,0.15)]',
-            'dark:shadow-[0_10px_30px_rgba(0,0,0,0.5),0_4px_10px_rgba(0,0,0,0.25),inset_0_0_0_0.5px_rgba(255,255,255,0.08)]',
-            'border-white/[0.2] dark:border-white/[0.12]',
+            'bg-white/85 dark:bg-white/[0.05]',
+            'shadow-[0_12px_40px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.06)]',
+            'dark:shadow-[0_12px_40px_rgba(0,0,0,0.6),0_4px_16px_rgba(0,0,0,0.3),inset_0_0_0_0.5px_rgba(255,255,255,0.08)]',
+            'border-neutral-200/80 dark:border-white/[0.10]',
           ]
         )}
       >
@@ -82,54 +82,44 @@ export function Navbar({ showCta = true }: NavbarProps) {
         </div>
 
         {/* Center: Nav Links */}
-        <div className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2 h-10">
+        <div className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 h-9">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                'relative px-5 h-10 rounded-full',
+                'relative px-4 h-9',
                 'inline-flex items-center justify-center',
-                'text-[15px] font-medium tracking-[0.01em] leading-none',
-                'text-black/70 hover:text-black dark:text-white/85 dark:hover:text-white',
-                'hover:tracking-[0.025em]',
-                'hover:bg-black/[0.04] dark:hover:bg-white/[0.06]',
+                'text-[14px] font-medium tracking-[0.01em] leading-none',
+                'text-neutral-500 dark:text-white/70',
+                'hover:text-neutral-900 dark:hover:text-white',
+                'hover:scale-[1.02]',
                 'transition-all duration-300 ease-out',
                 'focus-visible:outline-none focus-visible:ring-2',
-                'focus-visible:ring-foreground/50 focus-visible:rounded-full',
-                // Underline animation container
+                'focus-visible:ring-foreground/50 focus-visible:rounded-md',
                 'group',
-                pathname === link.href && [
-                  'text-black/90 dark:text-white',
-                  'bg-neutral-900/[0.06] dark:bg-white/[0.08]',
-                  'shadow-[0_0_12px_rgba(0,0,0,0.06)] dark:shadow-[0_0_12px_rgba(255,255,255,0.08)]',
-                ]
+                pathname === link.href && ['text-neutral-900 dark:text-white']
               )}
             >
               <span className="relative">
                 {link.label}
-                {/* Hover underline - slides in from center */}
+                {/* Sleek underline - 2px height, animates from center */}
                 <span
-                  className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] bg-current underline-animation"
-                  data-active={pathname === link.href ? 'true' : 'false'}
+                  className={cn(
+                    'absolute -bottom-1 left-0 right-0 h-[2px] rounded-full',
+                    'bg-neutral-800 dark:bg-white',
+                    'origin-center transition-transform duration-300 ease-out',
+                    'group-hover:scale-x-100',
+                    pathname === link.href ? 'scale-x-100' : 'scale-x-0'
+                  )}
                 />
-                {/* Active dot indicator */}
-                {pathname === link.href && (
-                  <span
-                    className={cn(
-                      'absolute -bottom-1.5 left-1/2 -translate-x-1/2',
-                      'w-1 h-1 rounded-full',
-                      'bg-black dark:bg-white'
-                    )}
-                  />
-                )}
               </span>
             </Link>
           ))}
         </div>
 
         {/* Right: Theme Toggle + CTA */}
-        <div className="flex items-center gap-2.5 md:gap-3 h-10">
+        <div className="flex items-center gap-2 md:gap-2.5 h-9">
           <ThemeToggle />
 
           {showCta && (
@@ -137,36 +127,34 @@ export function Navbar({ showCta = true }: NavbarProps) {
               asChild
               size="sm"
               className={cn(
-                'hidden sm:inline-flex',
+                'hidden sm:inline-flex items-center justify-center',
                 'relative overflow-hidden',
-                'bg-gradient-to-b from-foreground to-foreground/90',
-                'text-background font-semibold tracking-[0.01em]',
+                // Two-layer frost depth with micro gradient
+                'bg-gradient-to-b from-white/[0.08] via-white/[0.05] to-white/[0.02]',
+                'dark:from-white/[0.06] dark:via-white/[0.03] dark:to-white/[0.01]',
+                'backdrop-blur-md',
+                // Inner inset stroke + micro glow
+                'border-0',
+                'shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]',
+                'dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),0_0_14px_rgba(255,255,255,0.025)]',
+                // Typography - calm, confident
+                'text-neutral-700 dark:text-white/90 text-sm font-medium tracking-tight',
+                // Structured minimalism - pill shape for premium look
                 'rounded-full',
-                'px-5 h-10',
-                'shadow-[0_1px_2px_rgba(0,0,0,0.1),0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.1)]',
-                'dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]',
-                'transition-all duration-200 ease-out',
-                // Subtle lift + brightness increase on hover
-                'hover:-translate-y-px',
-                'hover:brightness-110 dark:hover:brightness-125',
-                'hover:shadow-[0_2px_6px_rgba(0,0,0,0.12),0_6px_16px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.15)]',
-                'dark:hover:shadow-[0_2px_6px_rgba(0,0,0,0.3),0_6px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.2)]',
-                'active:translate-y-0 active:brightness-100',
-                'active:shadow-[0_1px_2px_rgba(0,0,0,0.1),0_2px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.1)]',
-                // Ripple effect base
-                'group/btn',
-                'before:absolute before:inset-0 before:rounded-full',
-                'before:bg-white/20 before:opacity-0',
-                'before:scale-0 before:transition-all before:duration-300',
-                'active:before:scale-100 active:before:opacity-100 active:before:duration-0',
-                'after:absolute after:inset-0 after:rounded-full',
-                'after:bg-white/10 after:opacity-0 after:scale-100',
-                'active:after:animate-[ripple-fade_0.4s_ease-out]'
+                'px-4 py-1.5',
+                'transition-all duration-300 ease-out',
+                // Ultra-premium hover
+                'hover:bg-gradient-to-b hover:from-white/[0.12] hover:via-white/[0.08] hover:to-white/[0.04]',
+                'dark:hover:from-white/[0.08] dark:hover:via-white/[0.05] dark:hover:to-white/[0.02]',
+                'hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.06)]',
+                'dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),0_0_18px_rgba(255,255,255,0.04)]',
+                'hover:text-neutral-900 dark:hover:text-white',
+                'hover:scale-[1.01]',
+                'hover:[filter:brightness(1.05)_saturate(1.02)]',
+                'active:scale-[0.98]'
               )}
             >
-              <Link href="/debate/new" className="relative z-10">
-                Start Debate
-              </Link>
+              <Link href="/debate/new">Start Debate</Link>
             </Button>
           )}
 
@@ -175,10 +163,9 @@ export function Navbar({ showCta = true }: NavbarProps) {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className={cn(
               'md:hidden',
-              'p-2.5 rounded-full',
-              'text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white',
-              'hover:bg-black/[0.06] dark:hover:bg-white/[0.08]',
-              'hover:shadow-[0_0_12px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_0_12px_rgba(255,255,255,0.1)]',
+              'p-2 rounded-full',
+              'text-neutral-500 hover:text-neutral-900 dark:text-white/70 dark:hover:text-white',
+              'hover:bg-neutral-100/80 dark:hover:bg-white/[0.08]',
               'transition-all duration-200 ease-out',
               'focus-visible:outline-none focus-visible:ring-2',
               'focus-visible:ring-neutral-500/50'
@@ -227,10 +214,10 @@ export function Navbar({ showCta = true }: NavbarProps) {
           'fixed top-0 right-0 z-50',
           'h-full w-[280px] max-w-[85vw]',
           // Glassmorphic design matching navbar
-          'bg-white/70 dark:bg-white/[0.04]',
+          'bg-white/90 dark:bg-white/[0.04]',
           'backdrop-blur-[20px] backdrop-saturate-[1.8]',
-          'border-l border-white/[0.15] dark:border-white/[0.10]',
-          'shadow-[-8px_0_40px_rgba(0,0,0,0.15),inset_1px_0_0_rgba(255,255,255,0.1)]',
+          'border-l border-neutral-200 dark:border-white/[0.10]',
+          'shadow-[-8px_0_40px_rgba(0,0,0,0.08)]',
           'dark:shadow-[-8px_0_40px_rgba(0,0,0,0.5),inset_1px_0_0_rgba(255,255,255,0.05)]',
           'md:hidden'
         )}
@@ -242,15 +229,15 @@ export function Navbar({ showCta = true }: NavbarProps) {
         aria-label="Mobile navigation menu"
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-black/[0.08] dark:border-white/[0.08]">
-          <span className="text-sm font-semibold text-black/80 dark:text-white/80">Menu</span>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-200 dark:border-white/[0.08]">
+          <span className="text-sm font-semibold text-neutral-800 dark:text-white/80">Menu</span>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
             className={cn(
               'p-2 -mr-2 rounded-full',
-              'text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white',
-              'hover:bg-black/[0.06] dark:hover:bg-white/[0.08]',
+              'text-neutral-500 hover:text-neutral-900 dark:text-white/60 dark:hover:text-white',
+              'hover:bg-neutral-100 dark:hover:bg-white/[0.08]',
               'transition-all duration-200 ease-out'
             )}
             aria-label="Close menu"
@@ -269,12 +256,12 @@ export function Navbar({ showCta = true }: NavbarProps) {
               className={cn(
                 'px-4 py-3.5 rounded-xl',
                 'text-[15px] font-medium',
-                'text-black/70 hover:text-black dark:text-white/85 dark:hover:text-white',
-                'hover:bg-black/[0.05] dark:hover:bg-white/[0.08]',
+                'text-neutral-600 hover:text-neutral-900 dark:text-white/85 dark:hover:text-white',
+                'hover:bg-neutral-100 dark:hover:bg-white/[0.08]',
                 'transition-all duration-200 ease-out',
                 pathname === link.href && [
-                  'text-black dark:text-white',
-                  'bg-black/[0.06] dark:bg-white/[0.10]',
+                  'text-neutral-900 dark:text-white',
+                  'bg-neutral-100 dark:bg-white/[0.10]',
                 ]
               )}
               role="menuitem"
@@ -286,17 +273,17 @@ export function Navbar({ showCta = true }: NavbarProps) {
 
         {/* CTA Button at bottom */}
         {showCta && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.08] dark:border-white/[0.08]">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-neutral-200 dark:border-white/[0.08]">
             <Link
               href="/debate/new"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
                 'block px-4 py-3.5 rounded-xl',
                 'text-[15px] font-semibold text-center',
-                'bg-foreground text-background',
-                'hover:bg-foreground/90',
+                'bg-neutral-800 text-white dark:bg-white dark:text-neutral-900',
+                'hover:bg-neutral-700 dark:hover:bg-white/90',
                 'transition-all duration-200 ease-out',
-                'shadow-[0_2px_8px_rgba(0,0,0,0.1)]'
+                'shadow-[0_2px_8px_rgba(0,0,0,0.06)]'
               )}
               role="menuitem"
             >

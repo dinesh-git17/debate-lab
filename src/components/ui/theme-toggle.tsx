@@ -77,14 +77,14 @@ export function ThemeToggle() {
           transform: isDark ? 'translateX(24px)' : 'translateX(0px)',
           // Spring animation with overshoot
           transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          // Layered shadows: outer shadow + inner glossy highlight
-          background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
-          boxShadow: `
-            0 2px 8px rgba(0,0,0,0.18),
-            0 1px 3px rgba(0,0,0,0.12),
-            inset 0 1px 0 rgba(255,255,255,0.9),
-            inset 0 -1px 2px rgba(0,0,0,0.05)
-          `,
+          // Layered shadows: outer shadow + inner glossy highlight + border for light mode contrast
+          background: isDark
+            ? 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)'
+            : 'linear-gradient(145deg, #fefefe 0%, #f0f0f0 100%)',
+          border: isDark ? 'none' : '1px solid rgba(0,0,0,0.08)',
+          boxShadow: isDark
+            ? `0 2px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 2px rgba(0,0,0,0.05)`
+            : `0 2px 10px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 2px rgba(0,0,0,0.03)`,
         }}
       >
         {/* Icon container */}

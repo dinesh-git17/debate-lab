@@ -4,6 +4,11 @@
 /* Configure dark mode to use class-based selector for next-themes */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
@@ -24,21 +29,22 @@
 }
 
 .dark {
-  --background: 240 10% 3.9%;
+  /* Cool-tinted blacks for premium device-grade look */
+  --background: 220 15% 4%;
   --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
+  --card: 220 12% 5%;
   --card-foreground: 0 0% 98%;
   --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
+  --primary-foreground: 220 15% 8%;
+  --secondary: 220 10% 12%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
+  --muted: 220 10% 10%;
+  --muted-foreground: 220 5% 64%;
+  --accent: 220 10% 12%;
   --accent-foreground: 0 0% 98%;
   --destructive: 0 62.8% 30.6%;
-  --border: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
+  --border: 220 10% 14%;
+  --ring: 220 5% 80%;
 }
 
 @theme inline {
@@ -215,6 +221,52 @@ body {
   animation: bounce-gentle 2s ease-in-out infinite;
 }
 
+/* Apple-style scroll reveal animations */
+@keyframes apple-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes apple-reveal-header {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes apple-glow-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-apple-reveal {
+  animation: apple-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-apple-reveal-header {
+  animation: apple-reveal-header 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-apple-glow {
+  animation: apple-glow-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Animation delays */
 .animation-delay-100 {
   animation-delay: 100ms;
@@ -230,6 +282,10 @@ body {
 
 .animation-delay-500 {
   animation-delay: 500ms;
+}
+
+.animation-delay-700 {
+  animation-delay: 700ms;
 }
 
 /* 3D transform utilities for card flip */
