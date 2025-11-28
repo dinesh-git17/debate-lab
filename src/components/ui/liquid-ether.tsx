@@ -148,6 +148,11 @@ export default function LiquidEther({
         this.renderer.setClearColor(new THREE.Color(0x000000), 0)
         this.renderer.setPixelRatio(this.pixelRatio)
         this.renderer.setSize(this.width, this.height)
+        // Explicitly enable WebGL extensions used by float texture blending
+        // This prevents console warnings about implicitly enabled extensions
+        const gl = this.renderer.getContext()
+        gl.getExtension('EXT_float_blend')
+        gl.getExtension('OES_texture_float_linear')
         const el = this.renderer.domElement
         el.style.width = '100%'
         el.style.height = '100%'

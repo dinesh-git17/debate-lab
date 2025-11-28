@@ -9,11 +9,11 @@ function buildCsp(): string {
   const directives: Record<string, string[]> = {
     'default-src': ["'self'"],
     // Next.js requires 'unsafe-inline' for hydration scripts
-    // 'unsafe-eval' needed for some vendor dependencies that use eval() at runtime
+    // 'unsafe-eval' only needed in development for HMR and dev tools
     'script-src': [
       "'self'",
       "'unsafe-inline'",
-      "'unsafe-eval'",
+      ...(isDev ? ["'unsafe-eval'"] : []),
       'https://vercel.live',
       'https://*.vercel-scripts.com',
     ],
