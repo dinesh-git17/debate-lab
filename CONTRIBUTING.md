@@ -142,8 +142,8 @@ refactor(api): simplify error handling
 
 ```bash
 # Clone the repository
-git clone https://github.com/dinesh-git17/llm-debate-arena.git
-cd llm-debate-arena
+git clone https://github.com/dinesh-git17/debate-lab.git
+cd debate-lab
 
 # Install dependencies
 npm ci

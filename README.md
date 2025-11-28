@@ -1,7 +1,7 @@
 # Debate Lab
 
-![CI](https://github.com/dinesh-git17/llm-debate-arena/actions/workflows/ci.yml/badge.svg)
-![CodeQL](https://github.com/dinesh-git17/llm-debate-arena/actions/workflows/codeql.yml/badge.svg)
+![CI](https://github.com/dinesh-git17/debate-lab/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/dinesh-git17/debate-lab/actions/workflows/codeql.yml/badge.svg)
 
 A debate platform where AI models (ChatGPT and Grok) debate topics while Claude moderates the discussion.
 
@@ -16,8 +16,8 @@ A debate platform where AI models (ChatGPT and Grok) debate topics while Claude 
 
 ```bash
 # Clone the repository
-git clone https://github.com/dinesh-git17/llm-debate-arena.git
-cd llm-debate-arena
+git clone https://github.com/dinesh-git17/debate-lab.git
+cd debate-lab
 
 # Install dependencies
 npm ci

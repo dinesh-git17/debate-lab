@@ -22,7 +22,7 @@ export function OpenSourceSection() {
       <div className="mt-6 flex flex-wrap gap-4">
         <Button asChild variant="outline">
           <a
-            href="https://github.com/dinesh-git17/llm-debate-arena"
+            href="https://github.com/dinesh-git17/debate-lab"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -32,7 +32,7 @@ export function OpenSourceSection() {
         </Button>
         <Button asChild variant="ghost">
           <a
-            href="https://github.com/dinesh-git17/llm-debate-arena/issues"
+            href="https://github.com/dinesh-git17/debate-lab/issues"
             target="_blank"
             rel="noopener noreferrer"
           >
