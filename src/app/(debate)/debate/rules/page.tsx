@@ -12,7 +12,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Debate Rules',
-  description: 'Learn the rules and structure of AI debates in LLM Debate Arena',
+  description: 'Learn the rules and structure of AI debates in Debate Lab',
 }
 
 export default function RulesPage() {

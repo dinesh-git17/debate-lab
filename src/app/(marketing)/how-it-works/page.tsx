@@ -9,9 +9,9 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'How It Works',
   description:
-    'Learn how LLM Debate Arena works. Choose a topic, watch AI models debate, and get insights from Claude as moderator.',
+    'Learn how Debate Lab works. Choose a topic, watch AI models debate, and get insights from Claude as moderator.',
   openGraph: {
-    title: 'How It Works | LLM Debate Arena',
+    title: 'How It Works | Debate Lab',
     description: 'Learn how AI models debate topics with neutral moderation.',
   },
 }

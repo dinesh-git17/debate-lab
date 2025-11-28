@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: SummaryPageProps): Promise<Me
       title: shareData.title,
       description: shareData.description,
       url: shareData.url,
-      siteName: 'LLM Debate Arena',
+      siteName: 'Debate Lab',
       type: 'article',
       images: [
         {

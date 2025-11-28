@@ -9,8 +9,8 @@ export function PrivacySection() {
       </h2>
       <Prose className="mt-6">
         <p>
-          We believe in minimal data collection. You do not need an account to use LLM Debate Arena
-          — just pick a topic and start debating.
+          We believe in minimal data collection. You do not need an account to use Debate Lab — just
+          pick a topic and start debating.
         </p>
         <p>
           When you create a debate, your topic and any custom rules are sent to AI providers

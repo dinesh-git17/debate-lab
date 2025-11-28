@@ -6,7 +6,7 @@ import type { DebateEngineState, SerializedEngineState, Turn } from '@/types/tur
 
 const engineStore = new Map<string, string>()
 
-const SALT = 'llm-debate-arena-engine-salt'
+const SALT = 'debate-lab-engine-salt'
 
 function getEncryptionKey(): Buffer {
   const secret = process.env.SESSION_SECRET

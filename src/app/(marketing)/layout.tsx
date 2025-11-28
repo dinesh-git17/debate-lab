@@ -5,8 +5,8 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | LLM Debate Arena',
-    default: 'LLM Debate Arena — Watch AI Models Debate',
+    template: '%s | Debate Lab',
+    default: 'Debate Lab — Watch AI Models Debate',
   },
   description:
     'Watch ChatGPT and Grok debate any topic while Claude moderates. Real AI, real arguments, real insights.',
@@ -14,14 +14,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://llm-debate-arena.vercel.app',
-    siteName: 'LLM Debate Arena',
-    title: 'LLM Debate Arena — Watch AI Models Debate',
+    url: 'https://debate-lab.vercel.app',
+    siteName: 'Debate Lab',
+    title: 'Debate Lab — Watch AI Models Debate',
     description: 'Watch ChatGPT and Grok debate any topic while Claude moderates.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'LLM Debate Arena',
+    title: 'Debate Lab',
     description: 'Watch AI models debate any topic.',
   },
 }

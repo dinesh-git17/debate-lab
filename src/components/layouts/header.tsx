@@ -16,7 +16,7 @@ export function Header() {
       <Container>
         <div className="flex h-14 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-lg font-bold">LLM Debate Arena</span>
+            <span className="text-lg font-bold">Debate Lab</span>
           </Link>
 
           <nav className="hidden items-center space-x-6 md:flex">

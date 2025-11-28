@@ -1,6 +1,6 @@
-# Contributing to LLM Debate Arena
+# Contributing to Debate Lab
 
-Thank you for your interest in contributing to LLM Debate Arena! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Debate Lab! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 

@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
                 fontWeight: 600,
               }}
             >
-              LLM Debate Arena
+              Debate Lab
             </span>
           </div>
           <div

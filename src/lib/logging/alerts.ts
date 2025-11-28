@@ -258,7 +258,7 @@ class AlertManager {
     const payload: AlertWebhookPayload = {
       alert,
       environment: process.env.NODE_ENV ?? 'development',
-      appName: 'LLM Debate Arena',
+      appName: 'Debate Lab',
       timestamp: new Date().toISOString(),
     }
 

@@ -19,8 +19,8 @@ export function DisclaimersSection() {
           AIs) may disagree.
         </p>
         <p>
-          <strong>LLM Debate Arena is for entertainment and educational purposes.</strong> Do not
-          rely on AI-generated content for:
+          <strong>Debate Lab is for entertainment and educational purposes.</strong> Do not rely on
+          AI-generated content for:
         </p>
         <ul>
           <li>Medical diagnoses or health decisions</li>

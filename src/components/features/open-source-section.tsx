@@ -10,9 +10,9 @@ export function OpenSourceSection() {
       <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Open Source</h2>
       <Prose className="mt-6">
         <p>
-          LLM Debate Arena is open source. We believe in transparency not just in our AI debates,
-          but in our code as well. You can view the source code, report issues, or contribute
-          improvements on GitHub.
+          Debate Lab is open source. We believe in transparency not just in our AI debates, but in
+          our code as well. You can view the source code, report issues, or contribute improvements
+          on GitHub.
         </p>
         <p>
           The project is built with modern web technologies and follows best practices for

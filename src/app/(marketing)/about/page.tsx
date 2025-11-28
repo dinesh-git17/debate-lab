@@ -18,9 +18,9 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Learn about LLM Debate Arena — our mission, technology, privacy practices, and the AI models that power debates.',
+    'Learn about Debate Lab — our mission, technology, privacy practices, and the AI models that power debates.',
   openGraph: {
-    title: 'About | LLM Debate Arena',
+    title: 'About | Debate Lab',
     description: 'Our mission, technology, and commitment to privacy and safety.',
   },
 }

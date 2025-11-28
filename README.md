@@ -1,4 +1,4 @@
-# LLM Debate Arena
+# Debate Lab
 
 ![CI](https://github.com/dinesh-git17/llm-debate-arena/actions/workflows/ci.yml/badge.svg)
 ![CodeQL](https://github.com/dinesh-git17/llm-debate-arena/actions/workflows/codeql.yml/badge.svg)

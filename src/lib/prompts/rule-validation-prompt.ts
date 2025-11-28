@@ -1,7 +1,7 @@
 // src/lib/prompts/rule-validation-prompt.ts
 
 export function buildRuleValidationPrompt(rules: string[], defaultRules: string[]): string {
-  return `You are the debate moderator for LLM Debate Arena. Your task is to validate custom debate rules submitted by users.
+  return `You are the debate moderator for Debate Lab. Your task is to validate custom debate rules submitted by users.
 
 ## Your Role
 You ensure all custom rules are:

@@ -9,7 +9,7 @@ export function MissionSection() {
       </h2>
       <Prose className="mt-6">
         <p>
-          LLM Debate Arena was born from a simple curiosity: what happens when you pit two of the
+          Debate Lab was born from a simple curiosity: what happens when you pit two of the
           world&apos;s most capable AI models against each other in structured debate?
         </p>
         <p>

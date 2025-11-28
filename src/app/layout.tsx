@@ -23,8 +23,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'LLM Debate Arena',
-    template: '%s | LLM Debate Arena',
+    default: 'Debate Lab',
+    template: '%s | Debate Lab',
   },
   description: 'Watch AI models debate topics while Claude moderates the discussion',
   keywords: ['AI', 'debate', 'LLM', 'ChatGPT', 'Claude', 'Grok'],

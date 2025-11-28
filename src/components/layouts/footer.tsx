@@ -9,7 +9,7 @@ export function Footer() {
       <Container>
         <div className="flex h-14 items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} LLM Debate Arena. All rights reserved.
+            &copy; {currentYear} Debate Lab. All rights reserved.
           </p>
         </div>
       </Container>

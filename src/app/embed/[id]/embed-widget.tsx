@@ -110,7 +110,7 @@ export function EmbedWidget({
             color: isDark ? '#a1a1aa' : '#71717a',
           }}
         >
-          LLM Debate Arena
+          Debate Lab
         </span>
       </div>
 
