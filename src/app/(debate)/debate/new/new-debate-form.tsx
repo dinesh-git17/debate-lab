@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { DebateForm } from '@/components/features/debate-form'
-import { Card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 import { createDebate } from './actions'
 
@@ -32,8 +32,24 @@ export function NewDebateForm() {
   }
 
   return (
-    <Card className="p-6 sm:p-8">
+    <div
+      className={cn(
+        // Apple-style card with subtle elevation
+        'relative rounded-2xl',
+        'p-6 sm:p-8 md:p-10',
+        // Light mode - clean white with subtle shadow
+        'bg-white',
+        'border border-neutral-200/60',
+        'shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)]',
+        // Dark mode - elevated surface
+        'dark:bg-white/[0.02]',
+        'dark:border-white/[0.08]',
+        'dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0_0_0.5px_rgba(255,255,255,0.05)]',
+        // Animation
+        'animate-[fadeSlideUp_0.6s_ease-out_0.15s_forwards] opacity-0'
+      )}
+    >
       <DebateForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
-    </Card>
+    </div>
   )
 }

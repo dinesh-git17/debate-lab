@@ -6,7 +6,7 @@ import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  error?: boolean
+  error?: boolean | undefined
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -15,11 +15,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          'flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm text-foreground',
-          'placeholder:text-muted-foreground',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          // Base styles - Apple-style input
+          'flex h-11 w-full rounded-xl px-4 py-2',
+          'text-sm text-neutral-900 dark:text-neutral-100',
+          // Background
+          'bg-neutral-50/50 dark:bg-white/[0.03]',
+          // Placeholder
+          'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
+          // Border
+          'border transition-all duration-200',
+          error
+            ? 'border-red-300 dark:border-red-500/30'
+            : 'border-neutral-300 dark:border-white/[0.10]',
+          // Hover
+          'hover:border-neutral-400 dark:hover:border-white/[0.15]',
+          // Focus - Apple-style blue ring
+          'focus:outline-none focus:border-blue-500/50',
+          'focus:bg-white dark:focus:bg-white/[0.05]',
+          'focus:ring-2 focus:ring-blue-500/20',
+          'focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)]',
+          // Disabled
           'disabled:cursor-not-allowed disabled:opacity-50',
-          error ? 'border-destructive' : 'border-border',
           className
         )}
         ref={ref}

@@ -5,7 +5,6 @@ import { ExternalLink, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ValidationBadge } from '@/components/ui/validation-badge'
 import { ValidationFeedback } from '@/components/ui/validation-feedback'
@@ -261,11 +260,16 @@ export function CustomRulesInput({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-neutral-500 dark:text-neutral-400">
         Custom rules supplement the{' '}
         <Link
           href="/debate/rules"
-          className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+          className={cn(
+            'inline-flex items-center gap-1 font-medium',
+            'text-blue-600 dark:text-blue-400',
+            'hover:text-blue-700 dark:hover:text-blue-300',
+            'hover:underline transition-colors duration-200'
+          )}
         >
           default rules
           <ExternalLink className="h-3 w-3" aria-hidden="true" />
@@ -297,43 +301,54 @@ export function CustomRulesInput({
                       aria-label={`Custom rule ${index + 1}`}
                       aria-describedby={showFeedback ? `rule-${index}-feedback` : undefined}
                       className={cn(
-                        state.status === 'valid' && 'border-green-500/50',
+                        'pr-10',
+                        state.status === 'valid' && 'border-green-500/50 dark:border-green-400/30',
                         state.status === 'invalid' &&
                           state.result?.category === 'needs_revision' &&
-                          'border-amber-500/50'
+                          'border-amber-500/50 dark:border-amber-400/30'
                       )}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       <ValidationBadge status={state.status} category={state.result?.category} />
                     </div>
                   </div>
-                  <Button
+                  {/* Apple-style delete button */}
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={() => handleRemoveRule(index)}
                     disabled={disabled}
                     aria-label={`Remove rule ${index + 1}`}
-                    className="h-10 w-10 shrink-0 p-0"
+                    className={cn(
+                      'h-11 w-11 shrink-0 rounded-xl',
+                      'flex items-center justify-center',
+                      'text-neutral-500 dark:text-neutral-400',
+                      'hover:text-red-600 dark:hover:text-red-400',
+                      'hover:bg-red-50 dark:hover:bg-red-500/10',
+                      'transition-all duration-200',
+                      'disabled:opacity-50 disabled:cursor-not-allowed'
+                    )}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
-                  </Button>
+                  </button>
                 </div>
 
                 {showFeedback && (
                   <div id={`rule-${index}-feedback`}>
                     {state.status === 'error' ? (
-                      <div className="flex items-center gap-2 text-sm text-amber-600">
+                      <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
                         <span>{state.error}</span>
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
                           onClick={() => handleRetry(index)}
-                          className="h-auto px-2 py-1 text-xs"
+                          className={cn(
+                            'px-2 py-1 text-xs font-medium rounded-md',
+                            'text-amber-700 dark:text-amber-300',
+                            'hover:bg-amber-100 dark:hover:bg-amber-500/10',
+                            'transition-colors duration-200'
+                          )}
                         >
                           Retry
-                        </Button>
+                        </button>
                       </div>
                     ) : state.result ? (
                       <ValidationFeedback
@@ -353,26 +368,36 @@ export function CustomRulesInput({
         </div>
       )}
 
-      <Button
+      {/* Apple-style Add Rule button */}
+      <button
         type="button"
-        variant="outline"
-        size="sm"
         onClick={handleAddRule}
         disabled={disabled || value.length >= maxRules}
-        className="w-full"
+        className={cn(
+          'w-full h-11 rounded-xl',
+          'flex items-center justify-center gap-2',
+          'text-sm font-medium',
+          'bg-neutral-100 dark:bg-white/[0.05]',
+          'text-neutral-700 dark:text-neutral-300',
+          'border border-neutral-200 dark:border-white/[0.08]',
+          'hover:bg-neutral-200/80 dark:hover:bg-white/[0.08]',
+          'hover:text-neutral-900 dark:hover:text-white',
+          'transition-all duration-200',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
+        )}
       >
-        <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+        <Plus className="h-4 w-4" aria-hidden="true" />
         Add Rule ({value.length}/{maxRules})
-      </Button>
+      </button>
 
       {hasRejectedRules && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           One or more rules have been rejected. Please revise or remove them before submitting.
         </p>
       )}
 
       {isValidating && (
-        <p className="text-sm text-muted-foreground" aria-live="polite">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400" aria-live="polite">
           Validating rules...
         </p>
       )}
