@@ -210,7 +210,11 @@ export function sanitizeForRendering(input: string, allowHtml = false): Sanitiza
 }
 
 export function containsDangerousPatterns(input: string): boolean {
-  return LLM_DANGEROUS_PATTERNS.some((pattern) => pattern.test(input))
+  return LLM_DANGEROUS_PATTERNS.some((pattern) => {
+    // Reset lastIndex to avoid global regex state issues
+    pattern.lastIndex = 0
+    return pattern.test(input)
+  })
 }
 
 export function escapeForJson(str: string): string {

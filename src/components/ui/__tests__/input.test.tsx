@@ -60,13 +60,13 @@ describe('Input', () => {
     it('should show error border when error is true', () => {
       render(<Input error />)
 
-      expect(screen.getByRole('textbox')).toHaveClass('border-destructive')
+      expect(screen.getByRole('textbox')).toHaveClass('border-red-300')
     })
 
     it('should not show error border when error is false', () => {
       render(<Input error={false} />)
 
-      expect(screen.getByRole('textbox')).toHaveClass('border-border')
+      expect(screen.getByRole('textbox')).toHaveClass('border-neutral-300')
     })
 
     it('should set aria-invalid when error is true', () => {
@@ -172,10 +172,10 @@ describe('Input', () => {
   })
 
   describe('accessibility', () => {
-    it('should have focus-visible styles', () => {
+    it('should have focus styles', () => {
       render(<Input />)
 
-      expect(screen.getByRole('textbox')).toHaveClass('focus-visible:ring-2')
+      expect(screen.getByRole('textbox')).toHaveClass('focus:ring-2')
     })
 
     it('should support aria-label', () => {

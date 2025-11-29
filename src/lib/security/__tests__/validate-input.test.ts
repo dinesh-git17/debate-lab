@@ -25,6 +25,16 @@ vi.mock('../openai-moderation', () => ({
   isOpenAIModerationEnabled: vi.fn().mockReturnValue(false),
 }))
 
+// Mock the semantic filter to prevent actual API calls in tests
+vi.mock('../semantic-filter', () => ({
+  semanticFilter: vi.fn().mockResolvedValue({
+    flagged: false,
+    matchedConcepts: [],
+    maxSimilarity: 0,
+  }),
+  isSemanticFilterEnabled: vi.fn().mockReturnValue(false),
+}))
+
 describe('validate-input', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -78,7 +88,7 @@ describe('validate-input', () => {
 
       expect(result.valid).toBe(false)
       expect(result.blocked).toBe(true)
-      expect(result.errors.some((e: string) => e.includes('disallowed'))).toBe(true)
+      expect(result.errors.some((e: string) => e.includes('Terms of Service'))).toBe(true)
     })
 
     it('should block harmful content', async () => {

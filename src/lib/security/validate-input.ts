@@ -115,6 +115,7 @@ export async function validateDebateTopic(
   }
 
   // Now sanitize for XSS/storage (after security checks pass)
+  // Always use sanitized.value as the final value - it has HTML stripped and proper truncation
   const sanitized = sanitizeTopic(topic)
 
   if (sanitized.sanitizedLength < 10) {
@@ -125,7 +126,8 @@ export async function validateDebateTopic(
     errors.push('Topic must be less than 500 characters')
   }
 
-  const finalValue = filterResult.sanitizedContent ?? sanitized.value
+  // Use the sanitized value (HTML stripped, truncated) as the final value
+  const finalValue = sanitized.value
 
   // SECONDARY CHECK: OpenAI Moderation API for content that passed regex filters
   // This catches nuanced harmful content that regex patterns might miss
@@ -285,6 +287,7 @@ export function validateCustomRules(rules: string[], context?: SecurityContext):
     }
 
     // Now sanitize for XSS/storage (after security checks pass)
+    // Always use sanitized.value - it has HTML stripped and proper truncation
     const sanitized = sanitizeCustomRule(rule)
 
     if (sanitized.sanitizedLength > 200) {
@@ -292,7 +295,8 @@ export function validateCustomRules(rules: string[], context?: SecurityContext):
       continue
     }
 
-    sanitizedRules.push(filterResult.sanitizedContent ?? sanitized.value)
+    // Use the sanitized value (HTML stripped, truncated) as the final value
+    sanitizedRules.push(sanitized.value)
   }
 
   const result: ValidationResult = {
