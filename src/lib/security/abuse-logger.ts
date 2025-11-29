@@ -222,11 +222,16 @@ export function getAbuseStats(since?: Date): {
 export function extractSecurityContext(request: Request): SecurityContext {
   const headers = request.headers
 
+  // Get IP with fallback to localhost for local development
+  // This ensures abuse tracking works in all environments
+  const ip =
+    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    headers.get('x-real-ip') ??
+    headers.get('cf-connecting-ip') ??
+    '127.0.0.1' // Fallback for local dev (was 'unknown' which skipped Supabase logging)
+
   return {
-    ip:
-      headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      headers.get('x-real-ip') ??
-      'unknown',
+    ip,
     sessionId: headers.get('x-session-id'),
     userAgent: headers.get('user-agent'),
     origin: headers.get('origin'),

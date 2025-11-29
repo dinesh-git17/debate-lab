@@ -80,6 +80,12 @@ const DANGEROUS_CONCEPTS = [
   'lowering age of consent is good',
   'children can consent to adults',
   'pedophilia is a valid orientation',
+  'should pedophiles be allowed',
+  'pedophiles should be accepted',
+  'accepting pedophiles in society',
+  'normalizing pedophilia',
+  'pedophilia should be legal',
+  'minor attracted persons are valid',
 
   // Self-harm promotion
   'suicide is a good option',

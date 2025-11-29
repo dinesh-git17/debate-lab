@@ -1,14 +1,17 @@
 // src/middleware.ts
-// Next.js middleware for security headers, rate limiting, and request validation
+// Next.js middleware for security headers, rate limiting, ban checking, and request validation
 
 import { NextResponse } from 'next/server'
+
+import { checkBan, trackVisit, recordRateLimitHit } from '@/lib/security/abuse-tracker'
+import { hashIP, getClientIP } from '@/lib/security/ip-hash'
+import { isSupabaseConfigured } from '@/lib/supabase/server'
 
 import type { NextRequest } from 'next/server'
 
 const isDev = process.env.NODE_ENV === 'development'
 
 // Edge-compatible structured logging for middleware
-// (pino/logger module may not work in Edge Runtime)
 /* eslint-disable no-console */
 function logSecurityEvent(
   level: 'error' | 'warn' | 'info',
@@ -46,15 +49,7 @@ const DEBATE_CREATION_MAX_REQUESTS = 10
 const ipRequestCounts = new Map<string, { count: number; resetAt: number }>()
 const debateCreationCounts = new Map<string, { count: number; resetAt: number }>()
 
-function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    'unknown'
-  )
-}
-
-function checkRateLimit(
+function checkRateLimitLocal(
   ip: string,
   store: Map<string, { count: number; resetAt: number }>,
   maxRequests: number,
@@ -143,9 +138,69 @@ function validateOrigin(request: NextRequest): boolean {
   return allowedOrigins.includes(checkOrigin) || checkOrigin.endsWith('.vercel.app')
 }
 
-export function middleware(request: NextRequest): NextResponse {
+const PROTECTED_ROUTES = ['/api/debate', '/api/share']
+
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
-  const ip = getClientIp(request)
+  const ip = getClientIP(request)
+
+  // Check IP ban status for protected routes
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route))
+
+  if (isProtectedRoute && isSupabaseConfigured()) {
+    try {
+      const ipHash = await hashIP(ip)
+      const banCheck = await checkBan(ipHash)
+
+      if (banCheck.isBanned) {
+        const ban = banCheck.ban
+
+        // Handle shadow bans - allow request but mark it
+        if (ban?.banType === 'shadow') {
+          const response = NextResponse.next()
+          response.headers.set('X-Shadow-Banned', 'true')
+          applySecurityHeaders(response, request)
+          return response
+        }
+
+        logSecurityEvent('warn', 'banned_ip_access_attempt', {
+          ipHash,
+          banReason: ban?.reason,
+          pathname,
+        })
+
+        const response = NextResponse.json(
+          {
+            error: 'Access denied',
+            message: 'Your access has been restricted due to policy violations.',
+            expiresIn: banCheck.remainingTime
+              ? Math.ceil(banCheck.remainingTime / 1000 / 60)
+              : undefined,
+          },
+          {
+            status: 403,
+            headers: {
+              'X-Ban-Reason': ban?.reason ?? 'unknown',
+              'Retry-After': banCheck.remainingTime
+                ? String(Math.ceil(banCheck.remainingTime / 1000))
+                : '86400',
+            },
+          }
+        )
+        applySecurityHeaders(response, request)
+        return response
+      }
+
+      // Track visit for non-banned IPs on protected routes
+      await trackVisit(request)
+    } catch (error) {
+      // Log error but don't block request if ban check fails
+      logSecurityEvent('error', 'ban_check_failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        pathname,
+      })
+    }
+  }
 
   if (pathname.startsWith('/api/')) {
     if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -160,7 +215,7 @@ export function middleware(request: NextRequest): NextResponse {
       }
     }
 
-    const rateLimit = checkRateLimit(
+    const rateLimit = checkRateLimitLocal(
       ip,
       ipRequestCounts,
       RATE_LIMIT_MAX_REQUESTS,
@@ -169,6 +224,16 @@ export function middleware(request: NextRequest): NextResponse {
 
     if (!rateLimit.allowed) {
       logSecurityEvent('warn', 'rate_limit_exceeded', { ip, pathname })
+
+      // Record rate limit hit for abuse tracking
+      if (isSupabaseConfigured()) {
+        try {
+          const ipHash = await hashIP(ip)
+          await recordRateLimitHit(ipHash, pathname)
+        } catch {
+          // Silently fail - don't block request
+        }
+      }
 
       const response = NextResponse.json({ error: 'Too many requests' }, { status: 429 })
       response.headers.set(
@@ -183,7 +248,7 @@ export function middleware(request: NextRequest): NextResponse {
     }
 
     if (pathname === '/api/debate' && request.method === 'POST') {
-      const debateLimit = checkRateLimit(
+      const debateLimit = checkRateLimitLocal(
         ip,
         debateCreationCounts,
         DEBATE_CREATION_MAX_REQUESTS,
@@ -192,6 +257,16 @@ export function middleware(request: NextRequest): NextResponse {
 
       if (!debateLimit.allowed) {
         logSecurityEvent('warn', 'debate_creation_limit_exceeded', { ip })
+
+        // Record rate limit hit for abuse tracking
+        if (isSupabaseConfigured()) {
+          try {
+            const ipHash = await hashIP(ip)
+            await recordRateLimitHit(ipHash, pathname)
+          } catch {
+            // Silently fail - don't block request
+          }
+        }
 
         const response = NextResponse.json(
           { error: 'Debate creation limit exceeded. Try again later.' },
@@ -215,6 +290,16 @@ export function middleware(request: NextRequest): NextResponse {
     'X-RateLimit-Remaining',
     Math.max(0, RATE_LIMIT_MAX_REQUESTS - (ipRequestCounts.get(ip)?.count ?? 0)).toString()
   )
+
+  // Add IP hash header for downstream use (e.g., in API routes)
+  if (isSupabaseConfigured() && isProtectedRoute) {
+    try {
+      const ipHash = await hashIP(ip)
+      response.headers.set('X-IP-Hash', ipHash)
+    } catch {
+      // Silently fail
+    }
+  }
 
   return response
 }

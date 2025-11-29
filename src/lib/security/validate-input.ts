@@ -2,13 +2,67 @@
 // Unified input validation combining sanitization and content filtering
 // Uses a hybrid approach: fast regex patterns first, then OpenAI Moderation API as secondary check
 
+import { logger } from '@/lib/logging'
+
 import { logContentFilterViolation, logInjectionAttempt } from './abuse-logger'
+import { recordContentViolation, recordPromptInjection, hashIP } from './abuse-tracker'
 import { filterDebateTopic, filterCustomRule, isPromptInjection } from './content-filter'
 import { moderateWithOpenAI, isOpenAIModerationEnabled } from './openai-moderation'
 import { sanitizeTopic, sanitizeCustomRule, containsDangerousPatterns } from './sanitizer'
 import { semanticFilter, isSemanticFilterEnabled } from './semantic-filter'
 
 import type { SecurityContext, ContentFilterResult } from '@/types/security'
+
+async function recordAbuseIfContext(
+  context: SecurityContext | undefined,
+  type: 'content' | 'injection',
+  details: Record<string, unknown>,
+  endpoint: string
+): Promise<void> {
+  // Log immediately to confirm function is being called
+  logger.info('recordAbuseIfContext: Function called', {
+    type,
+    endpoint,
+    hasContext: !!context,
+    ip: context?.ip ?? 'no-context',
+  })
+
+  if (!context?.ip) {
+    logger.warn('recordAbuseIfContext: No context or IP provided - skipping Supabase', {
+      type,
+      endpoint,
+    })
+    return
+  }
+
+  try {
+    const ipHash = await hashIP(context.ip)
+    logger.info('Recording abuse event to Supabase', {
+      type,
+      endpoint,
+      ipHash: ipHash.substring(0, 16) + '...', // Truncate for privacy
+      detailsType: details.type,
+    })
+
+    if (type === 'injection') {
+      await recordPromptInjection(ipHash, details, endpoint)
+    } else {
+      await recordContentViolation(ipHash, details, endpoint)
+    }
+
+    logger.info('Abuse event recorded successfully', { type, endpoint })
+  } catch (error) {
+    logger.error(
+      'Failed to record abuse event to Supabase',
+      error instanceof Error ? error : null,
+      {
+        type,
+        endpoint,
+        ip: context.ip,
+      }
+    )
+  }
+}
 
 export type BlockReason =
   | 'prompt_injection'
@@ -50,6 +104,12 @@ export async function validateDebateTopic(
   if (containsDangerousPatterns(topic)) {
     if (context) {
       logInjectionAttempt(context, '/api/debate', 'dangerous_pattern', topic)
+      await recordAbuseIfContext(
+        context,
+        'injection',
+        { type: 'dangerous_pattern', topic },
+        '/api/debate'
+      )
     }
     return {
       valid: false,
@@ -81,27 +141,73 @@ export async function validateDebateTopic(
       blockReason = 'prompt_injection'
       if (context) {
         logInjectionAttempt(context, '/api/debate', 'prompt_injection', topic)
+        await recordAbuseIfContext(
+          context,
+          'injection',
+          { type: 'prompt_injection', topic, matches: filterResult.matches },
+          '/api/debate'
+        )
       }
     } else if (categories.includes('harmful_content')) {
       errors.push(
         'Your input contains content that violates our Terms of Service. This type of content is strictly prohibited.'
       )
       blockReason = 'harmful_content'
+      if (context) {
+        await recordAbuseIfContext(
+          context,
+          'content',
+          { type: 'harmful_content', topic, categories },
+          '/api/debate'
+        )
+      }
     } else if (categories.includes('sensitive_topic')) {
       errors.push(
         'This topic involves sensitive content that cannot be debated on our platform. Please choose a different topic.'
       )
       blockReason = 'sensitive_topic'
+      if (context) {
+        await recordAbuseIfContext(
+          context,
+          'content',
+          { type: 'sensitive_topic', topic, categories },
+          '/api/debate'
+        )
+      }
     } else if (categories.includes('manipulation')) {
       errors.push(
         'Your input contains content that violates our Terms of Service. Repeated violations may result in access termination.'
       )
       blockReason = 'manipulation'
+      if (context) {
+        await recordAbuseIfContext(
+          context,
+          'content',
+          { type: 'manipulation', topic, categories },
+          '/api/debate'
+        )
+      }
     } else if (categories.includes('profanity')) {
       errors.push('Your input contains inappropriate language. Please revise your topic.')
       blockReason = 'profanity'
+      if (context) {
+        await recordAbuseIfContext(
+          context,
+          'content',
+          { type: 'profanity', topic, categories },
+          '/api/debate'
+        )
+      }
     } else {
       errors.push('Your input was flagged by our content filter. Please revise your topic.')
+      if (context) {
+        await recordAbuseIfContext(
+          context,
+          'content',
+          { type: 'content_policy', topic, categories },
+          '/api/debate'
+        )
+      }
     }
 
     return {
@@ -151,6 +257,12 @@ export async function validateDebateTopic(
           },
           topic
         )
+        await recordAbuseIfContext(
+          context,
+          'content',
+          { type: 'openai_moderation', blockReason: moderationResult.blockReason, topic },
+          '/api/debate'
+        )
       }
 
       return {
@@ -174,6 +286,13 @@ export async function validateDebateTopic(
       const semanticErrors = getModerationErrorMessage(semanticResult.blockReason)
       errors.push(semanticErrors)
 
+      logger.info('Semantic filter blocked content - preparing to record abuse', {
+        hasContext: !!context,
+        contextIp: context?.ip ?? 'no-context',
+        blockReason: semanticResult.blockReason,
+        maxSimilarity: semanticResult.maxSimilarity,
+      })
+
       if (context) {
         logContentFilterViolation(
           context,
@@ -187,6 +306,16 @@ export async function validateDebateTopic(
           },
           topic
         )
+        logger.info('About to call recordAbuseIfContext for semantic filter block')
+        await recordAbuseIfContext(
+          context,
+          'content',
+          { type: 'semantic_filter', blockReason: semanticResult.blockReason, topic },
+          '/api/debate'
+        )
+        logger.info('recordAbuseIfContext completed for semantic filter block')
+      } else {
+        logger.warn('No context provided for semantic filter block - abuse not recorded')
       }
 
       return {
@@ -225,7 +354,10 @@ function getModerationErrorMessage(blockReason: BlockReason): string {
   }
 }
 
-export function validateCustomRules(rules: string[], context?: SecurityContext): ValidationResult {
+export async function validateCustomRules(
+  rules: string[],
+  context?: SecurityContext
+): Promise<ValidationResult> {
   const errors: string[] = []
   const sanitizedRules: string[] = []
   let blocked = false
@@ -258,6 +390,12 @@ export function validateCustomRules(rules: string[], context?: SecurityContext):
       errors.push('Your custom rule contains content that violates our Terms of Service.')
       if (context) {
         logInjectionAttempt(context, '/api/debate', 'dangerous_pattern', rule)
+        await recordAbuseIfContext(
+          context,
+          'injection',
+          { type: 'dangerous_pattern', rule, ruleIndex: i },
+          '/api/debate'
+        )
       }
       continue
     }
@@ -278,10 +416,24 @@ export function validateCustomRules(rules: string[], context?: SecurityContext):
         errors.push('Your custom rule contains content that violates our Terms of Service.')
         if (context) {
           logInjectionAttempt(context, '/api/debate', 'custom_rule_injection', rule)
+          await recordAbuseIfContext(
+            context,
+            'injection',
+            { type: 'custom_rule_injection', rule, ruleIndex: i },
+            '/api/debate'
+          )
         }
       } else {
         blockReason = 'content_policy'
         errors.push(`Rule ${i + 1} was flagged by content filter`)
+        if (context) {
+          await recordAbuseIfContext(
+            context,
+            'content',
+            { type: 'custom_rule_content_violation', rule, ruleIndex: i },
+            '/api/debate'
+          )
+        }
       }
       continue
     }
@@ -364,7 +516,7 @@ export async function validateAndSanitizeDebateConfig(
 
   let sanitizedRules: string[] = []
   if (config.customRules && config.customRules.length > 0) {
-    const rulesResult = validateCustomRules(config.customRules, context)
+    const rulesResult = await validateCustomRules(config.customRules, context)
     if (!rulesResult.valid) {
       errors.push(...rulesResult.errors)
       if (rulesResult.blocked) {

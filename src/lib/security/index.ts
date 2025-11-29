@@ -46,6 +46,23 @@ export {
   clearLogs,
 } from './abuse-logger'
 
+export { hashIP, getClientIP, getClientMetadata, isValidIPHash } from './ip-hash'
+
+export {
+  trackVisit,
+  checkBan,
+  banIP,
+  unbanIP,
+  flagIP,
+  logAbuseEvent,
+  recordContentViolation,
+  recordPromptInjection,
+  recordRateLimitHit,
+  incrementDebateCount,
+  getTrackingRecord,
+  getAbuseStatsForIP,
+} from './abuse-tracker'
+
 export {
   validateDebateTopic,
   validateCustomRules,
@@ -80,3 +97,20 @@ export type {
   AbuseLogEntry,
   SecurityContext,
 } from '@/types/security'
+
+export type {
+  HashedIP,
+  IPTrackingRecord,
+  IPMetadata,
+  IPBan,
+  BanType,
+  BanDuration,
+  BanReason,
+  FlagReason,
+  AbuseLog,
+  AbuseEventType,
+  AbuseSeverity,
+  BanCheckResult,
+  AbuseTrackingConfig,
+  TrackingResult,
+} from '@/types/abuse-tracking'

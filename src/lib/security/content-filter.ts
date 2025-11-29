@@ -223,7 +223,8 @@ const SENSITIVE_TOPIC_PATTERNS: FilterPattern[] = [
     description: 'Child safety violation',
   },
   {
-    pattern: /\b(csam|pedophil|paedophil|pedo)\b/gi,
+    // Match pedophil*, paedophil*, pedo (standalone), csam - catches pedophile, pedophiles, pedophilia, etc.
+    pattern: /\b(csam|pedophil\w*|paedophil\w*|pedo)\b/gi,
     category: 'sensitive_topic',
     severity: 'critical',
     description: 'Child safety violation',
