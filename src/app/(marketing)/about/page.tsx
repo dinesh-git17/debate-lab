@@ -9,9 +9,6 @@ import { PrivacySection } from '@/components/features/privacy-section'
 import { SafetySection } from '@/components/features/safety-section'
 import { TechStackSection } from '@/components/features/tech-stack-section'
 import { Container } from '@/components/ui/container'
-import { Divider } from '@/components/ui/divider'
-import { Section } from '@/components/ui/section'
-import { TableOfContents } from '@/components/ui/table-of-contents'
 
 import type { Metadata } from 'next'
 
@@ -25,47 +22,88 @@ export const metadata: Metadata = {
   },
 }
 
-const tocItems = [
-  { id: 'mission', label: 'Why We Built This' },
-  { id: 'tech-stack', label: 'Built With' },
-  { id: 'ai-models', label: 'The AI Models' },
-  { id: 'privacy', label: 'Your Privacy' },
-  { id: 'safety', label: 'Safe & Fair Debates' },
-  { id: 'disclaimers', label: 'Disclaimers' },
-  { id: 'open-source', label: 'Open Source' },
-  { id: 'contact', label: 'Get in Touch' },
-]
+// Subtle section divider component
+function SectionDivider() {
+  return (
+    <div
+      className="mx-auto h-px w-full max-w-xs"
+      style={{
+        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
+      }}
+      aria-hidden="true"
+    />
+  )
+}
 
 export default function AboutPage() {
   return (
-    <>
+    <div className="relative">
+      {/* Hero section */}
       <AboutHero />
-      <Section>
+
+      {/* Main content */}
+      <div className="relative overflow-hidden">
+        {/* Ambient background glow */}
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2"
+          style={{
+            width: '2000px',
+            height: '1500px',
+            background:
+              'radial-gradient(ellipse at center top, rgba(120, 150, 255, 0.012) 0%, transparent 60%)',
+          }}
+          aria-hidden="true"
+        />
+
         <Container>
-          <div className="lg:grid lg:grid-cols-[1fr_220px] lg:gap-12">
-            <article className="min-w-0">
-              <MissionSection />
-              <Divider className="my-12" />
-              <TechStackSection />
-              <Divider className="my-12" />
-              <AiModelsSection />
-              <Divider className="my-12" />
-              <PrivacySection />
-              <Divider className="my-12" />
-              <SafetySection />
-              <Divider className="my-12" />
-              <DisclaimersSection />
-              <Divider className="my-12" />
-              <OpenSourceSection />
-              <Divider className="my-12" />
-              <ContactSection />
-            </article>
-            <aside className="hidden lg:block">
-              <TableOfContents items={tocItems} />
-            </aside>
-          </div>
+          <article className="relative">
+            {/* Mission - uses internal 2-col layout */}
+            <MissionSection />
+
+            <SectionDivider />
+
+            {/* Tech Stack - uses 3-col grid */}
+            <TechStackSection />
+
+            <SectionDivider />
+
+            {/* AI Models - uses 3-col grid, full width needed */}
+            <AiModelsSection />
+
+            {/* Privacy - has dark panel, no divider needed (panel acts as separator) */}
+            <PrivacySection />
+
+            <SectionDivider />
+
+            {/* Safety - uses 2-col grid */}
+            <SafetySection />
+
+            <SectionDivider />
+
+            {/* Disclaimers - narrow centered panel */}
+            <DisclaimersSection />
+
+            <SectionDivider />
+
+            {/* Open Source - 2-col cards */}
+            <OpenSourceSection />
+
+            <SectionDivider />
+
+            {/* Contact - 2-col layout */}
+            <ContactSection />
+          </article>
         </Container>
-      </Section>
-    </>
+
+        {/* Bottom fade gradient */}
+        <div
+          className="pointer-events-none absolute bottom-0 left-0 right-0 h-64"
+          style={{
+            background: 'linear-gradient(to top, rgba(0,0,0,0.2) 0%, transparent 100%)',
+          }}
+          aria-hidden="true"
+        />
+      </div>
+    </div>
   )
 }

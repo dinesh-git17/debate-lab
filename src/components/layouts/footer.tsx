@@ -19,8 +19,42 @@ export function Footer() {
 
   return (
     <footer className="relative overflow-hidden">
+      {/* ========== LIGHT MODE BACKGROUND ========== */}
+      {/* Elevated panel background - soft neutral tint */}
+      <div className="absolute inset-0 bg-neutral-50/80 backdrop-blur-sm dark:bg-background dark:backdrop-blur-none" />
+
+      {/* Light mode: Ultra-soft ambient glow layer */}
+      <div
+        className="absolute inset-0 pointer-events-none dark:hidden"
+        style={{
+          background: `
+            radial-gradient(
+              ellipse 2400px 1200px at 50% 0%,
+              rgba(255,255,255,0.6) 0%,
+              rgba(250,250,252,0.3) 40%,
+              transparent 70%
+            )
+          `,
+        }}
+      />
+
+      {/* Light mode: Subtle bottom grounding shadow */}
+      <div
+        className="absolute inset-0 pointer-events-none dark:hidden"
+        style={{
+          background: `
+            linear-gradient(
+              to bottom,
+              transparent 0%,
+              transparent 85%,
+              rgba(0,0,0,0.015) 100%
+            )
+          `,
+        }}
+      />
+
+      {/* ========== DARK MODE BACKGROUND ========== */}
       {/* Soft panel background - dark blue-black gradient */}
-      <div className="absolute inset-0 bg-background" />
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -34,23 +68,21 @@ export function Footer() {
         }}
       />
 
-      {/* Frosted top edge separator */}
+      {/* ========== TOP EDGE SEPARATOR ========== */}
+      {/* Light mode: Clean neutral divider */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-transparent dark:from-transparent dark:to-transparent" />
+
+      {/* Dark mode: Frosted top edge separator */}
       <div
-        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+        className="absolute top-0 left-0 right-0 h-px pointer-events-none dark:block hidden"
         style={{
           background:
             'linear-gradient(to right, transparent 5%, rgba(255,255,255,0.05) 50%, transparent 95%)',
         }}
       />
 
-      {/*
-        Apple Vision Pro ambient lighting:
-        NO discrete radials - they always form visible circles.
-        Instead: layered linear gradients that create brightness zones
-        through color temperature shifts, not opacity blobs.
-      */}
-
-      {/* Layer 1: Horizontal brightness band - creates the "lit" feeling without circles */}
+      {/* ========== DARK MODE AMBIENT LIGHTING ========== */}
+      {/* Layer 1: Horizontal brightness band */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -68,7 +100,7 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 2: Asymmetric diagonal warmth - breaks up uniformity */}
+      {/* Layer 2: Asymmetric diagonal warmth */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -86,7 +118,7 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 3: Counter-diagonal cool shift - adds depth */}
+      {/* Layer 3: Counter-diagonal cool shift */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -104,7 +136,7 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 4: Soft top-to-bottom panel gradient - grounds the section */}
+      {/* Layer 4: Soft top-to-bottom panel gradient */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -120,7 +152,7 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 5: Very subtle edge darkening - no circular vignette */}
+      {/* Layer 5: Edge darkening */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -131,7 +163,7 @@ export function Footer() {
         }}
       />
 
-      {/* Noise texture - 1.5% opacity, hides any banding */}
+      {/* Noise texture - dark mode only */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none opacity-[0.015]"
         style={{
@@ -140,29 +172,31 @@ export function Footer() {
         }}
       />
 
-      {/* Content */}
+      {/* ========== CONTENT ========== */}
       <Container className="relative z-10">
-        <div className="py-12 md:py-16">
+        <div className="pt-20 pb-12 md:pt-24 md:pb-14">
           {/* CTA Section */}
           <div className="text-center mb-10 md:mb-12">
-            <p className="text-muted-foreground/60 text-sm mb-4">Experience AI-powered discourse</p>
+            <p className="text-neutral-900 dark:text-muted-foreground/60 text-sm font-medium mb-4 leading-relaxed">
+              Experience AI-powered discourse
+            </p>
             <Button
               asChild
               variant="outline"
               size="lg"
               className={cn(
                 'group/cta h-11 md:h-12 rounded-full px-7 md:px-8',
-                // Ghost button styling - matching nav/hero
-                'border-border/50 dark:border-white/[0.08]',
-                'bg-transparent',
-                'text-foreground/70 dark:text-white/70',
-                // Hover effects
+                // Light mode styling
+                'border-neutral-300 bg-white/80 text-neutral-700',
+                'hover:border-neutral-400 hover:bg-white hover:text-neutral-900',
+                'hover:shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
+                // Dark mode styling
+                'dark:border-white/[0.08] dark:bg-transparent dark:text-white/70',
+                'dark:hover:border-white/[0.15] dark:hover:bg-white/[0.03] dark:hover:text-white/90',
+                'dark:hover:shadow-[0_2px_16px_rgba(255,255,255,0.03)]',
+                // Shared transitions
                 'transition-all duration-500 ease-out',
                 'hover:-translate-y-[1px]',
-                'hover:border-border dark:hover:border-white/[0.15]',
-                'hover:bg-muted/20 dark:hover:bg-white/[0.03]',
-                'hover:text-foreground dark:hover:text-white/90',
-                'hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:hover:shadow-[0_2px_16px_rgba(255,255,255,0.03)]',
                 'active:translate-y-0 active:duration-150'
               )}
             >
@@ -181,15 +215,23 @@ export function Footer() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-8">
+          <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-10">
             {footerLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'text-sm text-muted-foreground/50',
-                  'transition-colors duration-300',
-                  'hover:text-muted-foreground/80'
+                  'text-sm leading-relaxed',
+                  // Light mode
+                  'text-neutral-600 hover:text-[#0066cc]',
+                  // Dark mode
+                  'dark:text-muted-foreground/50 dark:hover:text-muted-foreground/80',
+                  // Micro-interactions
+                  'transition-all duration-[80ms] ease-out',
+                  'hover:-translate-y-[1px]',
+                  'relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px',
+                  'after:bg-current after:opacity-0 after:transition-opacity after:duration-[80ms]',
+                  'hover:after:opacity-[0.04] dark:hover:after:opacity-0'
                 )}
               >
                 {link.label}
@@ -199,7 +241,7 @@ export function Footer() {
 
           {/* Copyright */}
           <div className="text-center">
-            <p className="text-xs font-light text-muted-foreground/40 tracking-wide">
+            <p className="text-xs font-light tracking-wide text-neutral-500 dark:text-muted-foreground/40">
               &copy; {currentYear} Debate Lab. All rights reserved.
             </p>
           </div>

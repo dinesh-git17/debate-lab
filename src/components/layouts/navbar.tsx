@@ -103,14 +103,16 @@ export function Navbar({ showCta = true }: NavbarProps) {
             >
               <span className="relative">
                 {link.label}
-                {/* Sleek underline - 2px height, animates from center */}
+                {/* Sleek underline - animates from center outward */}
                 <span
                   className={cn(
-                    'absolute -bottom-1 left-0 right-0 h-[2px] rounded-full',
+                    'absolute -bottom-1 left-1/2 h-[2px] rounded-full',
                     'bg-neutral-800 dark:bg-white',
-                    'origin-center transition-transform duration-300 ease-out',
-                    'group-hover:scale-x-100',
-                    pathname === link.href ? 'scale-x-100' : 'scale-x-0'
+                    'transition-all ease-[cubic-bezier(0.16,1,0.3,1)]',
+                    pathname === link.href
+                      ? 'w-full -translate-x-1/2 opacity-100 duration-500'
+                      : 'w-0 -translate-x-1/2 opacity-0 duration-300',
+                    'group-hover:w-full group-hover:-translate-x-1/2 group-hover:opacity-100 group-hover:duration-500'
                   )}
                 />
               </span>

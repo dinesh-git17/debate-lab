@@ -1,6 +1,5 @@
 // src/app/(marketing)/how-it-works/page.tsx
 import { DebateDetailsAccordion } from '@/components/features/debate-details-accordion'
-import { HowItWorksCta } from '@/components/features/how-it-works-cta'
 import { HowItWorksHero } from '@/components/features/how-it-works-hero'
 import { ProcessTimeline } from '@/components/features/process-timeline'
 
@@ -22,7 +21,6 @@ export default function HowItWorksPage() {
       <HowItWorksHero />
       <ProcessTimeline />
       <DebateDetailsAccordion />
-      <HowItWorksCta />
     </>
   )
 }
