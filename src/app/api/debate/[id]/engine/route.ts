@@ -2,6 +2,7 @@
 
 import { NextResponse } from 'next/server'
 
+import { debateEvents } from '@/lib/debate-events'
 import { isValidDebateId } from '@/lib/id-generator'
 import { logger } from '@/lib/logging'
 import {
@@ -12,7 +13,11 @@ import {
   startDebate,
 } from '@/services/debate-engine'
 
+import type { SSEEvent } from '@/types/execution'
 import type { NextRequest } from 'next/server'
+
+// Use longer timeout for debate execution
+export const maxDuration = 300 // 5 minutes (requires Vercel Pro)
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -51,9 +56,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 
 /**
  * POST /api/debate/[id]/engine
- * Start the debate engine
+ * Start the debate engine and stream events
  */
-export async function POST(_request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+export async function POST(_request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { id } = await params
 
   logger.info('Engine start request', { debateId: id })
@@ -76,17 +81,72 @@ export async function POST(_request: NextRequest, { params }: RouteParams): Prom
     return NextResponse.json({ error: result.error }, { status: 500 })
   }
 
-  // Start the debate loop in the background (don't await)
-  // This allows the endpoint to return immediately while turns execute
-  runDebateLoop(id).catch((error) => {
-    logger.error('Debate loop failed', error instanceof Error ? error : null, { debateId: id })
+  // Create a streaming response that runs the debate and streams events
+  const encoder = new TextEncoder()
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      // Subscribe to debate events and forward them to the stream
+      const unsubscribe = debateEvents.subscribe(id, (event: SSEEvent) => {
+        try {
+          const message = `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`
+          controller.enqueue(encoder.encode(message))
+        } catch {
+          // Stream may be closed
+        }
+      })
+
+      // Send initial success message
+      const initEvent = {
+        type: 'engine_started',
+        timestamp: new Date().toISOString(),
+        debateId: id,
+        success: true,
+      }
+      controller.enqueue(
+        encoder.encode(`event: engine_started\ndata: ${JSON.stringify(initEvent)}\n\n`)
+      )
+
+      try {
+        // Run the debate loop - this will emit events that get streamed
+        const loopResult = await runDebateLoop(id)
+
+        if (!loopResult.success) {
+          const errorEvent = {
+            type: 'debate_error',
+            timestamp: new Date().toISOString(),
+            debateId: id,
+            error: loopResult.error,
+          }
+          controller.enqueue(
+            encoder.encode(`event: debate_error\ndata: ${JSON.stringify(errorEvent)}\n\n`)
+          )
+        }
+      } catch (error) {
+        logger.error('Debate loop failed', error instanceof Error ? error : null, { debateId: id })
+        const errorEvent = {
+          type: 'debate_error',
+          timestamp: new Date().toISOString(),
+          debateId: id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }
+        controller.enqueue(
+          encoder.encode(`event: debate_error\ndata: ${JSON.stringify(errorEvent)}\n\n`)
+        )
+      } finally {
+        unsubscribe()
+        controller.close()
+      }
+    },
   })
 
-  const turnInfo = await getCurrentTurnInfo(id)
-
-  return NextResponse.json({
-    success: true,
-    currentTurn: turnInfo?.turn ?? null,
-    progress: turnInfo?.progress ?? null,
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    },
   })
 }
