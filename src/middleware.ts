@@ -135,7 +135,26 @@ function validateOrigin(request: NextRequest): boolean {
     return true
   }
 
-  return allowedOrigins.includes(checkOrigin) || checkOrigin.endsWith('.vercel.app')
+  // Allow exact matches, Vercel preview deployments, and custom domains
+  if (allowedOrigins.includes(checkOrigin)) {
+    return true
+  }
+
+  // Allow Vercel preview deployments
+  if (checkOrigin.endsWith('.vercel.app')) {
+    return true
+  }
+
+  // Allow custom domains - check if origin matches the request host
+  const requestHost = request.headers.get('host')
+  if (requestHost) {
+    const originHost = new URL(checkOrigin).host
+    if (originHost === requestHost) {
+      return true
+    }
+  }
+
+  return false
 }
 
 const PROTECTED_ROUTES = ['/api/debate', '/api/share']
