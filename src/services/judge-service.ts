@@ -99,7 +99,7 @@ export async function getJudgeAnalysis(
     )
 
     const result = await generate({
-      provider: 'anthropic',
+      provider: 'openai', // Using OpenAI instead of Anthropic
       params: {
         systemPrompt: JUDGE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],

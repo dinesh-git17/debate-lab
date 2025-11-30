@@ -139,7 +139,7 @@ export async function getCurrentTurnInfo(debateId: string): Promise<CurrentTurnI
 
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'claude'
+    provider = 'chatgpt' // Use OpenAI for moderator
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -170,7 +170,7 @@ export async function getNextTurnInfo(
 
   let provider: TurnProvider
   if (nextTurn.speaker === 'moderator') {
-    provider = 'claude'
+    provider = 'chatgpt' // Use OpenAI for moderator
   } else {
     provider = getProviderForPosition(session.assignment, nextTurn.speaker)
   }
@@ -479,7 +479,7 @@ export async function checkTurnBudget(
 
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'claude'
+    provider = 'chatgpt' // Use OpenAI for moderator
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -550,7 +550,7 @@ export async function recordCompletedTurnWithUsage(
     await storeEngineState(debateId, sequencer.getState())
 
     const turnId = `${debateId}_turn_${sequencer.getState().currentTurnIndex - 1}`
-    const usageProvider = provider === 'claude' ? 'claude' : mapTurnProviderToLLMProvider(provider)
+    const usageProvider = mapTurnProviderToLLMProvider(provider)
     recordUsage(debateId, turnId, usageProvider, generateResult)
 
     const budgetCheck = shouldEndDueToBudget(debateId)
@@ -611,7 +611,7 @@ export async function executeNextTurn(debateId: string): Promise<{
   // Determine provider for this turn
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'claude'
+    provider = 'chatgpt' // Use OpenAI for moderator
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -741,11 +741,10 @@ export async function executeNextTurn(debateId: string): Promise<{
     })
 
     // Record the turn
-    const llmProvider: LLMProvider | 'claude' = provider === 'claude' ? 'claude' : provider
     const recordResult = await recordCompletedTurnWithUsage(
       debateId,
       fullContent,
-      llmProvider,
+      provider as LLMProvider,
       generateResult
     )
 

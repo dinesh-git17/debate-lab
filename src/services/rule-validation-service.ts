@@ -1,5 +1,5 @@
 // src/services/rule-validation-service.ts
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 
 import { logger } from '@/lib/logging'
 import {
@@ -9,7 +9,7 @@ import {
 
 import type { ValidationResponse, ValidationResult } from '@/types/validation'
 
-interface ClaudeValidationResult {
+interface LLMValidationResult {
   ruleIndex: number
   isValid: boolean
   issues: string[]
@@ -18,8 +18,8 @@ interface ClaudeValidationResult {
   reasoning: string
 }
 
-interface ClaudeResponse {
-  results: ClaudeValidationResult[]
+interface LLMResponse {
+  results: LLMValidationResult[]
 }
 
 const MAX_RULE_LENGTH = 200
@@ -65,8 +65,8 @@ function validateInputRules(rules: string[]): { valid: boolean; error?: string }
   return { valid: true }
 }
 
-function parseClaudeResponse(content: string, originalRules: string[]): ValidationResult[] {
-  const parsed = JSON.parse(content) as ClaudeResponse
+function parseLLMResponse(content: string, originalRules: string[]): ValidationResult[] {
+  const parsed = JSON.parse(content) as LLMResponse
 
   if (!parsed.results || !Array.isArray(parsed.results)) {
     throw new Error('Invalid response structure: missing results array')
@@ -96,9 +96,9 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
   const sanitizedRules = rules.map(sanitizeRule)
   const defaultRules = extractDefaultRuleSummaries()
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    logger.error('ANTHROPIC_API_KEY is not configured')
+    logger.error('OPENAI_API_KEY is not configured')
     return {
       success: false,
       results: [],
@@ -106,12 +106,12 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
     }
   }
 
-  const client = new Anthropic({ apiKey })
+  const client = new OpenAI({ apiKey })
   const prompt = buildRuleValidationPrompt(sanitizedRules, defaultRules)
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 1024,
       temperature: 0,
       messages: [
@@ -122,12 +122,19 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
       ],
     })
 
-    const textBlock = message.content.find((block) => block.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      throw new Error('No text response from Claude')
+    const content = completion.choices[0]?.message?.content
+    if (!content) {
+      throw new Error('No text response from OpenAI')
     }
 
-    const results = parseClaudeResponse(textBlock.text, sanitizedRules)
+    // Extract JSON from potential markdown code block
+    let jsonContent = content
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (jsonMatch && jsonMatch[1]) {
+      jsonContent = jsonMatch[1]
+    }
+
+    const results = parseLLMResponse(jsonContent, sanitizedRules)
 
     if (results.length !== sanitizedRules.length) {
       logger.warn('Mismatch between input rules and validation results', {
@@ -143,7 +150,7 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
   } catch (error) {
     logger.error('Rule validation error', error instanceof Error ? error : null)
 
-    if (error instanceof Anthropic.APIError) {
+    if (error instanceof OpenAI.APIError) {
       if (error.status === 429) {
         return {
           success: false,
