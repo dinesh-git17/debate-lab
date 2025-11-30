@@ -128,8 +128,14 @@ export async function storeSession(session: DebateSession): Promise<void> {
     const key = `${REDIS_KEY_PREFIX}${session.id}`
     const ttl = getTTLSeconds(session)
     await redis.set(key, encrypted, { ex: ttl })
+    // eslint-disable-next-line no-console
+    console.log(
+      `[session-store] storeSession ${session.id}: stored in redis, key=${key}, ttl=${ttl}`
+    )
   } else {
     memoryStore.set(session.id, encrypted)
+    // eslint-disable-next-line no-console
+    console.log(`[session-store] storeSession ${session.id}: stored in memoryStore`)
   }
 }
 
@@ -144,8 +150,14 @@ export async function getSession(id: string): Promise<DebateSession | null> {
   if (redis) {
     const key = `${REDIS_KEY_PREFIX}${id}`
     encrypted = await redis.get<string>(key)
+    // eslint-disable-next-line no-console
+    console.log(
+      `[session-store] getSession ${id}: redis=${!!redis}, key=${key}, found=${!!encrypted}`
+    )
   } else {
     encrypted = memoryStore.get(id) ?? null
+    // eslint-disable-next-line no-console
+    console.log(`[session-store] getSession ${id}: using memoryStore, found=${!!encrypted}`)
   }
 
   if (!encrypted) return null
@@ -160,8 +172,10 @@ export async function getSession(id: string): Promise<DebateSession | null> {
     }
 
     return session
-  } catch {
+  } catch (error) {
     // Corrupted data - clean up
+    // eslint-disable-next-line no-console
+    console.error(`[session-store] getSession ${id}: decryption failed`, error)
     if (redis) {
       await redis.del(`${REDIS_KEY_PREFIX}${id}`)
     } else {

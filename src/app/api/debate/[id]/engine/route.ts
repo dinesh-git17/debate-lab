@@ -56,13 +56,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 export async function POST(_request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id } = await params
 
+  logger.info('Engine start request', { debateId: id })
+
   if (!isValidDebateId(id)) {
+    logger.warn('Invalid debate ID format', { debateId: id })
     return NextResponse.json({ error: 'Invalid debate ID' }, { status: 400 })
   }
 
   const { canStart, reason } = await canStartDebate(id)
 
   if (!canStart) {
+    logger.warn('Cannot start debate', { debateId: id, reason })
     return NextResponse.json({ error: reason }, { status: 400 })
   }
 
