@@ -23,9 +23,13 @@ export function NewDebateForm() {
     try {
       const result = await createDebate(data)
       if (result.success && result.debateId) {
+        // Navigate to debate page - keep loading state active during navigation
+        // The component will unmount when navigation completes, so we don't reset isSubmitting
         router.push(`/debate/${result.debateId}`)
         return { success: true }
       }
+      // Only reset loading state on failure
+      setIsSubmitting(false)
       return {
         success: false,
         error: result.error ?? 'Failed to create debate',
@@ -33,9 +37,8 @@ export function NewDebateForm() {
         blockReason: result.blockReason,
       }
     } catch {
-      return { success: false, error: 'An unexpected error occurred' }
-    } finally {
       setIsSubmitting(false)
+      return { success: false, error: 'An unexpected error occurred' }
     }
   }
 
