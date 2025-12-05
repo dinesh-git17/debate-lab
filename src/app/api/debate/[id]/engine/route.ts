@@ -12,6 +12,7 @@ import {
   runDebateLoop,
   startDebate,
 } from '@/services/debate-engine'
+import { isMockMode, runMockDebateLoop } from '@/services/mock-debate-engine'
 
 import type { SSEEvent } from '@/types/execution'
 import type { NextRequest } from 'next/server'
@@ -61,7 +62,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 export async function POST(_request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { id } = await params
 
-  logger.info('Engine start request', { debateId: id })
+  const mockMode = isMockMode()
+  logger.info('Engine start request', { debateId: id, mockMode })
 
   if (!isValidDebateId(id)) {
     logger.warn('Invalid debate ID format', { debateId: id })
@@ -108,8 +110,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams): Prom
       )
 
       try {
-        // Run the debate loop - this will emit events that get streamed
-        const loopResult = await runDebateLoop(id)
+        // Run the debate loop - use mock or real based on DEBATE_MODE
+        const loopResult = isMockMode() ? await runMockDebateLoop(id) : await runDebateLoop(id)
 
         if (!loopResult.success) {
           const errorEvent = {
