@@ -59,101 +59,27 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         }
       }
 
-      // Response is an SSE stream - read and process events
+      // Engine started successfully - events will be received via useDebateStream
+      // which subscribes to /api/debate/[id]/stream
+      // We just need to consume the response stream to keep the connection alive
+      // but NOT process events here (that would cause duplicates)
       const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('No response body')
-      }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-
-        // Parse SSE events from buffer
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? '' // Keep incomplete line in buffer
-
-        let eventType = ''
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            eventType = line.slice(7)
-          } else if (line.startsWith('data: ') && eventType) {
-            try {
-              const data = JSON.parse(line.slice(6))
-              // Process the event
-              switch (eventType) {
-                case 'engine_started':
-                  store.setStatus('active')
-                  break
-                case 'debate_started':
-                  store.setStatus('active')
-                  if (data.totalTurns) {
-                    store.setProgress({
-                      currentTurn: 0,
-                      totalTurns: data.totalTurns,
-                      percentComplete: 0,
-                    })
-                  }
-                  break
-                case 'turn_started':
-                  if (data.turnId && data.speaker && data.turnType) {
-                    store.addMessage({
-                      id: data.turnId,
-                      speaker: data.speaker,
-                      speakerLabel: data.speakerLabel ?? data.speaker.toUpperCase(),
-                      turnType: data.turnType,
-                      content: '',
-                      isStreaming: true,
-                      isComplete: false,
-                      timestamp: new Date(data.timestamp),
-                    })
-                    store.setCurrentTurn(data.turnId)
-                  }
-                  break
-                case 'turn_streaming':
-                  if (data.turnId && data.chunk) {
-                    store.appendToMessage(data.turnId, data.chunk)
-                  }
-                  break
-                case 'turn_completed':
-                  if (data.turnId) {
-                    store.completeMessage(data.turnId, data.content ?? '', data.tokenCount ?? 0)
-                    store.setCurrentTurn(null)
-                  }
-                  break
-                case 'progress_update':
-                  if (data.currentTurn !== undefined && data.totalTurns !== undefined) {
-                    store.setProgress({
-                      currentTurn: data.currentTurn,
-                      totalTurns: data.totalTurns,
-                      percentComplete: data.percentComplete ?? 0,
-                    })
-                  }
-                  break
-                case 'debate_completed':
-                  store.setStatus('completed')
-                  store.setCurrentTurn(null)
-                  break
-                case 'debate_error':
-                  store.setStatus('error')
-                  store.setError(data.error ?? 'An error occurred')
-                  break
-                case 'debate_paused':
-                  store.setStatus('paused')
-                  break
-              }
-            } catch (parseError) {
-              clientLogger.error('Failed to parse SSE event', parseError)
+      if (reader) {
+        // Consume stream in background without processing events
+        // Events are handled by useDebateStream hook via the /stream endpoint
+        void (async () => {
+          try {
+            while (true) {
+              const { done } = await reader.read()
+              if (done) break
             }
-            eventType = ''
+          } catch {
+            // Stream closed, ignore
           }
-        }
+        })()
       }
+
+      store.setStatus('active')
     } catch (error) {
       clientLogger.error('Debate start failed', error)
       store.setError(error instanceof Error ? error.message : 'Failed to start debate')
