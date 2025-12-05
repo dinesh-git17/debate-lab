@@ -2,6 +2,7 @@
 
 'use client'
 
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useCallback } from 'react'
@@ -224,17 +225,17 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'transition-all duration-150'
   )
 
-  // Apple-style unified dock - iOS Control Centerxx / Apple Music style
+  // Apple-style unified dock - iOS Control Center / Apple Music style
   const mobileDockStyles = cn(
     // Floating island with generous breathing room
-    'relative flex items-center gap-3 px-4 py-3.5',
-    'rounded-full',
+    'relative flex items-center gap-3 px-5 py-4',
+    'rounded-[28px]',
     // True glass material - lower opacity, stronger blur
-    'bg-white/[0.05] backdrop-blur-3xl backdrop-saturate-[1.8]',
+    'bg-white/[0.06] backdrop-blur-3xl backdrop-saturate-[1.8]',
     // Ultra-subtle border (0.5px effect via opacity)
-    'border border-white/[0.04]',
-    // Soft diffuse shadow - barely noticeable
-    'shadow-[0_2px_20px_rgba(0,0,0,0.15),0_0_0_0.5px_rgba(255,255,255,0.05)]'
+    'border border-white/[0.06]',
+    // Soft diffuse shadow with subtle inner glow
+    'shadow-[0_4px_24px_rgba(0,0,0,0.2),0_0_0_0.5px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.04)]'
   )
 
   // Primary dock button - 44pt minimum tap target (Apple HIG)
@@ -340,28 +341,48 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           {/* ===== READY STATE: Start + New Debate ===== */}
           {status === 'ready' && (
             <>
-              <button
-                onClick={handleStart}
-                disabled={isLoading}
-                className={cn(
-                  dockPrimaryButtonStyles,
-                  'bg-foreground text-background',
-                  'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15),0_0_12px_rgba(255,255,255,0.06)]',
-                  'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_16px_rgba(255,255,255,0.1)]'
-                )}
-              >
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  aria-hidden="true"
+              <motion.div className="relative">
+                {/* Pulsing glow ring behind button */}
+                <motion.div
+                  className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500/30 to-teal-500/30 blur-md"
+                  animate={{
+                    opacity: [0.4, 0.7, 0.4],
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                />
+                <motion.button
+                  onClick={handleStart}
+                  disabled={isLoading}
+                  className={cn(
+                    dockPrimaryButtonStyles,
+                    'relative',
+                    'bg-gradient-to-b from-emerald-400 to-emerald-500 text-white',
+                    'shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.3)]',
+                    'hover:from-emerald-350 hover:to-emerald-450',
+                    'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_20px_rgba(52,211,153,0.4)]'
+                  )}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
                 >
-                  <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-                <span>{isLoading ? 'Starting...' : 'Start'}</span>
-              </button>
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
+                    <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                  </svg>
+                  <span>{isLoading ? 'Starting...' : 'Start'}</span>
+                </motion.button>
+              </motion.div>
 
-              <div className="h-5 w-px bg-white/[0.06]" />
+              <div className="h-5 w-px bg-white/[0.08]" />
 
               <button
                 onClick={handleNewDebate}
@@ -712,28 +733,48 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         {/* ===== READY STATE: Start + New Debate ===== */}
         {status === 'ready' && (
           <>
-            <button
-              onClick={handleStart}
-              disabled={isLoading}
-              className={cn(
-                dockPrimaryButtonStyles,
-                'bg-foreground text-background',
-                'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15),0_0_12px_rgba(255,255,255,0.06)]',
-                'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_16px_rgba(255,255,255,0.1)]'
-              )}
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                aria-hidden="true"
+            <motion.div className="relative">
+              {/* Pulsing glow ring behind button */}
+              <motion.div
+                className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500/30 to-teal-500/30 blur-md"
+                animate={{
+                  opacity: [0.4, 0.7, 0.4],
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  duration: 2.5,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              />
+              <motion.button
+                onClick={handleStart}
+                disabled={isLoading}
+                className={cn(
+                  dockPrimaryButtonStyles,
+                  'relative',
+                  'bg-gradient-to-b from-emerald-400 to-emerald-500 text-white',
+                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.3)]',
+                  'hover:from-emerald-350 hover:to-emerald-450',
+                  'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_20px_rgba(52,211,153,0.4)]'
+                )}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
               >
-                <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
-              </svg>
-              <span>{isLoading ? 'Starting...' : 'Start'}</span>
-            </button>
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+                <span>{isLoading ? 'Starting...' : 'Start'}</span>
+              </motion.button>
+            </motion.div>
 
-            <div className="h-5 w-px bg-white/[0.06]" />
+            <div className="h-5 w-px bg-white/[0.08]" />
 
             <button
               onClick={handleNewDebate}

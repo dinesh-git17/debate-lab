@@ -2,6 +2,8 @@
 
 'use client'
 
+import { motion } from 'framer-motion'
+
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
@@ -20,32 +22,45 @@ const FORMAT_DISPLAY_NAMES: Record<string, string> = {
   'lincoln-douglas': 'Lincoln-Douglas',
 }
 
-// Status chip configuration
-const STATUS_CHIP_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
+// Status chip configuration with enhanced styling
+const STATUS_CHIP_STYLES: Record<
+  string,
+  { bg: string; text: string; dot: string; shadow: string; border: string }
+> = {
   ready: {
-    bg: 'bg-emerald-500/10 dark:bg-emerald-500/15',
+    bg: 'bg-emerald-500/12 dark:bg-emerald-500/15',
     text: 'text-emerald-600 dark:text-emerald-400',
     dot: 'bg-emerald-500',
+    shadow: 'shadow-[0_2px_8px_rgba(52,211,153,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
+    border: 'border-emerald-500/20',
   },
   active: {
-    bg: 'bg-blue-500/10 dark:bg-blue-500/15',
+    bg: 'bg-blue-500/12 dark:bg-blue-500/15',
     text: 'text-blue-600 dark:text-blue-400',
     dot: 'bg-blue-500',
+    shadow: 'shadow-[0_2px_8px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
+    border: 'border-blue-500/20',
   },
   paused: {
-    bg: 'bg-amber-500/10 dark:bg-amber-500/15',
+    bg: 'bg-amber-500/12 dark:bg-amber-500/15',
     text: 'text-amber-600 dark:text-amber-400',
     dot: 'bg-amber-500',
+    shadow: 'shadow-[0_2px_8px_rgba(245,158,11,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
+    border: 'border-amber-500/20',
   },
   completed: {
-    bg: 'bg-emerald-500/10 dark:bg-emerald-500/15',
+    bg: 'bg-emerald-500/12 dark:bg-emerald-500/15',
     text: 'text-emerald-600 dark:text-emerald-400',
     dot: 'bg-emerald-500',
+    shadow: 'shadow-[0_2px_8px_rgba(52,211,153,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
+    border: 'border-emerald-500/20',
   },
   error: {
-    bg: 'bg-red-500/10 dark:bg-red-500/15',
+    bg: 'bg-red-500/12 dark:bg-red-500/15',
     text: 'text-red-600 dark:text-red-400',
     dot: 'bg-red-500',
+    shadow: 'shadow-[0_2px_8px_rgba(239,68,68,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
+    border: 'border-red-500/20',
   },
 }
 
@@ -77,7 +92,10 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
     bg: 'bg-muted',
     text: 'text-muted-foreground',
     dot: 'bg-muted-foreground',
+    shadow: '',
+    border: 'border-white/10',
   }
+  const isReadyOrActive = status === 'ready' || status === 'active'
   const statusLabel = STATUS_LABELS[status] ?? status
   const glowGradient = STATUS_GLOW[status] ?? STATUS_GLOW.ready
 
@@ -138,18 +156,39 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
             <span className="rounded-md bg-muted/50 px-2 py-1 text-[11px] leading-none text-muted-foreground/70">
               {formatDisplayName}
             </span>
-            {/* Status chip */}
-            <span
+            {/* Status chip with enhanced styling */}
+            <motion.span
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-md px-2 py-1',
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5',
                 'text-[11px] font-medium leading-none',
+                'border backdrop-blur-sm',
+                'transition-all duration-150',
                 chipStyle.bg,
-                chipStyle.text
+                chipStyle.text,
+                chipStyle.shadow,
+                chipStyle.border
               )}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <span className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)} />
+              {isReadyOrActive ? (
+                <motion.span
+                  className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)}
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.8, 1, 0.8],
+                  }}
+                  transition={{
+                    duration: status === 'active' ? 1 : 1.5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                />
+              ) : (
+                <span className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)} />
+              )}
               {statusLabel}
-            </span>
+            </motion.span>
             {/* Connection status */}
             <ConnectionStatus />
           </div>
@@ -166,19 +205,39 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
                 {formatDisplayName}
               </span>
               <span className="text-muted-foreground/20">·</span>
-              {/* Status chip */}
-              <span
+              {/* Status chip with enhanced styling */}
+              <motion.span
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-2 py-1',
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5',
                   'text-[11px] font-medium leading-none',
-                  'backdrop-blur-sm',
+                  'border backdrop-blur-sm',
+                  'transition-all duration-150',
                   chipStyle.bg,
-                  chipStyle.text
+                  chipStyle.text,
+                  chipStyle.shadow,
+                  chipStyle.border
                 )}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <span className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)} />
+                {isReadyOrActive ? (
+                  <motion.span
+                    className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)}
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.8, 1, 0.8],
+                    }}
+                    transition={{
+                      duration: status === 'active' ? 1 : 1.5,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  />
+                ) : (
+                  <span className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)} />
+                )}
                 {statusLabel}
-              </span>
+              </motion.span>
               <span className="text-muted-foreground/20">·</span>
               <ConnectionStatus />
             </div>

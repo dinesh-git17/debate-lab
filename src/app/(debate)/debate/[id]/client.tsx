@@ -2,6 +2,7 @@
 
 'use client'
 
+import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, useCallback } from 'react'
 
 import { DebateHeader } from '@/components/debate/debate-header'
@@ -10,6 +11,7 @@ import { MessageList } from '@/components/debate/message-list'
 import { ShortcutsHelp } from '@/components/debate/shortcuts-help'
 import { useDebateStream } from '@/hooks/use-debate-stream'
 // import { clientLogger } from '@/lib/client-logger' // TODO: Re-enable with auto-start
+import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
 import type { DebateHistoryResponse } from '@/app/api/debate/[id]/history/route'
@@ -157,11 +159,93 @@ export function DebatePageClient({
     autoConnect: true,
   })
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <DebateHeader debateId={debateId} />
+  const status = useDebateViewStore((s) => s.status)
+  const isReady = status === 'ready'
 
-      <main className="relative min-h-0 flex-1">
+  return (
+    <div
+      className={cn(
+        'fixed inset-0 z-50 flex flex-col',
+        // Slightly off-black background for depth
+        'bg-[#0a0a0b]'
+      )}
+    >
+      {/* Subtle noise texture overlay */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 opacity-[0.015]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Animated aurora/gradient effect for ready state */}
+      <AnimatePresence>
+        {isReady && (
+          <motion.div
+            className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            {/* Top-left aurora glow */}
+            <motion.div
+              className="absolute -left-1/4 -top-1/4 h-[600px] w-[600px] rounded-full bg-emerald-500/[0.03] blur-[120px]"
+              animate={{
+                x: [0, 50, 0],
+                y: [0, 30, 0],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+            {/* Top-right aurora glow */}
+            <motion.div
+              className="absolute -right-1/4 -top-1/4 h-[500px] w-[500px] rounded-full bg-blue-500/[0.03] blur-[100px]"
+              animate={{
+                x: [0, -40, 0],
+                y: [0, 40, 0],
+                scale: [1.1, 1, 1.1],
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: 1,
+              }}
+            />
+            {/* Bottom subtle glow */}
+            <motion.div
+              className="absolute -bottom-1/4 left-1/4 h-[400px] w-[800px] rounded-full bg-teal-500/[0.02] blur-[100px]"
+              animate={{
+                x: [0, 30, 0],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: 12,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: 2,
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Subtle vignette effect */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%)',
+        }}
+      />
+
+      <DebateHeader debateId={debateId} className="relative z-10" />
+
+      <main className="relative z-10 min-h-0 flex-1">
         <MessageList autoScroll className="h-full" />
 
         {/* Shortcuts help - bottom right */}
@@ -171,7 +255,9 @@ export function DebatePageClient({
       </main>
 
       {/* Floating controls */}
-      <FloatingControls debateId={debateId} />
+      <div className="relative z-10">
+        <FloatingControls debateId={debateId} />
+      </div>
 
       <div className="safe-area-inset-bottom" />
     </div>
