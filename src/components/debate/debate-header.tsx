@@ -2,7 +2,7 @@
 
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
@@ -22,46 +22,13 @@ const FORMAT_DISPLAY_NAMES: Record<string, string> = {
   'lincoln-douglas': 'Lincoln-Douglas',
 }
 
-// Status chip configuration with enhanced styling
-const STATUS_CHIP_STYLES: Record<
-  string,
-  { bg: string; text: string; dot: string; shadow: string; border: string }
-> = {
-  ready: {
-    bg: 'bg-emerald-500/12 dark:bg-emerald-500/15',
-    text: 'text-emerald-600 dark:text-emerald-400',
-    dot: 'bg-emerald-500',
-    shadow: 'shadow-[0_2px_8px_rgba(52,211,153,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
-    border: 'border-emerald-500/20',
-  },
-  active: {
-    bg: 'bg-blue-500/12 dark:bg-blue-500/15',
-    text: 'text-blue-600 dark:text-blue-400',
-    dot: 'bg-blue-500',
-    shadow: 'shadow-[0_2px_8px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
-    border: 'border-blue-500/20',
-  },
-  paused: {
-    bg: 'bg-amber-500/12 dark:bg-amber-500/15',
-    text: 'text-amber-600 dark:text-amber-400',
-    dot: 'bg-amber-500',
-    shadow: 'shadow-[0_2px_8px_rgba(245,158,11,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
-    border: 'border-amber-500/20',
-  },
-  completed: {
-    bg: 'bg-emerald-500/12 dark:bg-emerald-500/15',
-    text: 'text-emerald-600 dark:text-emerald-400',
-    dot: 'bg-emerald-500',
-    shadow: 'shadow-[0_2px_8px_rgba(52,211,153,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
-    border: 'border-emerald-500/20',
-  },
-  error: {
-    bg: 'bg-red-500/12 dark:bg-red-500/15',
-    text: 'text-red-600 dark:text-red-400',
-    dot: 'bg-red-500',
-    shadow: 'shadow-[0_2px_8px_rgba(239,68,68,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]',
-    border: 'border-red-500/20',
-  },
+// FAANG-style status dot colors (only the dot gets color, chip stays neutral)
+const STATUS_DOT_COLORS: Record<string, string> = {
+  ready: 'bg-emerald-500',
+  active: 'bg-blue-500',
+  paused: 'bg-amber-500',
+  completed: 'bg-emerald-500',
+  error: 'bg-red-500',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -72,14 +39,33 @@ const STATUS_LABELS: Record<string, string> = {
   error: 'Error',
 }
 
-// Glow colors based on status for the radial effect
+// Glow colors based on status for the radial effect - extremely subtle
 const STATUS_GLOW: Record<string, string> = {
-  ready: 'from-emerald-500/8 via-transparent to-transparent',
-  active: 'from-blue-500/10 via-transparent to-transparent',
-  paused: 'from-amber-500/8 via-transparent to-transparent',
-  completed: 'from-emerald-500/8 via-transparent to-transparent',
-  error: 'from-red-500/8 via-transparent to-transparent',
+  ready: 'from-emerald-500/[0.03] via-transparent to-transparent',
+  active: 'from-blue-500/[0.05] via-transparent to-transparent',
+  paused: 'from-amber-500/[0.04] via-transparent to-transparent',
+  completed: 'from-emerald-500/[0.03] via-transparent to-transparent',
+  error: 'from-red-500/[0.04] via-transparent to-transparent',
 }
+
+// FAANG-style chip base styles (neutral background, color only in dot)
+const chipBaseStyles = cn(
+  'inline-flex items-center gap-1.5',
+  // Pill shape with 6px radius
+  'rounded-md px-2.5 py-1.5',
+  'text-[11px] font-medium leading-none tracking-wide',
+  // Neutral gray background
+  'bg-white/[0.04]',
+  'text-foreground/70',
+  // Subtle border
+  'border border-white/[0.06]',
+  // Hover elevation effect
+  'will-change-transform',
+  'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+  'hover:bg-white/[0.08] hover:border-white/[0.10]',
+  'hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)]',
+  'hover:translate-y-[-1px]'
+)
 
 export function DebateHeader({ debateId, className }: DebateHeaderProps) {
   const topic = useDebateViewStore((s) => s.topic)
@@ -88,13 +74,7 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
 
   const formatDisplayName = FORMAT_DISPLAY_NAMES[format] ?? format
   const isActive = status === 'active' || status === 'paused'
-  const chipStyle = STATUS_CHIP_STYLES[status] ?? {
-    bg: 'bg-muted',
-    text: 'text-muted-foreground',
-    dot: 'bg-muted-foreground',
-    shadow: '',
-    border: 'border-white/10',
-  }
+  const dotColor = STATUS_DOT_COLORS[status] ?? 'bg-muted-foreground'
   const isReadyOrActive = status === 'ready' || status === 'active'
   const statusLabel = STATUS_LABELS[status] ?? status
   const glowGradient = STATUS_GLOW[status] ?? STATUS_GLOW.ready
@@ -115,17 +95,20 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
       {/* Subtle top highlight for glass depth - very faint */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
-      {/* Radial glow behind content */}
-      <div
-        className={cn(
-          'pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-radial-gradient opacity-60 blur-3xl transition-opacity duration-700',
-          glowGradient,
-          isActive ? 'opacity-80' : 'opacity-40'
-        )}
-        style={{
-          background: `radial-gradient(circle, var(--tw-gradient-stops))`,
-        }}
-      />
+      {/* Radial glow behind content - barely perceptible, felt not seen */}
+      {isActive && (
+        <div
+          className={cn(
+            'pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full',
+            'blur-[100px]',
+            glowGradient,
+            'opacity-30'
+          )}
+          style={{
+            background: `radial-gradient(circle, var(--tw-gradient-stops))`,
+          }}
+        />
+      )}
 
       {/* Content container with consistent grid alignment */}
       <div className="relative mx-auto max-w-5xl px-6 py-6 md:px-8 md:py-8">
@@ -136,59 +119,71 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
             <DebateControls debateId={debateId} variant="mobile" />
           </div>
 
-          {/* Centered title */}
-          <div className="mt-4 text-center">
+          {/* Hero Title Section */}
+          <motion.div
+            className="mt-4 text-center"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          >
+            {/* Title with Apple-style typography */}
             <h1
               className={cn(
-                'truncate transition-all duration-300',
+                'relative inline-block truncate',
+                // Apple SF Pro Display style
+                'font-semibold tracking-[-0.02em]',
+                'transition-all duration-300',
                 isActive
-                  ? 'text-xl font-semibold leading-tight text-foreground'
-                  : 'text-lg font-semibold leading-tight text-foreground/85'
+                  ? 'text-xl leading-tight text-foreground'
+                  : 'text-lg leading-tight text-foreground/90'
               )}
             >
               {topic || 'Loading...'}
+              {/* Subtle underline accent */}
+              <motion.span
+                className="absolute -bottom-1 left-0 h-[2px] rounded-full bg-gradient-to-r from-emerald-500/40 via-blue-500/40 to-emerald-500/40"
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: '100%', opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+              />
             </h1>
-          </div>
+          </motion.div>
 
-          {/* Metadata chips row - centered under title */}
-          <div className="mt-3 flex items-center justify-center gap-2">
-            {/* Format chip */}
-            <span className="rounded-md bg-muted/50 px-2 py-1 text-[11px] leading-none text-muted-foreground/70">
-              {formatDisplayName}
-            </span>
-            {/* Status chip with enhanced styling */}
-            <motion.span
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5',
-                'text-[11px] font-medium leading-none',
-                'border backdrop-blur-sm',
-                'transition-all duration-150',
-                chipStyle.bg,
-                chipStyle.text,
-                chipStyle.shadow,
-                chipStyle.border
-              )}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isReadyOrActive ? (
-                <motion.span
-                  className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)}
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.8, 1, 0.8],
-                  }}
-                  transition={{
-                    duration: status === 'active' ? 1 : 1.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-              ) : (
-                <span className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)} />
-              )}
-              {statusLabel}
-            </motion.span>
+          {/* Status chips row - centered under title */}
+          <div className="mt-3 flex items-center justify-center gap-2.5">
+            {/* Format chip - neutral style */}
+            <span className={chipBaseStyles}>{formatDisplayName}</span>
+
+            {/* Status chip with animated dot */}
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={status}
+                className={chipBaseStyles}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                {isReadyOrActive ? (
+                  <motion.span
+                    className={cn('h-1.5 w-1.5 rounded-full', dotColor)}
+                    animate={{
+                      scale: [1, 1.3, 1],
+                      opacity: [0.7, 1, 0.7],
+                    }}
+                    transition={{
+                      duration: status === 'active' ? 1 : 1.5,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  />
+                ) : (
+                  <span className={cn('h-1.5 w-1.5 rounded-full', dotColor)} />
+                )}
+                {statusLabel}
+              </motion.span>
+            </AnimatePresence>
+
             {/* Connection status */}
             <ConnectionStatus />
           </div>
@@ -198,47 +193,42 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
         <div className="hidden md:block">
           {/* Primary row: Metadata + Controls - baseline aligned */}
           <div className="flex items-center justify-between gap-8">
-            {/* Left: Metadata row */}
-            <div className="flex items-center gap-3">
-              {/* Format label */}
-              <span className="text-[13px] leading-none tracking-wide text-muted-foreground/60">
-                {formatDisplayName}
-              </span>
-              <span className="text-muted-foreground/20">·</span>
-              {/* Status chip with enhanced styling */}
-              <motion.span
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5',
-                  'text-[11px] font-medium leading-none',
-                  'border backdrop-blur-sm',
-                  'transition-all duration-150',
-                  chipStyle.bg,
-                  chipStyle.text,
-                  chipStyle.shadow,
-                  chipStyle.border
-                )}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {isReadyOrActive ? (
-                  <motion.span
-                    className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)}
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      opacity: [0.8, 1, 0.8],
-                    }}
-                    transition={{
-                      duration: status === 'active' ? 1 : 1.5,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                  />
-                ) : (
-                  <span className={cn('h-1.5 w-1.5 rounded-full', chipStyle.dot)} />
-                )}
-                {statusLabel}
-              </motion.span>
-              <span className="text-muted-foreground/20">·</span>
+            {/* Left: Metadata row with FAANG-style chips */}
+            <div className="flex items-center gap-2.5">
+              {/* Format chip - neutral style */}
+              <span className={chipBaseStyles}>{formatDisplayName}</span>
+
+              {/* Status chip with animated switching */}
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={status}
+                  className={chipBaseStyles}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  {isReadyOrActive ? (
+                    <motion.span
+                      className={cn('h-1.5 w-1.5 rounded-full', dotColor)}
+                      animate={{
+                        scale: [1, 1.3, 1],
+                        opacity: [0.7, 1, 0.7],
+                      }}
+                      transition={{
+                        duration: status === 'active' ? 1 : 1.5,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    />
+                  ) : (
+                    <span className={cn('h-1.5 w-1.5 rounded-full', dotColor)} />
+                  )}
+                  {statusLabel}
+                </motion.span>
+              </AnimatePresence>
+
+              {/* Connection status */}
               <ConnectionStatus />
             </div>
 
@@ -248,19 +238,35 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
             </div>
           </div>
 
-          {/* Topic title row */}
-          <div className="mt-4">
+          {/* Hero Title Section */}
+          <motion.div
+            className="mt-5"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          >
+            {/* Title with Apple-style typography */}
             <h1
               className={cn(
-                'truncate transition-all duration-300',
+                'relative inline-block max-w-full truncate',
+                // Apple SF Pro Display style - weight 600, tight tracking
+                'font-semibold tracking-[-0.025em]',
+                'transition-all duration-300',
                 isActive
-                  ? 'text-[22px] font-semibold leading-tight text-foreground md:text-2xl'
-                  : 'text-xl font-semibold leading-tight text-foreground/85 md:text-[22px]'
+                  ? 'text-[26px] leading-tight text-foreground md:text-[28px]'
+                  : 'text-2xl leading-tight text-foreground/90 md:text-[26px]'
               )}
             >
               {topic || 'Loading...'}
+              {/* Subtle underline accent with gradient */}
+              <motion.span
+                className="absolute -bottom-1.5 left-0 h-[2px] rounded-full bg-gradient-to-r from-emerald-500/50 via-blue-500/50 to-emerald-500/50"
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: '100%', opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+              />
             </h1>
-          </div>
+          </motion.div>
         </div>
 
         {/* Progress section - generous spacing creates hierarchy without separator */}

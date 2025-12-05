@@ -3,8 +3,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { clientLogger } from '@/lib/client-logger'
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
@@ -85,37 +87,39 @@ function AIAvatar({ side, delay = 0 }: { side: 'left' | 'right'; delay?: number 
   )
 }
 
-// VS Badge component
+// VS Badge component with subtle glow
 function VSBadge() {
   return (
     <motion.div
       className="relative mx-6"
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.3, type: 'spring', stiffness: 200 }}
+      transition={{ duration: 0.3, delay: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
     >
+      {/* Outer glow ring - very subtle 2px blur */}
       <motion.div
-        className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-full',
-          'bg-white/5 backdrop-blur-sm',
-          'border border-white/10',
-          'text-xs font-bold tracking-wider text-white/60'
-        )}
+        className="absolute -inset-1 rounded-full bg-white/5 blur-[2px]"
         animate={{
-          boxShadow: [
-            '0 0 20px rgba(255,255,255,0.05)',
-            '0 0 30px rgba(255,255,255,0.1)',
-            '0 0 20px rgba(255,255,255,0.05)',
-          ],
+          opacity: [0.3, 0.6, 0.3],
         }}
         transition={{
           duration: 2.5,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
+      />
+
+      {/* Main badge */}
+      <div
+        className={cn(
+          'relative flex h-9 w-9 items-center justify-center rounded-full',
+          'bg-white/[0.04] backdrop-blur-sm',
+          'border border-white/[0.08]',
+          'text-[10px] font-bold tracking-widest text-white/50'
+        )}
       >
         VS
-      </motion.div>
+      </div>
     </motion.div>
   )
 }
@@ -174,120 +178,263 @@ function SkeletonMessage({
   )
 }
 
-// Animated arrow pointing to Start button
-function DirectionalHint() {
-  return (
-    <motion.div
-      className="mt-8 flex items-center gap-2 text-sm text-muted-foreground/60"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, delay: 0.8 }}
-    >
-      <span>Press Start to begin the debate</span>
-      <motion.svg
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        viewBox="0 0 24 24"
-        animate={{
-          x: [0, 4, 0],
-          opacity: [0.6, 1, 0.6],
-        }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3"
-        />
-      </motion.svg>
-    </motion.div>
-  )
-}
-
 // Main Empty State Component
 function EmptyState() {
+  const [isLoading, setIsLoading] = useState(false)
+  const debateId = useDebateViewStore((s) => s.debateId)
+  const setStatus = useDebateViewStore((s) => s.setStatus)
+  const setError = useDebateViewStore((s) => s.setError)
+
+  const handleStart = async () => {
+    if (!debateId || isLoading) return
+    setIsLoading(true)
+
+    try {
+      const response = await fetch(`/api/debate/${debateId}/engine`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        try {
+          const data = JSON.parse(text)
+          throw new Error(data.error ?? 'Failed to start debate')
+        } catch {
+          throw new Error(text || 'Failed to start debate')
+        }
+      }
+
+      // Consume stream in background
+      const reader = response.body?.getReader()
+      if (reader) {
+        void (async () => {
+          try {
+            while (true) {
+              const { done } = await reader.read()
+              if (done) break
+            }
+          } catch {
+            // Stream closed
+          }
+        })()
+      }
+
+      setStatus('active')
+    } catch (error) {
+      clientLogger.error('Debate start failed', error)
+      setError(error instanceof Error ? error.message : 'Failed to start debate')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <motion.div
-      className="relative flex h-full flex-col items-center justify-center px-6"
+      className="relative flex h-full flex-col items-center justify-center px-4 sm:px-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Ambient background glow */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Centered card container with glass morphism */}
+      <motion.div
+        className={cn(
+          'relative w-full max-w-lg',
+          // Glass card styling
+          'rounded-3xl',
+          'bg-white/[0.02]',
+          'border border-white/[0.06]',
+          'backdrop-blur-xl',
+          // Subtle shadow for depth
+          'shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.04)]',
+          // Padding with tighter vertical spacing
+          'px-6 py-8 sm:px-10 sm:py-10'
+        )}
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+      >
+        {/* Gradient backdrop glow behind card */}
+        <div className="pointer-events-none absolute -inset-px overflow-hidden rounded-3xl">
+          {/* Top edge highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          {/* Vignette effect inside card */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(52,211,153,0.08) 0%, transparent 50%), radial-gradient(ellipse 80% 50% at 50% 100%, rgba(59,130,246,0.06) 0%, transparent 50%)',
+            }}
+          />
+        </div>
+
+        {/* Hero Section: Title → Description (clear hierarchy) */}
+        <motion.div
+          className="relative text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[26px]">
+            Ready to Debate
+          </h2>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground/70 sm:text-sm">
+            Two AI perspectives will engage in structured discourse
+          </p>
+        </motion.div>
+
+        {/* VS Layout with AI Avatars - tighter spacing */}
+        <motion.div
+          className="relative mt-8 flex items-center justify-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <AIAvatar side="left" delay={0.25} />
+          <VSBadge />
+          <AIAvatar side="right" delay={0.35} />
+        </motion.div>
+
+        {/* Skeleton message previews */}
+        <motion.div
+          className="relative mt-8 space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <SkeletonMessage side="left" width="80%" delay={0.5} />
+          <SkeletonMessage side="right" width="70%" delay={0.6} />
+          <SkeletonMessage side="left" width="60%" delay={0.7} />
+        </motion.div>
+
+        {/* CTA Section */}
+        <motion.div
+          className="relative mt-8 flex flex-col items-center gap-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+        >
+          {/* Primary CTA - Start Button */}
+          <motion.button
+            onClick={handleStart}
+            disabled={isLoading}
+            className={cn(
+              'group relative inline-flex items-center justify-center gap-2',
+              // Pill shape with generous padding
+              'h-12 rounded-full px-8',
+              // Typography
+              'text-[15px] font-semibold tracking-[-0.01em] text-white',
+              // Gradient background
+              'bg-gradient-to-b from-emerald-400 to-emerald-500',
+              // Elevated shadow with color glow
+              'shadow-[0_4px_20px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]',
+              // GPU acceleration
+              'will-change-transform',
+              // Transitions
+              'transition-shadow duration-300 ease-out',
+              // Disabled state
+              'disabled:opacity-70 disabled:cursor-not-allowed'
+            )}
+            whileHover={
+              isLoading
+                ? {}
+                : {
+                    y: -2,
+                    scale: 1.02,
+                    boxShadow:
+                      '0 8px 30px rgba(52,211,153,0.45), inset 0 1px 0 rgba(255,255,255,0.3)',
+                  }
+            }
+            whileTap={isLoading ? {} : { scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          >
+            {/* Pulsing glow behind button */}
+            <motion.span
+              className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500/30 to-teal-500/30 blur-lg"
+              animate={{
+                opacity: [0.4, 0.7, 0.4],
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+
+            {/* Play icon or loading spinner */}
+            {isLoading ? (
+              <motion.span
+                className="relative h-4 w-4 rounded-full border-2 border-white/30 border-t-white"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              />
+            ) : (
+              <svg
+                className="relative h-4 w-4"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
+                <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+            )}
+            <span className="relative">{isLoading ? 'Starting...' : 'Start Debate'}</span>
+          </motion.button>
+
+          {/* Secondary CTA - Learn more link */}
+          <Link
+            href="/how-it-works"
+            className={cn(
+              'inline-flex items-center gap-1.5',
+              'text-[13px] text-muted-foreground/60',
+              'transition-all duration-200',
+              'hover:text-muted-foreground/90 hover:gap-2'
+            )}
+          >
+            <span>Learn how debates work</span>
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </Link>
+        </motion.div>
+      </motion.div>
+
+      {/* Ambient background glow - behind card */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         {/* Left emerald glow */}
         <motion.div
-          className="absolute left-1/4 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.08] blur-[100px]"
+          className="absolute left-1/4 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.06] blur-[100px]"
           animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.5, 0.8, 0.5],
+            scale: [1, 1.15, 1],
+            opacity: [0.4, 0.7, 0.4],
           }}
           transition={{
-            duration: 4,
+            duration: 5,
             repeat: Infinity,
             ease: 'easeInOut',
           }}
         />
         {/* Right blue glow */}
         <motion.div
-          className="absolute right-1/4 top-1/2 h-[400px] w-[400px] -translate-y-1/2 translate-x-1/2 rounded-full bg-blue-500/[0.08] blur-[100px]"
+          className="absolute right-1/4 top-1/2 h-[300px] w-[300px] -translate-y-1/2 translate-x-1/2 rounded-full bg-blue-500/[0.06] blur-[100px]"
           animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.8, 0.5],
+            scale: [1.15, 1, 1.15],
+            opacity: [0.4, 0.7, 0.4],
           }}
           transition={{
-            duration: 4,
+            duration: 5,
             repeat: Infinity,
             ease: 'easeInOut',
             delay: 0.5,
           }}
         />
-        {/* Center subtle glow */}
-        <div className="absolute left-1/2 top-1/2 h-[300px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.02] blur-[80px]" />
-      </div>
-
-      {/* Content container with optical vertical adjustment */}
-      <div className="relative -mt-8 flex flex-col items-center">
-        {/* VS Layout with AI Avatars */}
-        <div className="flex items-center">
-          <AIAvatar side="left" delay={0} />
-          <VSBadge />
-          <AIAvatar side="right" delay={0.15} />
-        </div>
-
-        {/* Typography */}
-        <motion.div
-          className="mt-10 text-center"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <h2 className="text-2xl font-medium tracking-tight text-foreground">Ready to Debate</h2>
-          <p className="mt-2 text-sm text-muted-foreground/70">
-            Two AI perspectives will engage in structured discourse
-          </p>
-        </motion.div>
-
-        {/* Skeleton message previews */}
-        <motion.div
-          className="mt-10 w-full max-w-md space-y-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <SkeletonMessage side="left" width="75%" delay={0.6} />
-          <SkeletonMessage side="right" width="65%" delay={0.7} />
-          <SkeletonMessage side="left" width="55%" delay={0.8} />
-        </motion.div>
-
-        {/* Directional hint */}
-        <DirectionalHint />
       </div>
     </motion.div>
   )

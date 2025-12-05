@@ -225,9 +225,9 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'transition-all duration-150'
   )
 
-  // Apple-style unified dock - iOS Control Center / Apple Music style
+  // Apple-style unified dock - iOS Control Center / Apple Music style (MOBILE)
   const mobileDockStyles = cn(
-    // Floating island with generous breathing room
+    // Floating island with generous breathing room for touch
     'relative flex items-center gap-3 px-5 py-4',
     'rounded-[28px]',
     // True glass material - lower opacity, stronger blur
@@ -238,21 +238,43 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'shadow-[0_4px_24px_rgba(0,0,0,0.2),0_0_0_0.5px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.04)]'
   )
 
-  // Primary dock button - 44pt minimum tap target (Apple HIG)
-  // Unified sizing for all dock buttons - premium consistent look
+  // Refined desktop dock - tighter, more elegant (DESKTOP/HEADER)
+  const desktopDockStyles = cn(
+    // Compact proportions for desktop - no background, just layout
+    'relative flex items-center gap-2'
+  )
+
+  // Primary dock button - 44pt minimum tap target (Apple HIG) - MOBILE
   const dockPrimaryButtonStyles = cn(
     'inline-flex items-center justify-center gap-1.5',
     // Consistent 44px height, uniform width for premium look
     'h-[44px] min-w-[88px] rounded-full px-4 text-[13px] font-semibold tracking-[-0.01em]',
-    // Smooth Apple-style transition (180-220ms)
-    'transition-all duration-[180ms] ease-out',
-    // Subtle scale on tap
-    'active:scale-[0.97]',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover lift + active tactile feedback
+    'hover:translate-y-[-1px]',
+    'active:translate-y-[0.5px] active:scale-[0.98]',
     'focus-visible:outline-none',
     'disabled:pointer-events-none disabled:opacity-50'
   )
 
-  // End button - Apple iOS systemRed style (Settings "Delete" button)
+  // Desktop primary button - smaller, refined (DESKTOP/HEADER)
+  const desktopPrimaryButtonStyles = cn(
+    'inline-flex items-center justify-center gap-1',
+    // Compact 36px height for desktop
+    'h-9 min-w-[72px] rounded-full px-3 text-[12px] font-semibold tracking-[-0.01em]',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover lift + active tactile feedback
+    'hover:translate-y-[-1px]',
+    'active:translate-y-[0.5px] active:scale-[0.98]',
+    'focus-visible:outline-none',
+    'disabled:pointer-events-none disabled:opacity-50'
+  )
+
+  // End button - Apple iOS systemRed style (Settings "Delete" button) - MOBILE
   const dockEndButtonStyles = cn(
     'inline-flex items-center justify-center gap-1.5',
     // Consistent 44px height with all dock buttons
@@ -262,12 +284,13 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'border border-[rgba(255,59,48,0.25)]',
     // High contrast systemRed text (#FF3B30)
     'text-[#FF3B30]',
-    // Hover: subtle color pulse only (no aggressive scaling)
-    'hover:bg-[rgba(255,59,48,0.18)] hover:border-[rgba(255,59,48,0.35)]',
-    // Smooth Apple-style transition
-    'transition-all duration-[180ms] ease-out',
-    // Press: deeper color instead of scale (less aggressive for danger)
-    'active:bg-[rgba(255,59,48,0.25)]',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift + color pulse
+    'hover:translate-y-[-1px] hover:bg-[rgba(255,59,48,0.18)] hover:border-[rgba(255,59,48,0.35)]',
+    // Press: tactile feedback + deeper color
+    'active:translate-y-[0.5px] active:scale-[0.98] active:bg-[rgba(255,59,48,0.25)]',
     'focus-visible:outline-none',
     'disabled:pointer-events-none disabled:opacity-50'
   )
@@ -282,12 +305,13 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'border border-white/[0.04]',
     // Subtle inner shadow for depth + micro top gradient
     'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.08),inset_0_-0.5px_0_rgba(0,0,0,0.05)]',
-    // Hover: gentle lift
-    'hover:bg-white/[0.1] hover:text-foreground/90 hover:border-white/[0.08]',
-    // Smooth Apple-style transition
-    'transition-all duration-[180ms] ease-out',
-    // Subtle scale + lift shadow on tap
-    'active:scale-[0.97] active:bg-white/[0.08]',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift effect
+    'hover:translate-y-[-1px] hover:bg-white/[0.1] hover:text-foreground/90 hover:border-white/[0.08]',
+    // Active: tactile feedback
+    'active:translate-y-[0.5px] active:scale-[0.98] active:bg-white/[0.08]',
     'focus-visible:outline-none'
   )
 
@@ -297,13 +321,16 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     // Consistent 44px circle
     'h-[44px] w-[44px] rounded-full',
     'text-foreground/40',
-    'hover:bg-white/[0.06] hover:text-foreground/60',
-    // Smooth Apple-style transition
-    'transition-all duration-[180ms] ease-out',
-    'active:scale-[0.97] active:bg-white/[0.08]'
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift effect
+    'hover:translate-y-[-1px] hover:bg-white/[0.06] hover:text-foreground/60',
+    // Active: tactile feedback
+    'active:translate-y-[0.5px] active:scale-[0.98] active:bg-white/[0.08]'
   )
 
-  // Export button style for completed state - primary pill (softer than Start)
+  // Export button style for completed state - primary pill (softer than Start) - MOBILE
   const dockExportButtonStyles = cn(
     'inline-flex items-center justify-center gap-1.5',
     // Consistent 44px height
@@ -311,11 +338,77 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     // Primary style - softer luminosity
     'bg-foreground text-background',
     'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15),0_0_12px_rgba(255,255,255,0.06)]',
-    // Hover: gentle glow increase
-    'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_18px_rgba(255,255,255,0.1)]',
-    // Smooth Apple-style transition
-    'transition-all duration-[180ms] ease-out',
-    'active:scale-[0.97]',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift + glow increase
+    'hover:translate-y-[-1px] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_18px_rgba(255,255,255,0.1)]',
+    // Active: tactile feedback
+    'active:translate-y-[0.5px] active:scale-[0.98]',
+    'focus-visible:outline-none'
+  )
+
+  // ===== DESKTOP BUTTON STYLES (compact, refined) =====
+
+  // Desktop End button - compact
+  const desktopEndButtonStyles = cn(
+    'inline-flex items-center justify-center gap-1',
+    'h-9 rounded-full px-3 text-[12px] font-medium tracking-[-0.01em]',
+    'bg-[rgba(255,59,48,0.10)]',
+    'text-[#FF3B30]',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift + color
+    'hover:translate-y-[-1px] hover:bg-[rgba(255,59,48,0.15)]',
+    // Active: tactile feedback
+    'active:translate-y-[0.5px] active:scale-[0.98] active:bg-[rgba(255,59,48,0.20)]',
+    'focus-visible:outline-none',
+    'disabled:pointer-events-none disabled:opacity-50'
+  )
+
+  // Desktop New button - compact secondary
+  const desktopNewButtonStyles = cn(
+    'inline-flex items-center justify-center gap-1',
+    'h-9 rounded-full px-3 text-[12px] font-medium tracking-[-0.01em]',
+    'bg-white/[0.04] text-foreground/60',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift effect
+    'hover:translate-y-[-1px] hover:bg-white/[0.08] hover:text-foreground/80',
+    // Active: tactile feedback
+    'active:translate-y-[0.5px] active:scale-[0.98]',
+    'focus-visible:outline-none'
+  )
+
+  // Desktop Icon button - compact
+  const desktopIconButtonStyles = cn(
+    'inline-flex items-center justify-center',
+    'h-9 w-9 rounded-full',
+    'text-foreground/40',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift effect
+    'hover:translate-y-[-1px] hover:bg-white/[0.06] hover:text-foreground/60',
+    // Active: tactile feedback
+    'active:translate-y-[0.5px] active:scale-[0.98]'
+  )
+
+  // Desktop Export button - compact
+  const desktopExportButtonStyles = cn(
+    'inline-flex items-center justify-center gap-1',
+    'h-9 rounded-full px-4 text-[12px] font-semibold tracking-[-0.01em]',
+    'bg-foreground text-background',
+    'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]',
+    // GPU acceleration + premium easing
+    'will-change-transform',
+    'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+    // Hover: lift + glow
+    'hover:translate-y-[-1px] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_12px_rgba(255,255,255,0.08)]',
+    // Active: tactile feedback
+    'active:translate-y-[0.5px] active:scale-[0.98]',
     'focus-visible:outline-none'
   )
 
@@ -342,12 +435,58 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           {status === 'ready' && (
             <>
               <motion.div className="relative">
+                {/* Circular progress ring around button */}
+                <svg
+                  className="pointer-events-none absolute -inset-2"
+                  viewBox="0 0 100 100"
+                  aria-hidden="true"
+                >
+                  {/* Background ring track */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="46"
+                    fill="none"
+                    stroke="rgba(52, 211, 153, 0.08)"
+                    strokeWidth="2"
+                  />
+                  {/* Animated progress ring */}
+                  <motion.circle
+                    cx="50"
+                    cy="50"
+                    r="46"
+                    fill="none"
+                    stroke="url(#progressGradientMobile)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray="289"
+                    initial={{ strokeDashoffset: 289 }}
+                    animate={{
+                      strokeDashoffset: [289, 217, 289],
+                      opacity: [0.4, 0.8, 0.4],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                  />
+                  <defs>
+                    <linearGradient id="progressGradientMobile" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="rgb(52, 211, 153)" />
+                      <stop offset="50%" stopColor="rgb(45, 212, 191)" />
+                      <stop offset="100%" stopColor="rgb(52, 211, 153)" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+
                 {/* Pulsing glow ring behind button */}
                 <motion.div
-                  className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500/30 to-teal-500/30 blur-md"
+                  className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500/25 to-teal-500/25 blur-md"
                   animate={{
-                    opacity: [0.4, 0.7, 0.4],
-                    scale: [1, 1.05, 1],
+                    opacity: [0.3, 0.5, 0.3],
+                    scale: [1, 1.03, 1],
                   }}
                   transition={{
                     duration: 2.5,
@@ -713,33 +852,70 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     )
   }
 
-  // FLOATING/HEADER VARIANT - Same dock style with menu opening upward
+  // FLOATING/HEADER VARIANT - Refined desktop dock
   // Uses floatingMenuStyles for upward menu (bottom dock) or headerMenuStyles (header)
   const menuStyles = variant === 'floating' ? floatingMenuStyles : headerMenuStyles
 
   return (
     <>
-      {/* Unified dock container */}
-      <div className={cn(mobileDockStyles, 'max-w-full shrink-0', className)}>
-        {/* Subtle internal radial glow */}
-        <div
-          className="pointer-events-none absolute inset-0 rounded-full"
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 50%)',
-          }}
-        />
-
+      {/* Desktop dock container - compact and refined */}
+      <div className={cn(desktopDockStyles, 'max-w-full shrink-0', className)}>
         {/* ===== READY STATE: Start + New Debate ===== */}
         {status === 'ready' && (
           <>
             <motion.div className="relative">
-              {/* Pulsing glow ring behind button */}
+              {/* Circular progress ring around button - desktop */}
+              <svg
+                className="pointer-events-none absolute -inset-1.5"
+                viewBox="0 0 100 100"
+                aria-hidden="true"
+              >
+                {/* Background ring track */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="none"
+                  stroke="rgba(52, 211, 153, 0.06)"
+                  strokeWidth="1.5"
+                />
+                {/* Animated progress ring */}
+                <motion.circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="none"
+                  stroke="url(#progressGradientDesktop)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeDasharray="289"
+                  initial={{ strokeDashoffset: 289 }}
+                  animate={{
+                    strokeDashoffset: [289, 217, 289],
+                    opacity: [0.3, 0.6, 0.3],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                />
+                <defs>
+                  <linearGradient id="progressGradientDesktop" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgb(52, 211, 153)" />
+                    <stop offset="50%" stopColor="rgb(45, 212, 191)" />
+                    <stop offset="100%" stopColor="rgb(52, 211, 153)" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Subtle glow ring behind button - reduced for desktop */}
               <motion.div
-                className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500/30 to-teal-500/30 blur-md"
+                className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-emerald-500/15 to-teal-500/15 blur-sm"
                 animate={{
-                  opacity: [0.4, 0.7, 0.4],
-                  scale: [1, 1.05, 1],
+                  opacity: [0.2, 0.4, 0.2],
+                  scale: [1, 1.02, 1],
                 }}
                 transition={{
                   duration: 2.5,
@@ -751,38 +927,33 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
                 onClick={handleStart}
                 disabled={isLoading}
                 className={cn(
-                  dockPrimaryButtonStyles,
+                  desktopPrimaryButtonStyles,
                   'relative',
                   'bg-gradient-to-b from-emerald-400 to-emerald-500 text-white',
-                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.3)]',
+                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_8px_rgba(52,211,153,0.25)]',
                   'hover:from-emerald-350 hover:to-emerald-450',
-                  'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_20px_rgba(52,211,153,0.4)]'
+                  'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.35)]'
                 )}
-                whileHover={{ scale: 1.02, y: -1 }}
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
               >
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  aria-hidden="true"
-                >
+                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
                 </svg>
                 <span>{isLoading ? 'Starting...' : 'Start'}</span>
               </motion.button>
             </motion.div>
 
-            <div className="h-5 w-px bg-white/[0.08]" />
+            <div className="h-4 w-px bg-white/[0.10]" />
 
             <button
               onClick={handleNewDebate}
-              className={dockNewButtonStyles}
+              className={desktopNewButtonStyles}
               aria-label="New debate"
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3 w-3"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.5}
@@ -803,18 +974,12 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               onClick={handlePause}
               disabled={isLoading}
               className={cn(
-                dockPrimaryButtonStyles,
-                'bg-white/[0.12] text-foreground',
-                'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.06)]',
-                'hover:bg-white/[0.15] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.1)]'
+                desktopPrimaryButtonStyles,
+                'bg-white/[0.08] text-foreground',
+                'hover:bg-white/[0.12]'
               )}
             >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-              >
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path
                   fillRule="evenodd"
                   d="M5.75 3a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0V3.75A.75.75 0 015.75 3zm8.5 0a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0V3.75a.75.75 0 01.75-.75z"
@@ -827,10 +992,10 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             <button
               onClick={() => setShowEndModal(true)}
               disabled={isLoading}
-              className={dockEndButtonStyles}
+              className={desktopEndButtonStyles}
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3 w-3"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.75}
@@ -842,11 +1007,11 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               <span>End</span>
             </button>
 
-            <div className="h-5 w-px bg-white/[0.06]" />
+            <div className="h-4 w-px bg-white/[0.10]" />
 
             <button
               onClick={handleNewDebate}
-              className={dockNewButtonStyles}
+              className={desktopNewButtonStyles}
               aria-label="New debate"
             >
               <svg
@@ -871,22 +1036,14 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               onClick={handleResume}
               disabled={isLoading}
               className={cn(
-                dockPrimaryButtonStyles,
-                // Softer amber gradient - Apple-style silky, not saturated
+                desktopPrimaryButtonStyles,
                 'bg-gradient-to-b from-amber-400/90 to-amber-500/90 text-white',
-                // Subtle highlight rim + soft outer glow
-                'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.25),0_0_14px_rgba(245,158,11,0.15)]',
-                // Hover: gentle brightness increase
+                'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_1px_8px_rgba(245,158,11,0.15)]',
                 'hover:from-amber-400 hover:to-amber-500',
-                'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.3),0_0_18px_rgba(245,158,11,0.2)]'
+                'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(245,158,11,0.2)]'
               )}
             >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-              >
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
               </svg>
               <span>{isLoading ? 'Resuming...' : 'Resume'}</span>
@@ -895,10 +1052,10 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             <button
               onClick={() => setShowEndModal(true)}
               disabled={isLoading}
-              className={dockEndButtonStyles}
+              className={desktopEndButtonStyles}
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3 w-3"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.75}
@@ -910,11 +1067,11 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               <span>End</span>
             </button>
 
-            <div className="h-5 w-px bg-white/[0.06]" />
+            <div className="h-4 w-px bg-white/[0.10]" />
 
             <button
               onClick={handleNewDebate}
-              className={dockNewButtonStyles}
+              className={desktopNewButtonStyles}
               aria-label="New debate"
             >
               <svg
@@ -935,9 +1092,9 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         {/* ===== COMPLETED STATE: Export + New Debate ===== */}
         {status === 'completed' && (
           <>
-            <button onClick={openExportModal} className={dockExportButtonStyles}>
+            <button onClick={openExportModal} className={desktopExportButtonStyles}>
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3 w-3"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.5}
@@ -953,15 +1110,15 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               <span>Export</span>
             </button>
 
-            <div className="h-5 w-px bg-white/[0.06]" />
+            <div className="h-4 w-px bg-white/[0.10]" />
 
             <button
               onClick={handleNewDebate}
-              className={dockNewButtonStyles}
+              className={desktopNewButtonStyles}
               aria-label="New debate"
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3 w-3"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.5}
@@ -977,10 +1134,15 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             <div className="relative">
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className={dockIconButtonStyles}
+                className={desktopIconButtonStyles}
                 aria-label="More actions"
               >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
                   <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
                 </svg>
               </button>
@@ -1024,18 +1186,13 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               onClick={handleStart}
               disabled={isLoading}
               className={cn(
-                dockPrimaryButtonStyles,
+                desktopPrimaryButtonStyles,
                 'bg-foreground text-background',
-                'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15),0_0_12px_rgba(255,255,255,0.06)]',
-                'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_16px_rgba(255,255,255,0.1)]'
+                'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]',
+                'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_12px_rgba(255,255,255,0.08)]'
               )}
             >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-              >
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path
                   fillRule="evenodd"
                   d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z"
@@ -1045,15 +1202,15 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               <span>{isLoading ? 'Retrying...' : 'Retry'}</span>
             </button>
 
-            <div className="h-5 w-px bg-white/[0.06]" />
+            <div className="h-4 w-px bg-white/[0.10]" />
 
             <button
               onClick={handleNewDebate}
-              className={dockNewButtonStyles}
+              className={desktopNewButtonStyles}
               aria-label="New debate"
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3 w-3"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.5}

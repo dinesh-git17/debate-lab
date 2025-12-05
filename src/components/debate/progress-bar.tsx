@@ -131,8 +131,26 @@ export function ProgressBar({ className }: ProgressBarProps) {
         </motion.span>
       </div>
 
-      {/* Progress track - increased to 6px */}
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+      {/* Progress track with micro-animations */}
+      <motion.div
+        className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.06]"
+        animate={
+          isReady
+            ? {
+                boxShadow: [
+                  'inset 0 0 0 rgba(52, 211, 153, 0)',
+                  'inset 0 0 8px rgba(52, 211, 153, 0.15)',
+                  'inset 0 0 0 rgba(52, 211, 153, 0)',
+                ],
+              }
+            : {}
+        }
+        transition={{
+          duration: 2.5,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      >
         {/* Shimmer effect for ready state */}
         {isReady && (
           <motion.div
@@ -148,6 +166,25 @@ export function ProgressBar({ className }: ProgressBarProps) {
               duration: 2,
               repeat: Infinity,
               ease: 'easeInOut',
+            }}
+          />
+        )}
+
+        {/* Pulsing edge glow for ready state */}
+        {isReady && (
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            animate={{
+              opacity: [0.3, 0.6, 0.3],
+            }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            style={{
+              background:
+                'linear-gradient(90deg, rgba(52, 211, 153, 0.2) 0%, transparent 15%, transparent 85%, rgba(52, 211, 153, 0.2) 100%)',
             }}
           />
         )}
@@ -169,7 +206,7 @@ export function ProgressBar({ className }: ProgressBarProps) {
 
         {/* Subtle highlight on top of track */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-      </div>
+      </motion.div>
     </div>
   )
 }
