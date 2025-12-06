@@ -6,7 +6,9 @@ import { memo, useEffect, useRef } from 'react'
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa'
 import { LuScale } from 'react-icons/lu'
 
+import { TypingIndicator } from '@/components/debate/typing-indicator'
 import { Markdown } from '@/components/ui/markdown'
+import { useChunkedDisplay } from '@/hooks/use-chunked-display'
 import {
   getSpeakerConfig,
   getTurnTypeShortLabel,
@@ -16,6 +18,7 @@ import {
 import { cn } from '@/lib/utils'
 
 import type { DebateMessage } from '@/types/debate-ui'
+import type { TurnSpeaker } from '@/types/turn'
 
 interface MessageBubbleProps {
   message: DebateMessage
@@ -46,41 +49,66 @@ function SpeakerIcon({ type, className }: { type: string; className?: string }) 
 }
 
 /**
- * Content renderer with markdown support and editorial typography
+ * Content renderer with markdown support and editorial typography.
+ * Uses chunked display for smooth, readable streaming.
  */
 function MessageContent({
+  messageId,
   content,
   isStreaming,
   isComplete,
+  speaker,
   onAnimationComplete,
 }: {
+  messageId: string
   content: string
   isStreaming: boolean
   isComplete: boolean
+  speaker: TurnSpeaker
   onAnimationComplete?: (() => void) | undefined
 }) {
   const hasCalledComplete = useRef(false)
 
+  const { displayContent, isTyping, isBuffering } = useChunkedDisplay({
+    messageId,
+    rawContent: content,
+    isStreaming,
+    isComplete,
+    chunkDelayMs: 400,
+  })
+
+  // Call onAnimationComplete when ALL content is revealed AND isComplete
   useEffect(() => {
-    if (isComplete && !hasCalledComplete.current) {
+    if (isComplete && !isBuffering && displayContent === content && !hasCalledComplete.current) {
       hasCalledComplete.current = true
       // eslint-disable-next-line no-console
       console.log('[MessageContent] Animation complete, calling onAnimationComplete')
       onAnimationComplete?.()
     }
-  }, [isComplete, onAnimationComplete])
+  }, [isComplete, isBuffering, displayContent, content, onAnimationComplete])
+
+  // Reset the ref when message changes
+  useEffect(() => {
+    hasCalledComplete.current = false
+  }, [messageId])
 
   return (
     <div className="prose prose-invert max-w-none">
-      <div className="font-serif text-lg leading-loose font-light text-zinc-200 antialiased">
-        <Markdown content={content} />
-        {isStreaming && (
-          <span
-            className="ml-1 inline-block h-4 w-2 animate-pulse bg-current align-middle"
-            aria-label="Generating content"
-          />
-        )}
-      </div>
+      {isTyping ? (
+        // Show typing indicator when API is streaming but we have no chunks yet
+        <TypingIndicator speaker={speaker} />
+      ) : (
+        <div className="font-serif text-lg leading-loose font-light text-zinc-200 antialiased">
+          <Markdown content={displayContent} />
+          {isBuffering && (
+            // Show cursor while we have more content to reveal
+            <span
+              className="ml-1 inline-block h-4 w-2 animate-pulse bg-current align-middle"
+              aria-label="Generating content"
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -199,9 +227,11 @@ export const MessageBubble = memo(function MessageBubble({
           {/* Body: Editorial Serif */}
           <div className="relative">
             <MessageContent
+              messageId={message.id}
               content={message.content}
               isStreaming={message.isStreaming}
               isComplete={message.isComplete}
+              speaker={message.speaker}
               onAnimationComplete={onAnimationComplete}
             />
           </div>
