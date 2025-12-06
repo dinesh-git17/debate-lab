@@ -204,15 +204,62 @@ function EmptyState() {
   )
 }
 
+function WaitingState() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center">
+      <motion.div
+        className="flex flex-col items-center gap-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* Pulsing dot indicator */}
+        <motion.div
+          className="flex gap-1.5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="h-2 w-2 rounded-full bg-zinc-500"
+              animate={{
+                opacity: [0.3, 1, 0.3],
+                scale: [0.85, 1, 0.85],
+              }}
+              transition={{
+                duration: 1.4,
+                repeat: Infinity,
+                delay: i * 0.2,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+        </motion.div>
+        <motion.p
+          className="text-sm text-zinc-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          Waiting for messages...
+        </motion.p>
+      </motion.div>
+    </div>
+  )
+}
+
 interface MessageListProps {
   className?: string
   autoScroll?: boolean
 }
 
 export function MessageList({ className, autoScroll = true }: MessageListProps) {
-  // Subscribe to both messages and displayedMessageIds to trigger re-renders
+  // Subscribe to messages, displayedMessageIds, and status to trigger re-renders
   const allMessages = useDebateViewStore((s) => s.messages)
   const displayedIds = useDebateViewStore((s) => s.displayedMessageIds)
+  const status = useDebateViewStore((s) => s.status)
   const currentTurnId = useDebateViewStore((s) => s.currentTurnId)
   const markMessageDisplayed = useDebateViewStore((s) => s.markMessageDisplayed)
 
@@ -282,16 +329,33 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
   }, [])
 
   if (messages.length === 0) {
-    return (
-      <div
-        className={cn('h-full', className)}
-        role="status"
-        aria-live="polite"
-        aria-label="Waiting for debate to begin"
-      >
-        <EmptyState />
-      </div>
-    )
+    // Show empty state with "Start Debate" only when debate hasn't started
+    if (status === 'ready') {
+      return (
+        <div
+          className={cn('h-full', className)}
+          role="status"
+          aria-live="polite"
+          aria-label="Waiting for debate to begin"
+        >
+          <EmptyState />
+        </div>
+      )
+    }
+
+    // Show waiting state when debate is active/paused but messages haven't loaded yet
+    if (status === 'active' || status === 'paused') {
+      return (
+        <div
+          className={cn('h-full', className)}
+          role="status"
+          aria-live="polite"
+          aria-label="Loading debate messages"
+        >
+          <WaitingState />
+        </div>
+      )
+    }
   }
 
   return (
