@@ -83,26 +83,35 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
     <header
       className={cn(
         'relative overflow-hidden',
-        // Apple-grade layered surface
-        'border-b border-white/[0.04]',
-        'bg-card/95',
-        'backdrop-blur-2xl backdrop-saturate-150',
-        // Inset shadow for depth instead of outward
-        'shadow-[inset_0_-1px_0_rgba(0,0,0,0.1)]',
+        // Apple glassmorphism - frosted translucent background
+        'bg-gradient-to-b from-white/[0.06] via-white/[0.03] to-transparent',
+        'backdrop-blur-3xl backdrop-saturate-[1.8]',
+        // Soft floating elevation with diffused shadow glow
+        'shadow-[0_4px_32px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)]',
+        // Subtle gradient border for soft edges
+        'border-b border-white/[0.05]',
         className
       )}
     >
-      {/* Subtle top highlight for glass depth - very faint */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+      {/* Top edge highlight - glass reflection effect */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent" />
 
-      {/* Radial glow behind content - barely perceptible, felt not seen */}
+      {/* Ambient radial glow - always present but subtle */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30"
+        style={{
+          background: 'radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 70%)',
+        }}
+      />
+
+      {/* Status-based radial glow - barely perceptible */}
       {isActive && (
         <div
           className={cn(
             'pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full',
-            'blur-[100px]',
+            'blur-[120px]',
             glowGradient,
-            'opacity-30'
+            'opacity-40'
           )}
           style={{
             background: `radial-gradient(circle, var(--tw-gradient-stops))`,
@@ -110,8 +119,8 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
         />
       )}
 
-      {/* Content container with consistent grid alignment */}
-      <div className="relative mx-auto max-w-5xl px-6 py-6 md:px-8 md:py-8">
+      {/* Content container - compact vertical padding */}
+      <div className="relative mx-auto max-w-5xl px-6 py-4 md:px-8 md:py-5">
         {/* MOBILE LAYOUT: Centered title with compact controls */}
         <div className="md:hidden">
           {/* Mobile controls row - centered */}
@@ -240,7 +249,7 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
 
           {/* Hero Title Section */}
           <motion.div
-            className="mt-5"
+            className="mt-4"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
@@ -269,14 +278,14 @@ export function DebateHeader({ debateId, className }: DebateHeaderProps) {
           </motion.div>
         </div>
 
-        {/* Progress section - generous spacing creates hierarchy without separator */}
-        <div className="mt-8">
+        {/* Progress section */}
+        <div className="mt-5">
           <ProgressBar />
         </div>
       </div>
 
-      {/* Bottom edge - subtle inner shadow line */}
-      <div className="absolute inset-x-0 bottom-0 h-px bg-black/[0.08] dark:bg-black/20" />
+      {/* Bottom edge - subtle divider line */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
     </header>
   )
 }

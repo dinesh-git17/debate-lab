@@ -1,4 +1,4 @@
-// src/app/(debate)/debate/[id]/page.tsx
+// src/app/(fullscreen)/debate/[id]/page.tsx
 
 import { notFound } from 'next/navigation'
 

@@ -24,8 +24,10 @@ export function NewDebateForm() {
       const result = await createDebate(data)
       if (result.success && result.debateId) {
         router.push(`/debate/${result.debateId}`)
+        // Don't reset isSubmitting - component will unmount on navigation
         return { success: true }
       }
+      setIsSubmitting(false)
       return {
         success: false,
         error: result.error ?? 'Failed to create debate',
@@ -33,9 +35,8 @@ export function NewDebateForm() {
         blockReason: result.blockReason,
       }
     } catch {
-      return { success: false, error: 'An unexpected error occurred' }
-    } finally {
       setIsSubmitting(false)
+      return { success: false, error: 'An unexpected error occurred' }
     }
   }
 

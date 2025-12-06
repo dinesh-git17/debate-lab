@@ -434,92 +434,31 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           {/* ===== READY STATE: Start + New Debate ===== */}
           {status === 'ready' && (
             <>
-              <motion.div className="relative">
-                {/* Circular progress ring around button */}
+              <motion.button
+                onClick={handleStart}
+                disabled={isLoading}
+                className={cn(
+                  dockPrimaryButtonStyles,
+                  'relative',
+                  'bg-gradient-to-b from-emerald-400 to-emerald-500 text-white',
+                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.3)]',
+                  'hover:from-emerald-350 hover:to-emerald-450',
+                  'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_20px_rgba(52,211,153,0.4)]'
+                )}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+              >
                 <svg
-                  className="pointer-events-none absolute -inset-2"
-                  viewBox="0 0 100 100"
+                  className="h-3.5 w-3.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                   aria-hidden="true"
                 >
-                  {/* Background ring track */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="46"
-                    fill="none"
-                    stroke="rgba(52, 211, 153, 0.08)"
-                    strokeWidth="2"
-                  />
-                  {/* Animated progress ring */}
-                  <motion.circle
-                    cx="50"
-                    cy="50"
-                    r="46"
-                    fill="none"
-                    stroke="url(#progressGradientMobile)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeDasharray="289"
-                    initial={{ strokeDashoffset: 289 }}
-                    animate={{
-                      strokeDashoffset: [289, 217, 289],
-                      opacity: [0.4, 0.8, 0.4],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                  />
-                  <defs>
-                    <linearGradient id="progressGradientMobile" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="rgb(52, 211, 153)" />
-                      <stop offset="50%" stopColor="rgb(45, 212, 191)" />
-                      <stop offset="100%" stopColor="rgb(52, 211, 153)" />
-                    </linearGradient>
-                  </defs>
+                  <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
                 </svg>
-
-                {/* Pulsing glow ring behind button */}
-                <motion.div
-                  className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500/25 to-teal-500/25 blur-md"
-                  animate={{
-                    opacity: [0.3, 0.5, 0.3],
-                    scale: [1, 1.03, 1],
-                  }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-                <motion.button
-                  onClick={handleStart}
-                  disabled={isLoading}
-                  className={cn(
-                    dockPrimaryButtonStyles,
-                    'relative',
-                    'bg-gradient-to-b from-emerald-400 to-emerald-500 text-white',
-                    'shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.3)]',
-                    'hover:from-emerald-350 hover:to-emerald-450',
-                    'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_20px_rgba(52,211,153,0.4)]'
-                  )}
-                  whileHover={{ scale: 1.02, y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15, ease: 'easeOut' }}
-                >
-                  <svg
-                    className="h-3.5 w-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                  >
-                    <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                  </svg>
-                  <span>{isLoading ? 'Starting...' : 'Start'}</span>
-                </motion.button>
-              </motion.div>
+                <span>{isLoading ? 'Starting...' : 'Start'}</span>
+              </motion.button>
 
               <div className="h-5 w-px bg-white/[0.08]" />
 
@@ -863,87 +802,26 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         {/* ===== READY STATE: Start + New Debate ===== */}
         {status === 'ready' && (
           <>
-            <motion.div className="relative">
-              {/* Circular progress ring around button - desktop */}
-              <svg
-                className="pointer-events-none absolute -inset-1.5"
-                viewBox="0 0 100 100"
-                aria-hidden="true"
-              >
-                {/* Background ring track */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="46"
-                  fill="none"
-                  stroke="rgba(52, 211, 153, 0.06)"
-                  strokeWidth="1.5"
-                />
-                {/* Animated progress ring */}
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="46"
-                  fill="none"
-                  stroke="url(#progressGradientDesktop)"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeDasharray="289"
-                  initial={{ strokeDashoffset: 289 }}
-                  animate={{
-                    strokeDashoffset: [289, 217, 289],
-                    opacity: [0.3, 0.6, 0.3],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                />
-                <defs>
-                  <linearGradient id="progressGradientDesktop" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgb(52, 211, 153)" />
-                    <stop offset="50%" stopColor="rgb(45, 212, 191)" />
-                    <stop offset="100%" stopColor="rgb(52, 211, 153)" />
-                  </linearGradient>
-                </defs>
+            <motion.button
+              onClick={handleStart}
+              disabled={isLoading}
+              className={cn(
+                desktopPrimaryButtonStyles,
+                'relative',
+                'bg-gradient-to-b from-emerald-400 to-emerald-500 text-white',
+                'shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_8px_rgba(52,211,153,0.25)]',
+                'hover:from-emerald-350 hover:to-emerald-450',
+                'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.35)]'
+              )}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+            >
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
               </svg>
-
-              {/* Subtle glow ring behind button - reduced for desktop */}
-              <motion.div
-                className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-emerald-500/15 to-teal-500/15 blur-sm"
-                animate={{
-                  opacity: [0.2, 0.4, 0.2],
-                  scale: [1, 1.02, 1],
-                }}
-                transition={{
-                  duration: 2.5,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
-              <motion.button
-                onClick={handleStart}
-                disabled={isLoading}
-                className={cn(
-                  desktopPrimaryButtonStyles,
-                  'relative',
-                  'bg-gradient-to-b from-emerald-400 to-emerald-500 text-white',
-                  'shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_8px_rgba(52,211,153,0.25)]',
-                  'hover:from-emerald-350 hover:to-emerald-450',
-                  'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(52,211,153,0.35)]'
-                )}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15, ease: 'easeOut' }}
-              >
-                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-                <span>{isLoading ? 'Starting...' : 'Start'}</span>
-              </motion.button>
-            </motion.div>
+              <span>{isLoading ? 'Starting...' : 'Start'}</span>
+            </motion.button>
 
             <div className="h-4 w-px bg-white/[0.10]" />
 

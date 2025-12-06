@@ -1,4 +1,4 @@
-// src/app/(debate)/debate/[id]/layout.tsx
+// src/app/(fullscreen)/debate/[id]/layout.tsx
 
 interface DebateViewLayoutProps {
   children: React.ReactNode
@@ -6,7 +6,7 @@ interface DebateViewLayoutProps {
 
 /**
  * Minimal layout for active debate view.
- * Bypasses MainLayout to provide fullscreen, distraction-free experience.
+ * Part of (fullscreen) route group - no navbar, no footer.
  */
 export default function DebateViewLayout({ children }: DebateViewLayoutProps) {
   return <>{children}</>

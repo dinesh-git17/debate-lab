@@ -1,4 +1,4 @@
-// src/app/(debate)/debate/[id]/client.tsx
+// src/app/(fullscreen)/debate/[id]/client.tsx
 
 'use client'
 
@@ -165,14 +165,15 @@ export function DebatePageClient({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 flex flex-col',
+        // Fullscreen fixed container - no navbar to account for
+        'fixed inset-0 z-50 flex flex-col overflow-hidden',
         // Slightly off-black background for depth
         'bg-[#0a0a0b]'
       )}
     >
       {/* Subtle noise texture overlay */}
       <div
-        className="pointer-events-none fixed inset-0 z-0 opacity-[0.015]"
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.015]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
         }}
@@ -182,7 +183,7 @@ export function DebatePageClient({
       <AnimatePresence>
         {isReady && (
           <motion.div
-            className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+            className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -237,7 +238,7 @@ export function DebatePageClient({
 
       {/* Subtle vignette effect */}
       <div
-        className="pointer-events-none fixed inset-0 z-0"
+        className="pointer-events-none absolute inset-0 z-0"
         style={{
           background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%)',
         }}
