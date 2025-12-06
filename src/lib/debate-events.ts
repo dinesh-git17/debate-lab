@@ -1,5 +1,6 @@
 // src/lib/debate-events.ts
 
+import { getNextSeq } from '@/lib/event-sequencer'
 import { appendEvent } from '@/lib/event-store'
 import { logger } from '@/lib/logging'
 import { publishEvent } from '@/lib/pusher'
@@ -104,15 +105,22 @@ class DebateEventEmitter {
   }
 
   /**
-   * Emit a typed event with automatic timestamp.
+   * Emit a typed event with automatic timestamp and sequence number.
    * This is the primary API used by the debate engine.
+   *
+   * IMPORTANT: This method is now async to support atomic sequence generation.
+   * Callers should await or handle the promise appropriately.
    */
-  emitEvent<T extends SSEEventType>(
+  async emitEvent<T extends SSEEventType>(
     debateId: string,
     type: T,
-    data: Omit<Extract<SSEEvent, { type: T }>, 'type' | 'timestamp' | 'debateId'>
-  ): void {
+    data: Omit<Extract<SSEEvent, { type: T }>, 'type' | 'timestamp' | 'debateId' | 'seq'>
+  ): Promise<void> {
+    // Get atomic sequence number FIRST (before any other async operations)
+    const seq = await getNextSeq(debateId)
+
     const event = {
+      seq,
       type,
       timestamp: new Date().toISOString(),
       debateId,

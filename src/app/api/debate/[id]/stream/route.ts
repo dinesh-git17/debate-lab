@@ -79,6 +79,7 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
             timestamp: new Date().toISOString(),
             debateId,
             serverTime: new Date().toISOString(),
+            seq: 0, // Heartbeats are local keep-alives, not sequenced events
           }
           controller.enqueue(encoder.encode(formatSSEMessage(heartbeatEvent)))
         } catch {

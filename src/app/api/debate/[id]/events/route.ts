@@ -2,7 +2,13 @@
 
 import { NextResponse } from 'next/server'
 
-import { getAllEvents, getEventsSince, getEventsAfterTimestamp } from '@/lib/event-store'
+import { getCurrentSeq } from '@/lib/event-sequencer'
+import {
+  getAllEvents,
+  getEventsSince,
+  getEventsAfterTimestamp,
+  getEventsAfterSeq,
+} from '@/lib/event-store'
 import { isValidDebateId } from '@/lib/id-generator'
 import { logger } from '@/lib/logging'
 import { getSession } from '@/lib/session-store'
@@ -23,6 +29,10 @@ export interface EventsResponse {
   debateId: string
   events: StoredEventResponse[]
   lastEventId: string | null
+  /** Current maximum sequence number for gap detection */
+  currentSeq: number
+  /** Whether there are more events beyond the returned set */
+  hasMore: boolean
 }
 
 /**
@@ -31,8 +41,10 @@ export interface EventsResponse {
  * Fetch events from Redis Stream for a debate.
  *
  * Query params:
- * - since: Event ID to fetch events after (exclusive)
- * - after: ISO timestamp to fetch events after
+ * - after: Sequence number to fetch events after (for sequence-based sync)
+ * - since: Event ID to fetch events after (exclusive, legacy)
+ * - afterTime: ISO timestamp to fetch events after (legacy)
+ * - limit: Maximum number of events to return (default: 100, max: 500)
  *
  * If no query params provided, returns all events.
  */
@@ -49,21 +61,37 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   }
 
   const { searchParams } = new URL(request.url)
+  const afterSeq = searchParams.get('after')
   const sinceId = searchParams.get('since')
-  const afterTimestamp = searchParams.get('after')
+  const afterTimestamp = searchParams.get('afterTime')
+  const limitParam = searchParams.get('limit')
+  const limit = Math.min(parseInt(limitParam ?? '100', 10), 500)
 
   try {
     let storedEvents: StoredEventResponse[]
+    let hasMore = false
 
-    logger.debug('Fetching events', { debateId, sinceId, afterTimestamp })
+    logger.debug('Fetching events', { debateId, afterSeq, sinceId, afterTimestamp, limit })
 
-    if (sinceId) {
-      // Fetch events since a specific event ID
+    if (afterSeq !== null && !isNaN(parseInt(afterSeq, 10))) {
+      // NEW: Sequence-based fetching (primary method for EventSynchronizer)
+      const afterSeqNum = parseInt(afterSeq, 10)
+      const events = await getEventsAfterSeq(debateId, afterSeqNum, limit)
+      storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
+      hasMore = events.length === limit
+      logger.debug('Fetched events after seq', {
+        debateId,
+        afterSeq: afterSeqNum,
+        count: storedEvents.length,
+        hasMore,
+      })
+    } else if (sinceId) {
+      // Legacy: Fetch events since a specific event ID
       const events = await getEventsSince(debateId, sinceId)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
       logger.debug('Fetched events since ID', { debateId, sinceId, count: storedEvents.length })
     } else if (afterTimestamp) {
-      // Fetch events after a specific timestamp
+      // Legacy: Fetch events after a specific timestamp
       const events = await getEventsAfterTimestamp(debateId, afterTimestamp)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
       logger.debug('Fetched events after timestamp', {
@@ -78,11 +106,16 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       logger.debug('Fetched all events', { debateId, count: storedEvents.length })
     }
 
+    // Get current max sequence for gap detection
+    const currentSeq = await getCurrentSeq(debateId)
+
     const lastEvent = storedEvents.length > 0 ? storedEvents[storedEvents.length - 1] : null
     const response: EventsResponse = {
       debateId,
       events: storedEvents,
       lastEventId: lastEvent?.id ?? null,
+      currentSeq,
+      hasMore,
     }
 
     return NextResponse.json(response)

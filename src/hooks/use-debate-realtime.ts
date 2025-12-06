@@ -5,12 +5,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { clientLogger } from '@/lib/client-logger'
+import { EventSynchronizer } from '@/lib/event-synchronizer'
 import {
   getConnectionState,
   isPusherClientConfigured,
   subscribeToDebate,
   type PusherConnectionState,
-  type SSEEventWithId,
 } from '@/lib/pusher-client'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
@@ -34,7 +34,7 @@ interface SSEMessageData {
   chunk?: string
   content?: string
   tokenCount?: number
-  accumulatedLength?: number
+  seq?: number
   error?: string
   violation?: {
     ruleViolated: string
@@ -45,7 +45,6 @@ interface SSEMessageData {
   totalTurns?: number
   percentComplete?: number
   reason?: string
-  _eventId?: string
   [key: string]: unknown
 }
 
@@ -53,60 +52,13 @@ const MAX_RECONNECT_ATTEMPTS = 5
 const BASE_RECONNECT_DELAY = 1000
 const MAX_RECONNECT_DELAY = 30000
 
-/**
- * Fetch missed events from Redis and apply them to the store.
- * Used for catch-up after reconnection or initial load.
- */
-async function fetchAndApplyMissedEvents(
-  debateId: string,
-  lastEventId: string | null,
-  applyEvent: (event: SSEEvent) => void,
-  appliedEventIds: Set<string>
-): Promise<string | null> {
-  try {
-    const url = lastEventId
-      ? `/api/debate/${debateId}/events?since=${encodeURIComponent(lastEventId)}`
-      : `/api/debate/${debateId}/events`
-
-    const response = await fetch(url)
-    if (!response.ok) {
-      clientLogger.warn('Failed to fetch missed events', { status: response.status })
-      return lastEventId
-    }
-
-    const data = (await response.json()) as { events: Array<{ id: string; event: SSEEvent }> }
-
-    if (data.events && data.events.length > 0) {
-      clientLogger.debug('Fetched events', { count: data.events.length, debateId })
-      for (const { id, event } of data.events) {
-        // Skip already applied events to prevent duplicates
-        if (appliedEventIds.has(id)) {
-          clientLogger.debug('Skipping duplicate event', { id, type: event.type })
-          continue
-        }
-        appliedEventIds.add(id)
-        applyEvent(event)
-      }
-      // Return the last event ID for tracking
-      const lastEvent = data.events[data.events.length - 1]
-      return lastEvent?.id ?? lastEventId
-    }
-
-    return lastEventId
-  } catch (error) {
-    clientLogger.error('Error fetching missed events', error)
-    return lastEventId
-  }
-}
-
 export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStreamReturn {
   const { debateId, autoConnect = true, onDebateComplete, onError } = options
 
   const unsubscribeRef = useRef<(() => void) | null>(null)
+  const syncRef = useRef<EventSynchronizer | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttempts = useRef(0)
-  const lastEventIdRef = useRef<string | null>(null)
-  const appliedEventIdsRef = useRef<Set<string>>(new Set())
   const debateIdRef = useRef(debateId)
   const onDebateCompleteRef = useRef(onDebateComplete)
   const onErrorRef = useRef(onError)
@@ -135,31 +87,10 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
   }, [])
 
   // Apply a single event to the store
-  const applyEvent = useCallback((event: SSEEvent | SSEEventWithId) => {
+  // NOTE: Deduplication is now handled by EventSynchronizer via seq numbers
+  const applyEventToStore = useCallback((event: SSEEvent) => {
     const data = event as SSEMessageData
     const store = useDebateViewStore.getState()
-
-    // UNIFIED DEDUPLICATION: Check if we've already processed this event
-    // For streaming events, include accumulatedLength to make each chunk unique
-    let eventId: string
-    if (data._eventId) {
-      eventId = data._eventId
-    } else if (data.type === 'turn_streaming' && data.accumulatedLength !== undefined) {
-      // For streaming events, include accumulatedLength to differentiate chunks
-      // that may arrive in the same millisecond
-      eventId = `${data.timestamp}-${data.type}-${data.turnId}-${data.accumulatedLength}`
-    } else {
-      eventId = `${data.timestamp}-${data.type}-${data.turnId ?? 'no-turn'}`
-    }
-
-    if (appliedEventIdsRef.current.has(eventId)) {
-      clientLogger.debug('Skipping duplicate event (unified check)', {
-        eventId,
-        type: data.type,
-      })
-      return
-    }
-    appliedEventIdsRef.current.add(eventId)
 
     // Skip events if debate is already completed (prevents replay)
     if (store.status === 'completed' && data.type !== 'debate_completed') {
@@ -169,10 +100,10 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
 
     clientLogger.debug('Applying event', {
       type: data.type,
+      seq: data.seq,
       turnId: data.turnId,
       hasChunk: !!data.chunk,
       chunkLength: data.chunk?.length,
-      messageCount: store.messages.length,
     })
 
     switch (data.type) {
@@ -210,14 +141,8 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
           if (!existingMessage) {
             clientLogger.warn('turn_streaming: message not found', { turnId: data.turnId })
           }
-          // Calculate expected position: where this chunk should start
-          // accumulatedLength is the total length AFTER this chunk is added
-          // So expectedPosition = accumulatedLength - chunk.length
-          const expectedPosition =
-            data.accumulatedLength !== undefined
-              ? data.accumulatedLength - data.chunk.length
-              : undefined
-          store.appendToMessage(data.turnId, data.chunk, expectedPosition)
+          // With sequence-based ordering, events arrive in order - simple append
+          store.appendToMessage(data.turnId, data.chunk)
         }
         break
 
@@ -330,10 +255,14 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
   const connectImpl = useCallback(async () => {
     const currentDebateId = debateIdRef.current
 
-    // Cleanup existing subscription
+    // Cleanup existing subscription and synchronizer
     if (unsubscribeRef.current) {
       unsubscribeRef.current()
       unsubscribeRef.current = null
+    }
+    if (syncRef.current) {
+      syncRef.current.destroy()
+      syncRef.current = null
     }
 
     clearReconnectTimeout()
@@ -341,30 +270,44 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     const store = useDebateViewStore.getState()
     store.setConnection('connecting')
 
-    // First, fetch any missed events from Redis
-    lastEventIdRef.current = await fetchAndApplyMissedEvents(
-      currentDebateId,
-      lastEventIdRef.current,
-      applyEvent,
-      appliedEventIdsRef.current
-    )
+    // Create EventSynchronizer for sequence-based ordering
+    const sync = new EventSynchronizer({
+      debateId: currentDebateId,
+      applyEvent: applyEventToStore,
+      onSyncStateChange: (state) => {
+        const currentStore = useDebateViewStore.getState()
+        if (state === 'synced') {
+          currentStore.setConnection('connected')
+        } else if (state === 'error') {
+          currentStore.setConnection('error')
+        }
+      },
+    })
+    syncRef.current = sync
 
     // If Pusher is not configured, fall back to periodic polling
     if (!isPusherAvailable) {
       clientLogger.warn('Pusher not configured, using polling fallback')
-      store.setConnection('connected')
 
-      // Use recursive setTimeout to prevent overlapping requests
+      // Perform initial sync
+      try {
+        await sync.performInitialSync()
+      } catch (error) {
+        clientLogger.error('Initial sync failed', error)
+        store.setError('Failed to sync events')
+      }
+
+      // Use recursive setTimeout for polling
       let isPolling = true
       const poll = async () => {
         if (!isPolling) return
 
-        lastEventIdRef.current = await fetchAndApplyMissedEvents(
-          debateIdRef.current,
-          lastEventIdRef.current,
-          applyEvent,
-          appliedEventIdsRef.current
-        )
+        try {
+          // Re-sync to catch any new events
+          await sync.handleReconnect()
+        } catch (error) {
+          clientLogger.error('Polling sync failed', error)
+        }
 
         // Schedule next poll only after current one completes
         if (isPolling) {
@@ -372,7 +315,7 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
         }
       }
 
-      // Start polling
+      // Start polling after initial sync
       setTimeout(poll, 500)
 
       unsubscribeRef.current = () => {
@@ -382,13 +325,21 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       return
     }
 
-    // Subscribe to Pusher channel
+    // 1. Subscribe to Pusher FIRST - events go to buffer in synchronizer
+    const handlePusherEvent = (event: SSEEvent) => {
+      sync.bufferEvent(event)
+    }
+
     const handleConnectionChange = (state: PusherConnectionState) => {
       const currentStore = useDebateViewStore.getState()
 
       switch (state) {
         case 'connected':
-          currentStore.setConnection('connected')
+          if (sync.isReady()) {
+            currentStore.setConnection('connected')
+            // Reconnected - fetch any missed events
+            sync.handleReconnect()
+          }
           reconnectAttempts.current = 0
           break
 
@@ -411,15 +362,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
 
             reconnectTimeoutRef.current = setTimeout(() => {
               reconnectAttempts.current++
-              // Fetch missed events on reconnection
-              fetchAndApplyMissedEvents(
-                debateIdRef.current,
-                lastEventIdRef.current,
-                applyEvent,
-                appliedEventIdsRef.current
-              ).then((newLastId) => {
-                lastEventIdRef.current = newLastId
-              })
             }, delay)
           } else {
             const errorMsg = 'Connection lost. Please refresh the page.'
@@ -436,10 +378,18 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
 
     unsubscribeRef.current = subscribeToDebate(
       currentDebateId,
-      applyEvent,
+      handlePusherEvent,
       handleConnectionChange,
       handleError
     )
+
+    // 2. Perform initial sync (fetches history, merges with buffer, applies in order)
+    try {
+      await sync.performInitialSync()
+    } catch (error) {
+      clientLogger.error('Initial sync failed', error)
+      store.setError('Failed to sync events')
+    }
 
     // Check current connection state
     const currentState = getConnectionState()
@@ -447,7 +397,7 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       store.setConnection('connected')
       reconnectAttempts.current = 0
     }
-  }, [clearReconnectTimeout, applyEvent, isPusherAvailable])
+  }, [clearReconnectTimeout, applyEventToStore, isPusherAvailable])
 
   const disconnect = useCallback(() => {
     clearReconnectTimeout()
@@ -457,8 +407,23 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       unsubscribeRef.current = null
     }
 
+    if (syncRef.current) {
+      syncRef.current.destroy()
+      syncRef.current = null
+    }
+
     useDebateViewStore.getState().setConnection('disconnected')
   }, [clearReconnectTimeout])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (syncRef.current) {
+        syncRef.current.destroy()
+        syncRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (autoConnect && debateId) {

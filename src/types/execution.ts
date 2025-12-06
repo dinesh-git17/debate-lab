@@ -30,6 +30,8 @@ export interface SSEEventBase {
   type: SSEEventType
   timestamp: string
   debateId: string
+  /** Monotonically increasing sequence number per debate for ordering */
+  seq: number
 }
 
 /**

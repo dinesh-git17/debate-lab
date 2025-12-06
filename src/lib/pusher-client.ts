@@ -70,14 +70,10 @@ export type PusherConnectionState =
   | 'disconnected'
 
 /**
- * Extended SSE event with deduplication ID
- */
-export type SSEEventWithId = SSEEvent & { _eventId?: string }
-
-/**
  * Event handler type for debate events
+ * Events now include seq numbers from the server for ordering
  */
-export type DebateEventHandler = (event: SSEEventWithId) => void
+export type DebateEventHandler = (event: SSEEvent) => void
 
 /**
  * Subscribe to a debate channel.
@@ -122,23 +118,10 @@ export function subscribeToDebate(
   ]
 
   // Bind to all event types
+  // Events now include seq numbers from the server for ordering/deduplication
   for (const eventType of eventTypes) {
     channel.bind(eventType, (data: SSEEvent) => {
-      // Generate a deterministic event ID for deduplication
-      // For streaming events, include accumulatedLength to differentiate chunks
-      const eventData = data as SSEEvent & {
-        turnId?: string
-        timestamp?: string
-        accumulatedLength?: number
-      }
-      let eventId: string
-      if (eventType === 'turn_streaming' && eventData.accumulatedLength !== undefined) {
-        // For streaming events, include accumulatedLength to make each chunk unique
-        eventId = `${eventData.timestamp ?? Date.now()}-${eventType}-${eventData.turnId}-${eventData.accumulatedLength}`
-      } else {
-        eventId = `${eventData.timestamp ?? Date.now()}-${eventType}-${eventData.turnId ?? 'no-turn'}`
-      }
-      onEvent({ ...data, _eventId: eventId })
+      onEvent(data)
     })
   }
 

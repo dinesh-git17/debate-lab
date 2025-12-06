@@ -18,7 +18,7 @@ interface DebateViewActions {
 
   addMessage: (message: DebateMessage) => void
   updateMessage: (id: string, updates: Partial<DebateMessage>) => void
-  appendToMessage: (id: string, chunk: string, expectedPosition?: number) => void
+  appendToMessage: (id: string, chunk: string) => void
   completeMessage: (id: string, finalContent: string, tokenCount: number) => void
 
   // Hydrate store with messages from server (for page reload/navigation back)
@@ -38,8 +38,6 @@ interface DebateViewActions {
 interface ExtendedDebateViewState extends DebateViewState {
   // Set of message IDs that have finished displaying (animation complete)
   displayedMessageIds: Set<string>
-  // Track content length per message to detect duplicate appends
-  messageContentLengths: Map<string, number>
 }
 
 type DebateViewStore = ExtendedDebateViewState & DebateViewActions
@@ -59,7 +57,6 @@ const initialState: ExtendedDebateViewState = {
   connection: 'disconnected',
   error: null,
   displayedMessageIds: new Set(),
-  messageContentLengths: new Map(),
 }
 
 export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
@@ -86,12 +83,8 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
         console.log('[Store] addMessage: duplicate ignored', message.id)
         return state
       }
-      // Initialize content length tracking for this message
-      const newLengths = new Map(state.messageContentLengths)
-      newLengths.set(message.id, message.content.length)
       return {
         messages: [...state.messages, message],
-        messageContentLengths: newLengths,
       }
     }),
 
@@ -100,64 +93,17 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
       messages: state.messages.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)),
     })),
 
-  appendToMessage: (id, chunk, expectedPosition) =>
+  // Event ordering is guaranteed by EventSynchronizer - simple append
+  appendToMessage: (id: string, chunk: string) =>
     set((state) => {
       const message = state.messages.find((m) => m.id === id)
       if (!message) return state
 
-      const currentLength = message.content.length
-
-      // If expectedPosition is provided, use it for precise duplicate detection
-      if (expectedPosition !== undefined) {
-        if (currentLength > expectedPosition) {
-          // We already have content past this position - this is a duplicate chunk
-          // eslint-disable-next-line no-console
-          console.log('[Store] appendToMessage: skipping duplicate chunk', {
-            id,
-            currentLength,
-            expectedPosition,
-            chunkLength: chunk.length,
-          })
-          return state
-        }
-
-        if (currentLength < expectedPosition) {
-          // We're missing some content - log warning but continue
-          // This can happen if chunks arrive out of order
-          // eslint-disable-next-line no-console
-          console.warn('[Store] appendToMessage: gap detected, missing content', {
-            id,
-            currentLength,
-            expectedPosition,
-            gap: expectedPosition - currentLength,
-          })
-          // Still append - better to have some content than get stuck
-        }
-        // If currentLength === expectedPosition, this chunk is exactly where we expect it
-      } else {
-        // Fallback: legacy duplicate detection when expectedPosition not provided
-        const trackedLength = state.messageContentLengths.get(id) ?? 0
-        if (currentLength > trackedLength + chunk.length) {
-          // eslint-disable-next-line no-console
-          console.log('[Store] appendToMessage: skipping likely duplicate (legacy)', {
-            id,
-            currentLength,
-            trackedLength,
-            chunkLength: chunk.length,
-          })
-          return state
-        }
-      }
-
       const newContent = message.content + chunk
-      const newLengths = new Map(state.messageContentLengths)
-      newLengths.set(id, newContent.length)
-
       return {
         messages: state.messages.map((msg) =>
           msg.id === id ? { ...msg, content: newContent } : msg
         ),
-        messageContentLengths: newLengths,
       }
     }),
 
@@ -224,6 +170,5 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
     set({
       ...initialState,
       displayedMessageIds: new Set(),
-      messageContentLengths: new Map(),
     }),
 }))

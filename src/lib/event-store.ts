@@ -477,3 +477,34 @@ export async function getLastEventId(debateId: string): Promise<string | null> {
 export function clearAllEventStores(): void {
   memoryStore.clear()
 }
+
+/**
+ * Get events after a specific sequence number.
+ * Used by clients for initial sync and gap filling.
+ * Events are filtered by their seq field (included in event data).
+ */
+export async function getEventsAfterSeq(
+  debateId: string,
+  afterSeq: number,
+  limit: number = 100
+): Promise<StoredEvent[]> {
+  // Get all events and filter by seq
+  const allEvents = await getAllEvents(debateId)
+
+  // Filter to events with seq > afterSeq
+  const filtered = allEvents
+    .filter(({ event }) => {
+      // Handle events that may not have seq (backwards compatibility)
+      const eventSeq = (event as SSEEvent & { seq?: number }).seq
+      return eventSeq !== undefined && eventSeq > afterSeq
+    })
+    .sort((a, b) => {
+      // Sort by seq to ensure proper ordering
+      const seqA = (a.event as SSEEvent & { seq?: number }).seq ?? 0
+      const seqB = (b.event as SSEEvent & { seq?: number }).seq ?? 0
+      return seqA - seqB
+    })
+    .slice(0, limit)
+
+  return filtered
+}
