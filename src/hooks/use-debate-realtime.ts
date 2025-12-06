@@ -73,6 +73,7 @@ async function fetchAndApplyMissedEvents(
     const data = (await response.json()) as { events: Array<{ id: string; event: SSEEvent }> }
 
     if (data.events && data.events.length > 0) {
+      clientLogger.debug('Fetched events', { count: data.events.length, debateId })
       for (const { event } of data.events) {
         applyEvent(event)
       }

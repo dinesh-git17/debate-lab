@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 
 import { getAllEvents, getEventsSince, getEventsAfterTimestamp } from '@/lib/event-store'
 import { isValidDebateId } from '@/lib/id-generator'
+import { logger } from '@/lib/logging'
 import { getSession } from '@/lib/session-store'
 
 import type { SSEEvent } from '@/types/execution'
@@ -54,18 +55,27 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   try {
     let storedEvents: StoredEventResponse[]
 
+    logger.debug('Fetching events', { debateId, sinceId, afterTimestamp })
+
     if (sinceId) {
       // Fetch events since a specific event ID
       const events = await getEventsSince(debateId, sinceId)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
+      logger.debug('Fetched events since ID', { debateId, sinceId, count: storedEvents.length })
     } else if (afterTimestamp) {
       // Fetch events after a specific timestamp
       const events = await getEventsAfterTimestamp(debateId, afterTimestamp)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
+      logger.debug('Fetched events after timestamp', {
+        debateId,
+        afterTimestamp,
+        count: storedEvents.length,
+      })
     } else {
       // Fetch all events
       const events = await getAllEvents(debateId)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
+      logger.debug('Fetched all events', { debateId, count: storedEvents.length })
     }
 
     const lastEvent = storedEvents.length > 0 ? storedEvents[storedEvents.length - 1] : null
@@ -77,8 +87,7 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
     return NextResponse.json(response)
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to fetch events:', error)
+    logger.error('Failed to fetch events', error instanceof Error ? error : null, { debateId })
     return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 })
   }
 }

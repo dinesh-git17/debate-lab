@@ -44,26 +44,50 @@ export interface StoredEvent {
 }
 
 /**
- * Redis stream entry type from xrange/xrevrange
- */
-type RedisStreamEntry = {
-  id: string
-  type: string
-  data: string
-}
-
-/**
  * Parse Redis stream entries to StoredEvent array.
+ * Handles various formats that Upstash Redis might return.
  */
-function parseStreamEntries(entries: RedisStreamEntry[] | null): StoredEvent[] {
-  if (!entries || !Array.isArray(entries)) {
+function parseStreamEntries(entries: unknown): StoredEvent[] {
+  if (!entries) {
     return []
   }
 
-  return entries.map((entry) => ({
-    id: entry.id,
-    event: JSON.parse(entry.data) as SSEEvent,
-  }))
+  if (!Array.isArray(entries)) {
+    logger.warn('Redis stream entries is not an array', { type: typeof entries })
+    return []
+  }
+
+  const results: StoredEvent[] = []
+
+  for (const entry of entries) {
+    try {
+      // Upstash Redis returns entries as { id: string, ...fields }
+      if (entry && typeof entry === 'object' && 'id' in entry) {
+        const entryObj = entry as Record<string, unknown>
+        const id = String(entryObj.id)
+        const data = entryObj.data
+
+        if (typeof data === 'string') {
+          results.push({
+            id,
+            event: JSON.parse(data) as SSEEvent,
+          })
+        } else {
+          logger.warn('Redis stream entry missing data field', { id, entry: JSON.stringify(entry) })
+        }
+      } else {
+        logger.warn('Redis stream entry has unexpected format', {
+          entry: JSON.stringify(entry),
+        })
+      }
+    } catch (error) {
+      logger.error('Failed to parse Redis stream entry', error instanceof Error ? error : null, {
+        entry: JSON.stringify(entry),
+      })
+    }
+  }
+
+  return results
 }
 
 /**
@@ -87,6 +111,12 @@ export async function appendEvent(debateId: string, event: SSEEvent): Promise<st
       // Set TTL on the stream if it's a new stream
       // Use EXPIRE to ensure cleanup after 24 hours
       await redis.expire(streamKey, EVENT_TTL_SECONDS)
+
+      logger.debug('Event appended to Redis Stream', {
+        debateId,
+        eventType: event.type,
+        eventId,
+      })
 
       return eventId
     } catch (error) {
@@ -120,11 +150,17 @@ export async function getAllEvents(debateId: string): Promise<StoredEvent[]> {
       const streamKey = `${REDIS_STREAM_PREFIX}${debateId}`
 
       // XRANGE to get all events from beginning to end
-      const entries = (await redis.xrange(streamKey, '-', '+')) as unknown as
-        | RedisStreamEntry[]
-        | null
+      const entries = await redis.xrange(streamKey, '-', '+')
 
-      return parseStreamEntries(entries)
+      const parsed = parseStreamEntries(entries)
+
+      logger.debug('Fetched events from Redis Stream', {
+        debateId,
+        rawCount: Array.isArray(entries) ? entries.length : 0,
+        parsedCount: parsed.length,
+      })
+
+      return parsed
     } catch (error) {
       logger.error(
         'Failed to get events from Redis Stream',
@@ -158,9 +194,7 @@ export async function getEventsSince(debateId: string, sinceId: string): Promise
 
       // XRANGE from (sinceId, +inf]
       // We use the exclusive range by using (sinceId
-      const entries = (await redis.xrange(streamKey, `(${sinceId}`, '+')) as unknown as
-        | RedisStreamEntry[]
-        | null
+      const entries = await redis.xrange(streamKey, `(${sinceId}`, '+')
 
       return parseStreamEntries(entries)
     } catch (error) {
@@ -220,9 +254,7 @@ export async function getLastEvents(debateId: string, count: number): Promise<St
       const streamKey = `${REDIS_STREAM_PREFIX}${debateId}`
 
       // XREVRANGE to get last N events (in reverse order)
-      const entries = (await redis.xrevrange(streamKey, '+', '-', count)) as unknown as
-        | RedisStreamEntry[]
-        | null
+      const entries = await redis.xrevrange(streamKey, '+', '-', count)
 
       // Reverse back to chronological order
       const parsed = parseStreamEntries(entries)
