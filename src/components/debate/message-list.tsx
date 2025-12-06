@@ -2,6 +2,7 @@
 
 'use client'
 
+import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { clientLogger } from '@/lib/client-logger'
@@ -75,16 +76,25 @@ function EmptyState() {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center">
-      {/* Spotlight - depth behind text */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[800px]"
+      {/* God Ray - breathing spotlight */}
+      <motion.div
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1000px] w-[1000px] -translate-x-1/2 -translate-y-1/2"
         style={{
           background:
-            'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 60%)',
+            'radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 50%)',
+        }}
+        animate={{
+          scale: [1, 1.1, 1],
+          opacity: [1, 1.3, 1],
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: 'easeInOut',
         }}
       />
 
-      {/* Title */}
+      {/* Title - metallic gradient */}
       <h1
         className="text-center text-5xl font-semibold tracking-tighter md:text-7xl bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}
@@ -92,16 +102,17 @@ function EmptyState() {
         {sanitizeTopic(topic)}
       </h1>
 
-      {/* Metadata Pills */}
+      {/* Metadata - cut glass pills */}
       <div className="mt-6 flex gap-3">
         <div
           className={cn(
             'flex h-8 items-center justify-center rounded-full px-4',
             'bg-white/[0.03]',
+            'backdrop-blur-md',
             'text-xs font-medium uppercase tracking-wide text-zinc-400'
           )}
           style={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
             borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
             borderRight: '1px solid rgba(255, 255, 255, 0.06)',
@@ -113,10 +124,11 @@ function EmptyState() {
           className={cn(
             'flex h-8 items-center justify-center rounded-full px-4',
             'bg-white/[0.03]',
+            'backdrop-blur-md',
             'text-xs font-medium uppercase tracking-wide text-zinc-400'
           )}
           style={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
             borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
             borderRight: '1px solid rgba(255, 255, 255, 0.06)',
@@ -126,19 +138,19 @@ function EmptyState() {
         </div>
       </div>
 
-      {/* CTA */}
+      {/* CTA - bloom glow */}
       <button
         onClick={handleStart}
         disabled={isLoading}
         className={cn(
           'mt-10 rounded-full bg-white px-8 py-4',
           'text-sm font-semibold text-black',
-          // Radioactive halo - wide diffuse glow
-          'shadow-[0_0_80px_-10px_rgba(255,255,255,0.3)]',
+          // Bloom - button emits light
+          'shadow-[0_0_60px_-15px_rgba(255,255,255,0.3)]',
           // Transitions
           'transition-all duration-300 ease-out',
-          // Hover: subtle scale + increased glow
-          'hover:scale-[1.02] hover:shadow-[0_0_100px_-10px_rgba(255,255,255,0.5)]',
+          // Hover: subtle scale + increased bloom
+          'hover:scale-[1.02] hover:shadow-[0_0_80px_-15px_rgba(255,255,255,0.5)]',
           // Disabled state
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none'
         )}
