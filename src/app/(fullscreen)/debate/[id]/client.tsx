@@ -2,6 +2,7 @@
 
 'use client'
 
+import { motion } from 'framer-motion'
 import { useEffect, useRef, useCallback } from 'react'
 
 import { DebateHeader } from '@/components/debate/debate-header'
@@ -191,9 +192,14 @@ export function DebatePageClient({
         <MessageList autoScroll className="h-full" />
 
         {/* Shortcuts help - bottom right */}
-        <div className="absolute bottom-4 right-4 z-10">
+        <motion.div
+          className="absolute bottom-4 right-4 z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.8, ease: 'easeOut' }}
+        >
           <ShortcutsHelp />
-        </div>
+        </motion.div>
       </main>
 
       {/* Floating controls */}

@@ -2,6 +2,7 @@
 
 'use client'
 
+import { motion } from 'framer-motion'
 import { Home, Plus } from 'lucide-react'
 import Link from 'next/link'
 
@@ -27,7 +28,7 @@ export function DebateHeader({ className }: DebateHeaderProps) {
   const statusLabel = STATUS_LABELS[status] ?? status
 
   return (
-    <header
+    <motion.header
       className={cn(
         'relative h-16',
         'bg-[#0A0A0A]/60',
@@ -36,6 +37,9 @@ export function DebateHeader({ className }: DebateHeaderProps) {
         'z-50',
         className
       )}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, delay: 0.8, ease: 'easeOut' }}
     >
       {/* Nav row */}
       <div className="relative mx-auto flex h-full max-w-5xl items-center justify-between px-6 md:px-8">
@@ -68,6 +72,6 @@ export function DebateHeader({ className }: DebateHeaderProps) {
           <span>New</span>
         </Link>
       </div>
-    </header>
+    </motion.header>
   )
 }

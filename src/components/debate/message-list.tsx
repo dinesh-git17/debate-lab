@@ -76,35 +76,48 @@ function EmptyState() {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center">
-      {/* God Ray - ambient spotlight */}
+      {/* God Ray - entrance fade + heartbeat */}
       <motion.div
         className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1800px] w-[1800px] -translate-x-1/2 -translate-y-1/2"
         style={{
           background:
             'radial-gradient(circle at center, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.015) 30%, rgba(255, 255, 255, 0) 70%)',
         }}
+        initial={{ opacity: 0, scale: 1 }}
         animate={{
+          opacity: 1,
           scale: [1, 1.03, 1],
-          opacity: [1, 1.1, 1],
         }}
         transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: [0.4, 0, 0.6, 1],
+          opacity: { duration: 1.2, ease: 'easeOut' },
+          scale: {
+            duration: 8,
+            repeat: Infinity,
+            ease: [0.4, 0, 0.6, 1],
+            delay: 1.2,
+          },
         }}
       />
 
-      {/* Title - metallic gradient */}
-      <h1
+      {/* Title - blur-in effect */}
+      <motion.h1
         className="text-center text-5xl font-semibold tracking-tighter md:text-7xl bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}
+        initial={{ opacity: 0, y: 20, filter: 'blur(12px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
       >
         {sanitizeTopic(topic)}
-      </h1>
+      </motion.h1>
 
-      {/* Metadata - cut glass pills */}
-      <div className="mt-6 flex gap-3">
-        <div
+      {/* Metadata - spring waterfall pills */}
+      <motion.div
+        className="mt-6 flex gap-3"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <motion.div
           className={cn(
             'flex h-8 items-center justify-center rounded-full px-4',
             'bg-white/[0.03]',
@@ -116,11 +129,19 @@ function EmptyState() {
             borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
             borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
             borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: 0.4,
+            type: 'spring',
+            stiffness: 100,
+            damping: 20,
           }}
         >
           {formatDisplayName}
-        </div>
-        <div
+        </motion.div>
+        <motion.div
           className={cn(
             'flex h-8 items-center justify-center rounded-full px-4',
             'bg-white/[0.03]',
@@ -133,36 +154,52 @@ function EmptyState() {
             borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
             borderRight: '1px solid rgba(255, 255, 255, 0.06)',
           }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: 0.5,
+            type: 'spring',
+            stiffness: 100,
+            damping: 20,
+          }}
         >
           2 Agents
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      {/* CTA - ambient glow */}
-      <div className="relative mt-10">
-        {/* Static glow layer - doesn't transition */}
+      {/* CTA - spring scale entrance */}
+      <motion.div
+        className="relative mt-10"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{
+          delay: 0.6,
+          type: 'spring',
+          stiffness: 200,
+          damping: 15,
+        }}
+      >
+        {/* Static glow layer */}
         <div
           className="absolute inset-0 rounded-full"
           style={{
             boxShadow: '0 0 120px -20px rgba(255, 255, 255, 0.25)',
           }}
         />
-        <button
+        <motion.button
           onClick={handleStart}
           disabled={isLoading}
           className={cn(
             'relative rounded-full bg-white px-8 py-4',
             'text-sm font-semibold text-black',
-            // Smooth scale transition only
-            'transition-transform duration-300 ease-out',
-            'hover:scale-[1.02]',
-            // Disabled state
-            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
+            'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           {isLoading ? 'Starting...' : 'Start Debate'}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </div>
   )
 }
