@@ -52,42 +52,122 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
     return []
   }
 
-  if (!Array.isArray(entries)) {
-    logger.warn('Redis stream entries is not an array', { type: typeof entries })
-    return []
-  }
+  logger.debug('parseStreamEntries input', {
+    type: typeof entries,
+    isArray: Array.isArray(entries),
+    sample: JSON.stringify(entries).slice(0, 500),
+  })
 
   const results: StoredEvent[] = []
 
-  for (const entry of entries) {
-    try {
-      // Upstash Redis returns entries as { id: string, ...fields }
-      if (entry && typeof entry === 'object' && 'id' in entry) {
-        const entryObj = entry as Record<string, unknown>
-        const id = String(entryObj.id)
-        const data = entryObj.data
-
-        if (typeof data === 'string') {
-          results.push({
-            id,
-            event: JSON.parse(data) as SSEEvent,
-          })
-        } else {
-          logger.warn('Redis stream entry missing data field', { id, entry: JSON.stringify(entry) })
-        }
-      } else {
-        logger.warn('Redis stream entry has unexpected format', {
-          entry: JSON.stringify(entry),
-        })
-      }
-    } catch (error) {
-      logger.error('Failed to parse Redis stream entry', error instanceof Error ? error : null, {
-        entry: JSON.stringify(entry),
-      })
+  // Handle array format (expected from XRANGE)
+  if (Array.isArray(entries)) {
+    for (const entry of entries) {
+      const parsed = parseSingleEntry(entry)
+      if (parsed) results.push(parsed)
     }
+    return results
   }
 
+  // Handle object format - Upstash might return { id: fields } or similar
+  if (typeof entries === 'object' && entries !== null) {
+    const entriesObj = entries as Record<string, unknown>
+
+    // Check if it's a single entry with 'id' field
+    if ('id' in entriesObj) {
+      const parsed = parseSingleEntry(entriesObj)
+      if (parsed) results.push(parsed)
+      return results
+    }
+
+    // Check if it's a map of id -> fields
+    for (const [key, value] of Object.entries(entriesObj)) {
+      if (typeof value === 'object' && value !== null) {
+        const valueObj = value as Record<string, unknown>
+        // Try to parse as { data: string } format
+        if ('data' in valueObj && typeof valueObj.data === 'string') {
+          try {
+            results.push({
+              id: key,
+              event: JSON.parse(valueObj.data) as SSEEvent,
+            })
+          } catch (e) {
+            logger.warn('Failed to parse entry data', { key, error: String(e) })
+          }
+        }
+      }
+    }
+
+    if (results.length > 0) return results
+
+    logger.warn('Could not parse Redis stream entries object', {
+      keys: Object.keys(entriesObj).slice(0, 5),
+    })
+  }
+
+  logger.warn('Redis stream entries has unexpected format', { type: typeof entries })
   return results
+}
+
+/**
+ * Parse a single stream entry in various possible formats.
+ */
+function parseSingleEntry(entry: unknown): StoredEvent | null {
+  if (!entry || typeof entry !== 'object') return null
+
+  try {
+    const entryObj = entry as Record<string, unknown>
+
+    // Format 1: { id: string, data: string }
+    if ('id' in entryObj && 'data' in entryObj) {
+      const id = String(entryObj.id)
+      const data = entryObj.data
+
+      if (typeof data === 'string') {
+        return {
+          id,
+          event: JSON.parse(data) as SSEEvent,
+        }
+      }
+    }
+
+    // Format 2: [id, [field1, value1, field2, value2, ...]] (raw Redis format)
+    if (Array.isArray(entry) && entry.length === 2) {
+      const [id, fields] = entry
+      if (typeof id === 'string' && Array.isArray(fields)) {
+        // Find 'data' field in the array
+        for (let i = 0; i < fields.length - 1; i += 2) {
+          if (fields[i] === 'data' && typeof fields[i + 1] === 'string') {
+            return {
+              id,
+              event: JSON.parse(fields[i + 1]) as SSEEvent,
+            }
+          }
+        }
+      }
+    }
+
+    // Format 3: { id: string, fieldName: value, ... } where we need to find data
+    if ('id' in entryObj) {
+      const id = String(entryObj.id)
+      for (const [key, value] of Object.entries(entryObj)) {
+        if (key === 'data' && typeof value === 'string') {
+          return {
+            id,
+            event: JSON.parse(value) as SSEEvent,
+          }
+        }
+      }
+    }
+
+    logger.debug('Could not parse single entry', { entry: JSON.stringify(entry).slice(0, 200) })
+  } catch (error) {
+    logger.error('Failed to parse Redis stream entry', error instanceof Error ? error : null, {
+      entry: JSON.stringify(entry).slice(0, 200),
+    })
+  }
+
+  return null
 }
 
 /**
