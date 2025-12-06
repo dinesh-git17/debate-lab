@@ -38,6 +38,8 @@ interface DebateViewActions {
 interface ExtendedDebateViewState extends DebateViewState {
   // Set of message IDs that have finished displaying (animation complete)
   displayedMessageIds: Set<string>
+  // Track content length per message to detect duplicate appends
+  messageContentLengths: Map<string, number>
 }
 
 type DebateViewStore = ExtendedDebateViewState & DebateViewActions
@@ -57,6 +59,7 @@ const initialState: ExtendedDebateViewState = {
   connection: 'disconnected',
   error: null,
   displayedMessageIds: new Set(),
+  messageContentLengths: new Map(),
 }
 
 export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
@@ -83,7 +86,13 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
         console.log('[Store] addMessage: duplicate ignored', message.id)
         return state
       }
-      return { messages: [...state.messages, message] }
+      // Initialize content length tracking for this message
+      const newLengths = new Map(state.messageContentLengths)
+      newLengths.set(message.id, message.content.length)
+      return {
+        messages: [...state.messages, message],
+        messageContentLengths: newLengths,
+      }
     }),
 
   updateMessage: (id, updates) =>
@@ -92,11 +101,37 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
     })),
 
   appendToMessage: (id, chunk) =>
-    set((state) => ({
-      messages: state.messages.map((msg) =>
-        msg.id === id ? { ...msg, content: msg.content + chunk } : msg
-      ),
-    })),
+    set((state) => {
+      const message = state.messages.find((m) => m.id === id)
+      if (!message) return state
+
+      const expectedLength = state.messageContentLengths.get(id) ?? 0
+      const currentLength = message.content.length
+
+      // Detect if content was already updated (duplicate event)
+      // If current length is significantly ahead of expected, this is likely a duplicate
+      if (currentLength > expectedLength + chunk.length) {
+        // eslint-disable-next-line no-console
+        console.log('[Store] appendToMessage: skipping likely duplicate', {
+          id,
+          currentLength,
+          expectedLength,
+          chunkLength: chunk.length,
+        })
+        return state
+      }
+
+      const newContent = message.content + chunk
+      const newLengths = new Map(state.messageContentLengths)
+      newLengths.set(id, newContent.length)
+
+      return {
+        messages: state.messages.map((msg) =>
+          msg.id === id ? { ...msg, content: newContent } : msg
+        ),
+        messageContentLengths: newLengths,
+      }
+    }),
 
   completeMessage: (id, finalContent, tokenCount) =>
     set((state) => ({
@@ -157,5 +192,10 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
 
   setCurrentTurn: (turnId) => set({ currentTurnId: turnId }),
 
-  reset: () => set({ ...initialState, displayedMessageIds: new Set() }),
+  reset: () =>
+    set({
+      ...initialState,
+      displayedMessageIds: new Set(),
+      messageContentLengths: new Map(),
+    }),
 }))

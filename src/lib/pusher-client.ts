@@ -70,9 +70,14 @@ export type PusherConnectionState =
   | 'disconnected'
 
 /**
+ * Extended SSE event with deduplication ID
+ */
+export type SSEEventWithId = SSEEvent & { _eventId?: string }
+
+/**
  * Event handler type for debate events
  */
-export type DebateEventHandler = (event: SSEEvent) => void
+export type DebateEventHandler = (event: SSEEventWithId) => void
 
 /**
  * Subscribe to a debate channel.
@@ -119,7 +124,11 @@ export function subscribeToDebate(
   // Bind to all event types
   for (const eventType of eventTypes) {
     channel.bind(eventType, (data: SSEEvent) => {
-      onEvent(data)
+      // Generate a deterministic event ID for deduplication
+      // Uses timestamp + type + turnId to create a unique identifier
+      const eventData = data as SSEEvent & { turnId?: string; timestamp?: string }
+      const eventId = `${eventData.timestamp ?? Date.now()}-${eventType}-${eventData.turnId ?? 'no-turn'}`
+      onEvent({ ...data, _eventId: eventId })
     })
   }
 

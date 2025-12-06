@@ -10,6 +10,7 @@ import {
   isPusherClientConfigured,
   subscribeToDebate,
   type PusherConnectionState,
+  type SSEEventWithId,
 } from '@/lib/pusher-client'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
@@ -43,6 +44,7 @@ interface SSEMessageData {
   totalTurns?: number
   percentComplete?: number
   reason?: string
+  _eventId?: string
   [key: string]: unknown
 }
 
@@ -132,9 +134,21 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
   }, [])
 
   // Apply a single event to the store
-  const applyEvent = useCallback((event: SSEEvent) => {
+  const applyEvent = useCallback((event: SSEEvent | SSEEventWithId) => {
     const data = event as SSEMessageData
     const store = useDebateViewStore.getState()
+
+    // UNIFIED DEDUPLICATION: Check if we've already processed this event
+    // Works for both Pusher events (with _eventId) and Redis events (checked earlier)
+    const eventId = data._eventId ?? `${data.timestamp}-${data.type}-${data.turnId ?? 'no-turn'}`
+    if (appliedEventIdsRef.current.has(eventId)) {
+      clientLogger.debug('Skipping duplicate event (unified check)', {
+        eventId,
+        type: data.type,
+      })
+      return
+    }
+    appliedEventIdsRef.current.add(eventId)
 
     // Skip events if debate is already completed (prevents replay)
     if (store.status === 'completed' && data.type !== 'debate_completed') {
@@ -191,7 +205,21 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
 
       case 'turn_completed':
         if (data.turnId) {
-          store.completeMessage(data.turnId, data.content ?? '', data.tokenCount ?? 0)
+          // DON'T replace content if it matches - prevents visual flash
+          const existingMessage = store.messages.find((m) => m.id === data.turnId)
+          const finalContent = data.content ?? ''
+
+          // Only update content if different (handles edge cases)
+          if (existingMessage?.content !== finalContent) {
+            store.completeMessage(data.turnId, finalContent, data.tokenCount ?? 0)
+          } else {
+            // Just mark as complete without replacing content
+            store.updateMessage(data.turnId, {
+              isStreaming: false,
+              isComplete: true,
+              tokenCount: data.tokenCount ?? 0,
+            })
+          }
           store.setCurrentTurn(null)
         }
         break
