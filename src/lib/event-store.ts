@@ -82,17 +82,42 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
 
     // Check if it's a map of id -> fields
     for (const [key, value] of Object.entries(entriesObj)) {
-      if (typeof value === 'object' && value !== null) {
+      logger.debug('Processing entry', {
+        key,
+        valueType: typeof value,
+        valueIsArray: Array.isArray(value),
+        valueSample: JSON.stringify(value).slice(0, 300),
+      })
+
+      // Format: { "stream-id": { type: "...", data: "..." } }
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         const valueObj = value as Record<string, unknown>
-        // Try to parse as { data: string } format
         if ('data' in valueObj && typeof valueObj.data === 'string') {
           try {
             results.push({
               id: key,
               event: JSON.parse(valueObj.data) as SSEEvent,
             })
+            continue
           } catch (e) {
             logger.warn('Failed to parse entry data', { key, error: String(e) })
+          }
+        }
+      }
+
+      // Format: { "stream-id": ["field1", "value1", "field2", "value2"] }
+      if (Array.isArray(value)) {
+        for (let i = 0; i < value.length - 1; i += 2) {
+          if (value[i] === 'data' && typeof value[i + 1] === 'string') {
+            try {
+              results.push({
+                id: key,
+                event: JSON.parse(value[i + 1]) as SSEEvent,
+              })
+            } catch (e) {
+              logger.warn('Failed to parse array entry data', { key, error: String(e) })
+            }
+            break
           }
         }
       }
@@ -102,6 +127,7 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
 
     logger.warn('Could not parse Redis stream entries object', {
       keys: Object.keys(entriesObj).slice(0, 5),
+      firstValue: JSON.stringify(Object.values(entriesObj)[0]).slice(0, 500),
     })
   }
 
