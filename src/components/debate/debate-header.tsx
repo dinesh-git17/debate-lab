@@ -61,7 +61,7 @@ export function DebateHeader({ className }: DebateHeaderProps) {
 
         {/* Right: New debate action */}
         <Link
-          href="/debates/new"
+          href="/debate/new"
           className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-white"
         >
           <Plus className="h-4 w-4" />
