@@ -52,6 +52,7 @@ export function DebatePageClient({
   initialStatus,
 }: DebatePageClientProps) {
   const { setDebateInfo, setStatus, setProgress, hydrateMessages, reset } = useDebateViewStore()
+  const status = useDebateViewStore((s) => s.status)
   const hasAutoStarted = useRef(false)
   const hasHydrated = useRef(false)
   const previousDebateId = useRef<string | null>(null)
@@ -205,10 +206,12 @@ export function DebatePageClient({
         </motion.div>
       </main>
 
-      {/* Floating controls */}
-      <div className="relative z-10">
-        <FloatingControls debateId={debateId} />
-      </div>
+      {/* Floating controls - only visible during active debate or completed */}
+      {(status === 'active' || status === 'paused' || status === 'completed') && (
+        <div className="relative z-10">
+          <FloatingControls debateId={debateId} />
+        </div>
+      )}
 
       <div className="safe-area-inset-bottom" />
     </motion.div>

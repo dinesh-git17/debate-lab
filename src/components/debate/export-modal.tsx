@@ -3,8 +3,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import type { ExportFormat, ExportConfig } from '@/types/export'
@@ -20,6 +20,12 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
   const [includeTimestamps, setIncludeTimestamps] = useState(true)
   const [includeTokenCounts, setIncludeTokenCounts] = useState(false)
   const [includeModeratorTurns, setIncludeModeratorTurns] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  // Ensure we only render portal on client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -39,7 +45,7 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
     }
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleExport = () => {
     onExport({
@@ -76,37 +82,44 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
     },
   ]
 
-  return (
+  // Render via portal to escape parent positioning context
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[100] flex items-center justify-center"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      {/* Backdrop - strong blur to lock background */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
 
-      {/* Modal */}
-      <div className="animate-scale-in relative z-10 mx-4 w-full max-w-lg rounded-xl border bg-card shadow-xl">
+      {/* Modal - dark glass styling */}
+      <div
+        className={cn(
+          'animate-scale-in relative z-10 mx-4 w-full max-w-lg',
+          'rounded-2xl overflow-hidden',
+          'bg-[#0a0a0b]/95 backdrop-blur-2xl',
+          'border border-white/[0.08]',
+          'shadow-[0_24px_80px_rgba(0,0,0,0.6)]'
+        )}
+      >
         <div className="p-6">
           {/* Header */}
-          <h2 className="mb-1 text-lg font-semibold">Export Transcript</h2>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Choose format and options for your export
-          </p>
+          <h2 className="mb-1 text-lg font-semibold text-white">Export Transcript</h2>
+          <p className="mb-6 text-sm text-zinc-400">Choose format and options for your export</p>
 
           {/* Format selection */}
           <div className="mb-6">
-            <label className="mb-3 block text-sm font-medium">Format</label>
+            <label className="mb-3 block text-sm font-medium text-zinc-300">Format</label>
             <div className="space-y-2">
               {formatOptions.map((option) => (
                 <label
                   key={option.value}
                   className={cn(
-                    'flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors',
+                    'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all',
                     format === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-white/20 bg-white/[0.06]'
+                      : 'border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]'
                   )}
                 >
                   <input
@@ -115,11 +128,11 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
                     value={option.value}
                     checked={format === option.value}
                     onChange={(e) => setFormat(e.target.value as ExportFormat)}
-                    className="mt-1"
+                    className="mt-1 accent-white"
                   />
                   <div>
-                    <div className="font-medium">{option.label}</div>
-                    <div className="text-xs text-muted-foreground">{option.description}</div>
+                    <div className="font-medium text-zinc-100">{option.label}</div>
+                    <div className="text-xs text-zinc-500">{option.description}</div>
                   </div>
                 </label>
               ))}
@@ -128,47 +141,67 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
 
           {/* Options */}
           <div className="mb-6">
-            <label className="mb-3 block text-sm font-medium">Options</label>
+            <label className="mb-3 block text-sm font-medium text-zinc-300">Options</label>
             <div className="space-y-3">
               <label className="flex cursor-pointer items-center gap-3">
                 <input
                   type="checkbox"
                   checked={includeModeratorTurns}
                   onChange={(e) => setIncludeModeratorTurns(e.target.checked)}
-                  className="rounded"
+                  className="rounded accent-white"
                 />
-                <span className="text-sm">Include moderator messages</span>
+                <span className="text-sm text-zinc-300">Include moderator messages</span>
               </label>
               <label className="flex cursor-pointer items-center gap-3">
                 <input
                   type="checkbox"
                   checked={includeTimestamps}
                   onChange={(e) => setIncludeTimestamps(e.target.checked)}
-                  className="rounded"
+                  className="rounded accent-white"
                 />
-                <span className="text-sm">Include timestamps</span>
+                <span className="text-sm text-zinc-300">Include timestamps</span>
               </label>
               <label className="flex cursor-pointer items-center gap-3">
                 <input
                   type="checkbox"
                   checked={includeTokenCounts}
                   onChange={(e) => setIncludeTokenCounts(e.target.checked)}
-                  className="rounded"
+                  className="rounded accent-white"
                 />
-                <span className="text-sm">Include token counts</span>
+                <span className="text-sm text-zinc-300">Include token counts</span>
               </label>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium',
+                'text-zinc-400 hover:text-zinc-200',
+                'hover:bg-white/[0.06]',
+                'transition-all duration-150'
+              )}
+            >
               Cancel
-            </Button>
-            <Button onClick={handleExport}>Export</Button>
+            </button>
+            <button
+              onClick={handleExport}
+              className={cn(
+                'px-5 py-2 rounded-full text-sm font-medium',
+                'bg-white text-black',
+                'hover:bg-zinc-200',
+                'transition-all duration-150',
+                'active:scale-95'
+              )}
+            >
+              Export
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

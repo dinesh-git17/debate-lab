@@ -1,5 +1,5 @@
 // src/app/layout.tsx
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Newsreader } from 'next/font/google'
 
 import { Providers } from '@/components/providers'
 
@@ -18,6 +18,14 @@ const geistMono = Geist_Mono({
   // Disable preloading since mono font is only used for code blocks
   // which aren't immediately visible on most pages
   preload: false,
+  display: 'swap',
+})
+
+const newsreader = Newsreader({
+  variable: '--font-newsreader',
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  style: ['normal', 'italic'],
   display: 'swap',
 })
 
@@ -44,7 +52,9 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

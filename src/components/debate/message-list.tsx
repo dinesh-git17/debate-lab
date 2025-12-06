@@ -371,24 +371,45 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={cn('scroll-smooth overflow-y-auto px-4 py-6', className)}
-      role="log"
-      aria-live="polite"
-      aria-label="Debate messages"
-    >
-      <div className="mx-auto max-w-4xl">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            showTimestamp={message.isComplete}
-            onAnimationComplete={() => handleAnimationComplete(message.id)}
-          />
-        ))}
+    <div className={cn('relative h-full', className)}>
+      {/* Bottom gradient mask - fades content into dock area */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24"
+        style={{
+          background:
+            'linear-gradient(to top, #0a0a0b 0%, rgba(10, 10, 11, 0.9) 40%, transparent 100%)',
+        }}
+        aria-hidden="true"
+      />
 
-        <div id="scroll-anchor" aria-hidden="true" />
+      <div
+        ref={containerRef}
+        className="scroll-smooth overflow-y-auto px-4 py-6 h-full"
+        role="log"
+        aria-live="polite"
+        aria-label="Debate messages"
+      >
+        <div className="relative mx-auto max-w-3xl">
+          {messages.map((message, index) => {
+            const isLastMessage = index === messages.length - 1
+            const isFirstMessage = index === 0
+            return (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                showTimestamp={message.isComplete}
+                onAnimationComplete={() => handleAnimationComplete(message.id)}
+                isActive={isLastMessage}
+                isFirst={isFirstMessage}
+              />
+            )
+          })}
+
+          {/* Safe zone padding for floating dock */}
+          <div className="h-24" aria-hidden="true" />
+
+          <div id="scroll-anchor" aria-hidden="true" />
+        </div>
       </div>
     </div>
   )

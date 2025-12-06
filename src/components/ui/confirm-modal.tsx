@@ -2,11 +2,10 @@
 
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import { cn } from '@/lib/utils'
-
-import { Button } from './button'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -33,6 +32,12 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
   const confirmButtonRef = useRef<HTMLButtonElement>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Ensure we only render portal on client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -54,7 +59,7 @@ export function ConfirmModal({
     }
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleConfirm = async () => {
     await onConfirm()
@@ -67,50 +72,73 @@ export function ConfirmModal({
     }
   }
 
-  return (
+  // Render via portal to escape parent positioning context
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[100] flex items-center justify-center"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      {/* Backdrop - strong blur to lock background */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
 
-      {/* Modal */}
+      {/* Modal - dark glass styling */}
       <div
         ref={modalRef}
         className={cn(
-          'relative z-10 mx-4 w-full max-w-md rounded-xl border bg-card shadow-xl',
-          'animate-scale-in'
+          'animate-scale-in relative z-10 mx-4 w-full max-w-md',
+          'rounded-2xl overflow-hidden',
+          'bg-[#0a0a0b]/95 backdrop-blur-2xl',
+          'border border-white/[0.08]',
+          'shadow-[0_24px_80px_rgba(0,0,0,0.6)]'
         )}
       >
         <div className="p-6">
           {/* Header */}
-          <h2 id="modal-title" className="mb-2 text-lg font-semibold">
+          <h2 id="modal-title" className="mb-2 text-lg font-semibold text-white">
             {title}
           </h2>
 
           {/* Description */}
-          <p className="mb-6 text-muted-foreground">{description}</p>
+          <p className="mb-6 text-zinc-400">{description}</p>
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium',
+                'text-zinc-400 hover:text-zinc-200',
+                'hover:bg-white/[0.06]',
+                'transition-all duration-150',
+                'disabled:opacity-50'
+              )}
+            >
               {cancelLabel}
-            </Button>
-            <Button
+            </button>
+            <button
               ref={confirmButtonRef}
-              variant={variant === 'destructive' ? 'destructive' : 'primary'}
               onClick={handleConfirm}
               disabled={isLoading}
+              className={cn(
+                'px-5 py-2 rounded-full text-sm font-medium',
+                'transition-all duration-150',
+                'active:scale-95',
+                'disabled:opacity-50',
+                variant === 'destructive'
+                  ? 'bg-rose-500 text-white hover:bg-rose-600'
+                  : 'bg-white text-black hover:bg-zinc-200'
+              )}
             >
               {isLoading ? 'Processing...' : confirmLabel}
-            </Button>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

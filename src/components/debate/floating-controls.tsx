@@ -2,43 +2,50 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 
 import { cn } from '@/lib/utils'
-import { useDebateViewStore } from '@/store/debate-view-store'
 
-import { DebateControls } from './debate-controls'
+import { CommandDock } from './command-dock'
 
 interface FloatingControlsProps {
   debateId: string
 }
 
 export function FloatingControls({ debateId }: FloatingControlsProps) {
-  const status = useDebateViewStore((s) => s.status)
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsVisible(window.scrollY > 200)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  const shouldShow = isVisible || status === 'active' || status === 'paused'
-
-  if (!shouldShow) return null
-
   return (
-    <div
+    <motion.div
       className={cn(
-        'fixed bottom-6 left-1/2 z-40 -translate-x-1/2',
-        'transition-all duration-300',
-        shouldShow ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+        // Fixed positioning - centered at bottom
+        'fixed bottom-10 left-1/2 z-50 -translate-x-1/2',
+        // Responsive adjustments
+        'max-w-[calc(100vw-2rem)]'
       )}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.4,
+        delay: 0.2,
+        ease: [0.16, 1, 0.3, 1],
+      }}
     >
-      <DebateControls debateId={debateId} variant="floating" />
-    </div>
+      {/* Deep Glass Dock - precision form factor */}
+      <div
+        className={cn(
+          // Fixed height - tight skin
+          'flex items-center h-12 p-1.5',
+          // Pill shape
+          'rounded-full',
+          // Deep glass surface
+          'bg-[#050505]/90 backdrop-blur-xl',
+          // Crisp border
+          'border border-white/[0.08]',
+          // Floating shadow
+          'shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+        )}
+      >
+        <CommandDock debateId={debateId} />
+      </div>
+    </motion.div>
   )
 }

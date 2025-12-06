@@ -68,6 +68,11 @@ export interface SpeakerConfig {
   borderColor: string
   icon: string
   position: 'left' | 'right' | 'center'
+  // Chip styling for data chip headers
+  chipBorder: string
+  chipBg: string
+  // Accent color for active glow
+  glowColor: string
 }
 
 /**
