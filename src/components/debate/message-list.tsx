@@ -75,7 +75,7 @@ function EmptyState() {
   }
 
   return (
-    <div className="relative flex h-full flex-col items-center justify-center">
+    <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24">
       {/* God Ray - entrance fade + heartbeat */}
       <motion.div
         className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1800px] w-[1800px] -translate-x-1/2 -translate-y-1/2"

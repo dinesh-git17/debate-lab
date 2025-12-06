@@ -4,25 +4,27 @@ import type { LogStep } from '@/components/ui/intelligence-console'
 
 /**
  * Full script for debate creation loading
+ * Total duration: ~7 seconds (human-readable pace)
  */
 export const DEBATE_CREATION_SCRIPT: LogStep[] = [
-  { text: 'Initializing semantic analysis...', duration: 400 },
-  { text: 'Parsing user intent: "{topic}"', duration: 600 },
-  { text: 'Querying knowledge base (Vector_DB_Shard_04)...', duration: 800 },
-  { text: 'Identifying logical frameworks...', duration: 600 },
-  { text: 'Assigning Agent A: Constructive', duration: 400 },
-  { text: 'Assigning Agent B: Rebuttal', duration: 300 },
-  { text: 'Ready.', duration: 500 },
+  { text: 'Initializing semantic analysis...', duration: 800 },
+  { text: 'Parsing user intent: "{topic}"', duration: 1200 },
+  { text: 'Querying knowledge base (Vector_DB_Shard_04)...', duration: 1400 },
+  { text: 'Identifying logical frameworks...', duration: 1000 },
+  { text: 'Assigning Agent A: Constructive', duration: 800 },
+  { text: 'Assigning Agent B: Rebuttal', duration: 700 },
+  { text: 'Ready.', duration: 1000 },
 ]
 
 /**
  * Short script for topic polish (sparkle button)
+ * Total duration: ~4 seconds
  */
 export const TOPIC_POLISH_SCRIPT: LogStep[] = [
-  { text: 'Analyzing semantic structure...', duration: 300 },
-  { text: 'Reformulating: "{topic}"', duration: 500 },
-  { text: 'Applying linguistic polish...', duration: 600 },
-  { text: 'Complete.', duration: 300 },
+  { text: 'Analyzing semantic structure...', duration: 800 },
+  { text: 'Reformulating: "{topic}"', duration: 1200 },
+  { text: 'Applying linguistic polish...', duration: 1200 },
+  { text: 'Complete.', duration: 800 },
 ]
 
 /**

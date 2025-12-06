@@ -3,9 +3,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Home, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 
+import { Logo } from '@/components/ui/logo'
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
@@ -43,10 +44,8 @@ export function DebateHeader({ className }: DebateHeaderProps) {
     >
       {/* Nav row */}
       <div className="relative mx-auto flex h-full max-w-5xl items-center justify-between px-6 md:px-8">
-        {/* Left: Home navigation */}
-        <Link href="/" className="text-zinc-500 transition-colors hover:text-zinc-200">
-          <Home className="h-5 w-5" />
-        </Link>
+        {/* Left: Logo navigation */}
+        <Logo size="md" />
 
         {/* Center: Status badge */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">

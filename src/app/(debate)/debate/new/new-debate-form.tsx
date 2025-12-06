@@ -3,7 +3,8 @@
 
 import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import { DebateForm, type DebateFormSubmitData } from '@/components/features/debate-form'
 import { BanModal, useBanStatus } from '@/components/ui/ban-modal'
@@ -18,6 +19,7 @@ export function NewDebateForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConsole, setShowConsole] = useState(false)
   const [consoleTopic, setConsoleTopic] = useState('')
+  const [mounted, setMounted] = useState(false)
   const pendingDebateId = useRef<string | null>(null)
   const pendingError = useRef<{
     error: string
@@ -26,6 +28,11 @@ export function NewDebateForm() {
   } | null>(null)
   const banStatus = useBanStatus()
   const [showBanModal, setShowBanModal] = useState(true)
+
+  // Track when component is mounted for portal rendering
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSubmit = async (data: DebateFormSubmitData) => {
     setIsSubmitting(true)
@@ -112,16 +119,19 @@ export function NewDebateForm() {
         />
       )}
 
-      {/* Intelligence Console Loading Overlay */}
-      <AnimatePresence>
-        {showConsole && (
-          <ConsoleOverlay
-            steps={getRandomizedScript(DEBATE_CREATION_SCRIPT)}
-            topic={consoleTopic}
-            onComplete={handleConsoleComplete}
-          />
+      {/* Intelligence Console Loading Overlay - rendered via portal at document root */}
+      {mounted &&
+        showConsole &&
+        createPortal(
+          <AnimatePresence>
+            <ConsoleOverlay
+              steps={getRandomizedScript(DEBATE_CREATION_SCRIPT)}
+              topic={consoleTopic}
+              onComplete={handleConsoleComplete}
+            />
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
 
       <div
         className={cn(

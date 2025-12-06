@@ -63,26 +63,29 @@ export function IntelligenceConsole({
 
   return (
     <div className={cn('relative', className)}>
-      {/* Terminal Container */}
+      {/* Terminal Container - Larger, more theatrical */}
       <motion.div
         className={cn(
-          'relative w-full max-w-lg overflow-hidden',
-          'bg-black/40 backdrop-blur-md',
+          'relative w-full overflow-hidden',
+          // Larger container with stronger backdrop
+          'bg-black/60 backdrop-blur-xl',
           'border border-white/[0.08]',
-          'rounded-xl shadow-2xl'
+          'rounded-2xl',
+          // More prominent shadow
+          'shadow-[0_0_80px_-20px_rgba(0,0,0,0.8)]'
         )}
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-          {/* Status Dot */}
-          <div className="flex items-center gap-2">
+        {/* Header - taller */}
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
+          {/* Status Dot - larger */}
+          <div className="flex items-center gap-3">
             <motion.div
-              className="h-2 w-2 rounded-full bg-emerald-500"
+              className="h-2.5 w-2.5 rounded-full bg-emerald-500"
               animate={{
-                scale: [1, 1.2, 1],
+                scale: [1, 1.3, 1],
                 opacity: [0.7, 1, 0.7],
               }}
               transition={{
@@ -91,19 +94,19 @@ export function IntelligenceConsole({
                 ease: 'easeInOut',
               }}
             />
-            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            <span className="font-mono text-xs uppercase tracking-widest text-zinc-400">
               Processing
             </span>
           </div>
 
           {/* System Status */}
-          <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-            System Status: <span className="text-emerald-500/70">Optimal</span>
+          <span className="font-mono text-xs uppercase tracking-widest text-zinc-600">
+            System Status: <span className="text-emerald-500/80">Optimal</span>
           </span>
         </div>
 
-        {/* Log Content */}
-        <div className="p-6 font-mono text-sm leading-relaxed">
+        {/* Log Content - more padding, larger text */}
+        <div className="p-8 font-mono text-sm leading-loose">
           <AnimatePresence mode="popLayout">
             {processedSteps.slice(0, currentStep + 1).map((step, index) => {
               const isPast = index < currentStep
@@ -113,7 +116,7 @@ export function IntelligenceConsole({
               return (
                 <motion.div
                   key={index}
-                  className="flex items-start gap-2"
+                  className="flex items-start gap-3"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3 }}
@@ -157,8 +160,8 @@ export function IntelligenceConsole({
           </AnimatePresence>
         </div>
 
-        {/* Progress Bar */}
-        <div className="h-0.5 w-full bg-white/[0.03]">
+        {/* Progress Bar - slightly thicker */}
+        <div className="h-1 w-full bg-white/[0.03]">
           <motion.div
             className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500"
             initial={{ width: '0%' }}
