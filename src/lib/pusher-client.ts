@@ -125,9 +125,19 @@ export function subscribeToDebate(
   for (const eventType of eventTypes) {
     channel.bind(eventType, (data: SSEEvent) => {
       // Generate a deterministic event ID for deduplication
-      // Uses timestamp + type + turnId to create a unique identifier
-      const eventData = data as SSEEvent & { turnId?: string; timestamp?: string }
-      const eventId = `${eventData.timestamp ?? Date.now()}-${eventType}-${eventData.turnId ?? 'no-turn'}`
+      // For streaming events, include accumulatedLength to differentiate chunks
+      const eventData = data as SSEEvent & {
+        turnId?: string
+        timestamp?: string
+        accumulatedLength?: number
+      }
+      let eventId: string
+      if (eventType === 'turn_streaming' && eventData.accumulatedLength !== undefined) {
+        // For streaming events, include accumulatedLength to make each chunk unique
+        eventId = `${eventData.timestamp ?? Date.now()}-${eventType}-${eventData.turnId}-${eventData.accumulatedLength}`
+      } else {
+        eventId = `${eventData.timestamp ?? Date.now()}-${eventType}-${eventData.turnId ?? 'no-turn'}`
+      }
       onEvent({ ...data, _eventId: eventId })
     })
   }

@@ -18,7 +18,7 @@ interface DebateViewActions {
 
   addMessage: (message: DebateMessage) => void
   updateMessage: (id: string, updates: Partial<DebateMessage>) => void
-  appendToMessage: (id: string, chunk: string) => void
+  appendToMessage: (id: string, chunk: string, expectedPosition?: number) => void
   completeMessage: (id: string, finalContent: string, tokenCount: number) => void
 
   // Hydrate store with messages from server (for page reload/navigation back)
@@ -100,25 +100,53 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
       messages: state.messages.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)),
     })),
 
-  appendToMessage: (id, chunk) =>
+  appendToMessage: (id, chunk, expectedPosition) =>
     set((state) => {
       const message = state.messages.find((m) => m.id === id)
       if (!message) return state
 
-      const expectedLength = state.messageContentLengths.get(id) ?? 0
       const currentLength = message.content.length
 
-      // Detect if content was already updated (duplicate event)
-      // If current length is significantly ahead of expected, this is likely a duplicate
-      if (currentLength > expectedLength + chunk.length) {
-        // eslint-disable-next-line no-console
-        console.log('[Store] appendToMessage: skipping likely duplicate', {
-          id,
-          currentLength,
-          expectedLength,
-          chunkLength: chunk.length,
-        })
-        return state
+      // If expectedPosition is provided, use it for precise duplicate detection
+      if (expectedPosition !== undefined) {
+        if (currentLength > expectedPosition) {
+          // We already have content past this position - this is a duplicate chunk
+          // eslint-disable-next-line no-console
+          console.log('[Store] appendToMessage: skipping duplicate chunk', {
+            id,
+            currentLength,
+            expectedPosition,
+            chunkLength: chunk.length,
+          })
+          return state
+        }
+
+        if (currentLength < expectedPosition) {
+          // We're missing some content - log warning but continue
+          // This can happen if chunks arrive out of order
+          // eslint-disable-next-line no-console
+          console.warn('[Store] appendToMessage: gap detected, missing content', {
+            id,
+            currentLength,
+            expectedPosition,
+            gap: expectedPosition - currentLength,
+          })
+          // Still append - better to have some content than get stuck
+        }
+        // If currentLength === expectedPosition, this chunk is exactly where we expect it
+      } else {
+        // Fallback: legacy duplicate detection when expectedPosition not provided
+        const trackedLength = state.messageContentLengths.get(id) ?? 0
+        if (currentLength > trackedLength + chunk.length) {
+          // eslint-disable-next-line no-console
+          console.log('[Store] appendToMessage: skipping likely duplicate (legacy)', {
+            id,
+            currentLength,
+            trackedLength,
+            chunkLength: chunk.length,
+          })
+          return state
+        }
       }
 
       const newContent = message.content + chunk

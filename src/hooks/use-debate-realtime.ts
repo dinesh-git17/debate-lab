@@ -34,6 +34,7 @@ interface SSEMessageData {
   chunk?: string
   content?: string
   tokenCount?: number
+  accumulatedLength?: number
   error?: string
   violation?: {
     ruleViolated: string
@@ -139,8 +140,18 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     const store = useDebateViewStore.getState()
 
     // UNIFIED DEDUPLICATION: Check if we've already processed this event
-    // Works for both Pusher events (with _eventId) and Redis events (checked earlier)
-    const eventId = data._eventId ?? `${data.timestamp}-${data.type}-${data.turnId ?? 'no-turn'}`
+    // For streaming events, include accumulatedLength to make each chunk unique
+    let eventId: string
+    if (data._eventId) {
+      eventId = data._eventId
+    } else if (data.type === 'turn_streaming' && data.accumulatedLength !== undefined) {
+      // For streaming events, include accumulatedLength to differentiate chunks
+      // that may arrive in the same millisecond
+      eventId = `${data.timestamp}-${data.type}-${data.turnId}-${data.accumulatedLength}`
+    } else {
+      eventId = `${data.timestamp}-${data.type}-${data.turnId ?? 'no-turn'}`
+    }
+
     if (appliedEventIdsRef.current.has(eventId)) {
       clientLogger.debug('Skipping duplicate event (unified check)', {
         eventId,
@@ -199,7 +210,14 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
           if (!existingMessage) {
             clientLogger.warn('turn_streaming: message not found', { turnId: data.turnId })
           }
-          store.appendToMessage(data.turnId, data.chunk)
+          // Calculate expected position: where this chunk should start
+          // accumulatedLength is the total length AFTER this chunk is added
+          // So expectedPosition = accumulatedLength - chunk.length
+          const expectedPosition =
+            data.accumulatedLength !== undefined
+              ? data.accumulatedLength - data.chunk.length
+              : undefined
+          store.appendToMessage(data.turnId, data.chunk, expectedPosition)
         }
         break
 
