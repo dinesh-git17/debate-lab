@@ -1,8 +1,6 @@
 // src/lib/security/sanitizer.ts
 // Input sanitization utilities for XSS prevention and text cleaning
 
-import DOMPurify from 'isomorphic-dompurify'
-
 import type { SanitizationOptions, SanitizationResult } from '@/types/security'
 
 const DEFAULT_MAX_LENGTHS = {
@@ -106,7 +104,19 @@ function escapeHtml(str: string): string {
 }
 
 function stripHtml(str: string): string {
-  return DOMPurify.sanitize(str, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
+  // Server-safe HTML stripping without jsdom dependency
+  return str
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags and content
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '') // Remove style tags and content
+    .replace(/<[^>]*>/g, '') // Remove all HTML tags
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, '/')
+    .trim()
 }
 
 function sanitizeForLlm(str: string): string {
@@ -132,10 +142,20 @@ function sanitizeForStorage(str: string): string {
 
 function sanitizeForDisplay(str: string, allowHtml: boolean): string {
   if (allowHtml) {
-    return DOMPurify.sanitize(str, {
-      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
-      ALLOWED_ATTR: [],
-    })
+    // Server-safe HTML sanitization - allow only specific safe tags
+    const allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li']
+    const tagPattern = allowedTags.join('|')
+    // Remove script/style tags completely
+    let result = str
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    // Remove attributes from allowed tags
+    const allowedTagRegex = new RegExp(`<(${tagPattern})(\\s[^>]*)?>`, 'gi')
+    result = result.replace(allowedTagRegex, '<$1>')
+    // Remove all non-allowed tags
+    const disallowedTagRegex = new RegExp(`<(?!\\/?(${tagPattern})\\s*\\/?>)[^>]*>`, 'gi')
+    result = result.replace(disallowedTagRegex, '')
+    return result.trim()
   }
   return escapeHtml(stripHtml(str))
 }
