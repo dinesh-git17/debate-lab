@@ -92,4 +92,11 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## License
 
-This project is private and proprietary.
+This project is licensed under the [Elastic License 2.0](LICENSE). This means:
+
+- ✅ Free to use, modify, and distribute the source code
+- ✅ Can use for internal/non-commercial purposes
+- ❌ Cannot provide as a hosted/managed service to third parties
+- ❌ Cannot remove or circumvent license protections
+
+For commercial SaaS use or other licensing options, please contact the repository owner.
