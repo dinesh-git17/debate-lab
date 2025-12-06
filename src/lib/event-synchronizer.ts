@@ -120,8 +120,9 @@ export class EventSynchronizer {
         throw new Error(`Failed to fetch events: ${response.status}`)
       }
 
+      // API returns { events: [{ id, event }], currentSeq } - destructure inner event
       const { events, currentSeq } = (await response.json()) as {
-        events: SSEEvent[]
+        events: Array<{ id: string; event: SSEEvent }>
         currentSeq: number
       }
 
@@ -131,10 +132,22 @@ export class EventSynchronizer {
       })
 
       // Add fetched events to buffer (Map dedupes by seq automatically)
-      for (const event of events) {
+      for (const { event } of events) {
         const seqEvent = event as SequencedEvent
         if (seqEvent.seq !== undefined && seqEvent.seq > this.state.lastAppliedSeq) {
           this.state.buffer.set(seqEvent.seq, seqEvent)
+        }
+      }
+
+      // Bug #3 fix: If seq doesn't start at 1, adjust lastAppliedSeq to avoid false gap
+      if (this.state.lastAppliedSeq === 0 && this.state.buffer.size > 0) {
+        const minSeq = Math.min(...this.state.buffer.keys())
+        if (minSeq > 1) {
+          clientLogger.info('[Sync] Adjusting lastAppliedSeq to match first event', {
+            minSeq,
+            adjustedTo: minSeq - 1,
+          })
+          this.state.lastAppliedSeq = minSeq - 1
         }
       }
 
@@ -155,10 +168,22 @@ export class EventSynchronizer {
         remainingBuffer: this.state.buffer.size,
       })
     } catch (error) {
+      // Bug #4 fix: Still mark sync complete so buffered Pusher events can be processed
       this.state.isSyncing = false
+      this.state.isInitialSyncComplete = true
       this.onSyncStateChange?.('error')
-      clientLogger.error('[Sync] Initial sync failed', error)
-      throw error
+      clientLogger.error('[Sync] Initial sync failed, will process buffered events', error)
+
+      // Try to flush any buffered events we received via Pusher
+      if (this.state.buffer.size > 0) {
+        // Adjust lastAppliedSeq if needed
+        const minSeq = Math.min(...this.state.buffer.keys())
+        if (this.state.lastAppliedSeq === 0 && minSeq > 1) {
+          this.state.lastAppliedSeq = minSeq - 1
+        }
+        this.flushBuffer()
+      }
+      // Don't rethrow - allow the app to continue with Pusher events
     }
   }
 
@@ -268,10 +293,13 @@ export class EventSynchronizer {
         throw new Error(`Gap fill failed: ${response.status}`)
       }
 
-      const { events } = (await response.json()) as { events: SSEEvent[] }
+      // API returns { events: [{ id, event }] } - destructure inner event
+      const { events } = (await response.json()) as {
+        events: Array<{ id: string; event: SSEEvent }>
+      }
 
       // Add to buffer
-      for (const event of events) {
+      for (const { event } of events) {
         const seqEvent = event as SequencedEvent
         if (
           seqEvent.seq !== undefined &&
@@ -305,12 +333,13 @@ export class EventSynchronizer {
         throw new Error(`Reconnect fetch failed: ${response.status}`)
       }
 
+      // API returns { events: [{ id, event }] } - destructure inner event
       const { events, currentSeq } = (await response.json()) as {
-        events: SSEEvent[]
+        events: Array<{ id: string; event: SSEEvent }>
         currentSeq: number
       }
 
-      for (const event of events) {
+      for (const { event } of events) {
         const seqEvent = event as SequencedEvent
         if (seqEvent.seq !== undefined && seqEvent.seq > this.state.lastAppliedSeq) {
           this.state.buffer.set(seqEvent.seq, seqEvent)

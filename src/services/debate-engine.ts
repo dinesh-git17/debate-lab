@@ -105,7 +105,7 @@ export async function startDebate(debateId: string): Promise<StartDebateResult> 
     await updateDebateStatus(debateId, 'active')
 
     const progress = context.sequencer.getProgress()
-    debateEvents.emitEvent(debateId, 'debate_started', {
+    await debateEvents.emitEvent(debateId, 'debate_started', {
       totalTurns: progress.totalTurns,
       format: context.session.format,
     })
@@ -345,7 +345,7 @@ export async function endDebateEarly(debateId: string, reason: string): Promise<
   await storeEngineState(debateId, context.sequencer.getState())
   await updateDebateStatus(debateId, 'completed')
 
-  debateEvents.emitEvent(debateId, 'debate_cancelled', {
+  await debateEvents.emitEvent(debateId, 'debate_cancelled', {
     reason,
     completedTurns: progress.currentTurn,
   })
@@ -365,7 +365,7 @@ export async function pauseDebate(debateId: string): Promise<boolean> {
   await storeEngineState(debateId, context.sequencer.getState())
   await updateDebateStatus(debateId, 'paused')
 
-  debateEvents.emitEvent(debateId, 'debate_paused', {
+  await debateEvents.emitEvent(debateId, 'debate_paused', {
     pausedAtTurn: progress.currentTurn,
   })
 
@@ -384,7 +384,7 @@ export async function resumeDebate(debateId: string): Promise<boolean> {
   await storeEngineState(debateId, context.sequencer.getState())
   await updateDebateStatus(debateId, 'active')
 
-  debateEvents.emitEvent(debateId, 'debate_resumed', {
+  await debateEvents.emitEvent(debateId, 'debate_resumed', {
     resumingAtTurn: progress.currentTurn,
   })
 
@@ -402,7 +402,7 @@ export async function setDebateError(debateId: string, error: string): Promise<b
   await storeEngineState(debateId, context.sequencer.getState())
   await updateDebateStatus(debateId, 'error')
 
-  debateEvents.emitEvent(debateId, 'debate_error', {
+  await debateEvents.emitEvent(debateId, 'debate_error', {
     error,
     fatal: true,
   })
@@ -620,7 +620,7 @@ export async function executeNextTurn(debateId: string): Promise<{
   const startTime = Date.now()
 
   // Emit turn started event
-  debateEvents.emitEvent(debateId, 'turn_started', {
+  await debateEvents.emitEvent(debateId, 'turn_started', {
     turnId,
     turnNumber: sequencer.getState().currentTurnIndex + 1,
     speaker: currentTurn.speaker,
@@ -670,7 +670,7 @@ export async function executeNextTurn(debateId: string): Promise<{
 
     const budgetCheck = checkBudget(debateId, llmProviderType, estimatedInput, maxTokens)
     if (!budgetCheck.allowed) {
-      debateEvents.emitEvent(debateId, 'turn_error', {
+      await debateEvents.emitEvent(debateId, 'turn_error', {
         turnId,
         error: budgetCheck.reason ?? 'Budget exceeded',
         recoverable: false,
@@ -684,7 +684,7 @@ export async function executeNextTurn(debateId: string): Promise<{
       const remainingCost = budgetStatus.config.costLimitUsd
         ? budgetStatus.config.costLimitUsd - (budgetStatus.usage?.totalCostUsd ?? 0)
         : 0
-      debateEvents.emitEvent(debateId, 'budget_warning', {
+      await debateEvents.emitEvent(debateId, 'budget_warning', {
         budgetUsedPercent: usedPercent,
         remainingTokens: budgetCheck.tokensRemaining,
         remainingCost,
@@ -709,7 +709,8 @@ export async function executeNextTurn(debateId: string): Promise<{
     for await (const chunk of stream) {
       fullContent += chunk.content
       accumulatedLength += chunk.content.length
-      debateEvents.emitEvent(debateId, 'turn_streaming', {
+      // CRITICAL: Must await to ensure seq numbers are assigned in order
+      await debateEvents.emitEvent(debateId, 'turn_streaming', {
         turnId,
         chunk: chunk.content,
         accumulatedLength,
@@ -733,7 +734,7 @@ export async function executeNextTurn(debateId: string): Promise<{
     }
 
     // Emit turn completed
-    debateEvents.emitEvent(debateId, 'turn_completed', {
+    await debateEvents.emitEvent(debateId, 'turn_completed', {
       turnId,
       content: fullContent,
       tokenCount: generateResult.totalTokens,
@@ -760,7 +761,7 @@ export async function executeNextTurn(debateId: string): Promise<{
     const updatedContext = await initializeEngine(debateId)
     if (updatedContext) {
       const progress = updatedContext.sequencer.getProgress()
-      debateEvents.emitEvent(debateId, 'progress_update', {
+      await debateEvents.emitEvent(debateId, 'progress_update', {
         currentTurn: progress.currentTurn,
         totalTurns: progress.totalTurns,
         percentComplete: progress.percentComplete,
@@ -781,7 +782,7 @@ export async function executeNextTurn(debateId: string): Promise<{
     const log = createDebateLogger(debateId)
     log.error('Turn execution failed', error instanceof Error ? error : null, { turnId })
 
-    debateEvents.emitEvent(debateId, 'turn_error', {
+    await debateEvents.emitEvent(debateId, 'turn_error', {
       turnId,
       error: errorMsg,
       recoverable: false,
@@ -815,7 +816,7 @@ export async function runDebateLoop(debateId: string): Promise<{
     // Check for terminal states
     if (status === 'completed') {
       const budgetStatus = getBudgetStatus(debateId)
-      debateEvents.emitEvent(debateId, 'debate_completed', {
+      await debateEvents.emitEvent(debateId, 'debate_completed', {
         totalTurns: context.sequencer.getProgress().currentTurn,
         durationMs: Date.now() - loopStartTime,
         totalTokens: budgetStatus.usage?.totalTokens ?? 0,
@@ -867,7 +868,7 @@ export async function runDebateLoop(debateId: string): Promise<{
       const finalTurnCount = turnCount + 1
       const finalDurationMs = Date.now() - loopStartTime
       const budgetStatus = getBudgetStatus(debateId)
-      debateEvents.emitEvent(debateId, 'debate_completed', {
+      await debateEvents.emitEvent(debateId, 'debate_completed', {
         totalTurns: finalTurnCount,
         durationMs: finalDurationMs,
         totalTokens: budgetStatus.usage?.totalTokens ?? 0,
