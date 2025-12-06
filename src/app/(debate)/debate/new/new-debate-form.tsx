@@ -1,12 +1,14 @@
 // src/app/(debate)/debate/new/new-debate-form.tsx
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { DebateForm, type DebateFormSubmitData } from '@/components/features/debate-form'
 import { BanModal, useBanStatus } from '@/components/ui/ban-modal'
+import { ConsoleOverlay } from '@/components/ui/console-overlay'
+import { DEBATE_CREATION_SCRIPT, getRandomizedScript } from '@/lib/console-scripts'
 import { cn } from '@/lib/utils'
 
 import { createDebate } from './actions'
@@ -14,32 +16,40 @@ import { createDebate } from './actions'
 export function NewDebateForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [loadingMessage, setLoadingMessage] = useState('')
+  const [showConsole, setShowConsole] = useState(false)
+  const [consoleTopic, setConsoleTopic] = useState('')
+  const pendingDebateId = useRef<string | null>(null)
+  const pendingError = useRef<{
+    error: string
+    blocked?: boolean | undefined
+    blockReason?: string | undefined
+  } | null>(null)
   const banStatus = useBanStatus()
   const [showBanModal, setShowBanModal] = useState(true)
 
   const handleSubmit = async (data: DebateFormSubmitData) => {
     setIsSubmitting(true)
-    setLoadingMessage('Preparing your debate...')
+    setConsoleTopic(data.topic)
+    setShowConsole(true)
+    pendingDebateId.current = null
+    pendingError.current = null
 
     try {
-      // Small delay to let animation start smoothly
-      await new Promise((resolve) => setTimeout(resolve, 300))
-
-      // Show appropriate message based on whether topic was already polished
-      setLoadingMessage(data.alreadyPolished ? 'Creating debate...' : 'Polishing topic...')
+      // API call runs in parallel with console animation
       const result = await createDebate(data)
 
       if (result.success && result.debateId) {
-        setLoadingMessage('Launching debate...')
-        // Brief pause before navigation for smooth transition
-        await new Promise((resolve) => setTimeout(resolve, 200))
-        router.push(`/debate/${result.debateId}`)
-        // Don't reset isSubmitting - component will unmount on navigation
+        pendingDebateId.current = result.debateId
+        // Console onComplete will handle navigation
         return { success: true }
       }
-      setIsSubmitting(false)
-      setLoadingMessage('')
+
+      // Store error for console completion handler
+      pendingError.current = {
+        error: result.error ?? 'Failed to create debate',
+        blocked: result.blocked,
+        blockReason: result.blockReason,
+      }
       return {
         success: false,
         error: result.error ?? 'Failed to create debate',
@@ -47,9 +57,39 @@ export function NewDebateForm() {
         blockReason: result.blockReason,
       }
     } catch {
-      setIsSubmitting(false)
-      setLoadingMessage('')
+      pendingError.current = { error: 'An unexpected error occurred' }
       return { success: false, error: 'An unexpected error occurred' }
+    }
+  }
+
+  const handleConsoleComplete = () => {
+    if (pendingDebateId.current) {
+      router.push(`/debate/${pendingDebateId.current}`)
+    } else if (pendingError.current) {
+      // Error occurred, hide console and show error
+      setShowConsole(false)
+      setIsSubmitting(false)
+    } else {
+      // API still loading, wait a bit more
+      const checkInterval = setInterval(() => {
+        if (pendingDebateId.current) {
+          clearInterval(checkInterval)
+          router.push(`/debate/${pendingDebateId.current}`)
+        } else if (pendingError.current) {
+          clearInterval(checkInterval)
+          setShowConsole(false)
+          setIsSubmitting(false)
+        }
+      }, 100)
+
+      // Timeout after 10s
+      setTimeout(() => {
+        clearInterval(checkInterval)
+        if (!pendingDebateId.current) {
+          setShowConsole(false)
+          setIsSubmitting(false)
+        }
+      }, 10000)
     }
   }
 
@@ -72,54 +112,14 @@ export function NewDebateForm() {
         />
       )}
 
-      {/* Loading Overlay */}
+      {/* Intelligence Console Loading Overlay */}
       <AnimatePresence>
-        {isSubmitting && (
-          <motion.div
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0b]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Breathing background glow */}
-            <motion.div
-              className="absolute h-[600px] w-[600px] rounded-full"
-              style={{
-                background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 60%)',
-              }}
-              animate={{
-                scale: [1, 1.15, 1],
-                opacity: [0.5, 0.8, 0.5],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
-
-            {/* Loading spinner */}
-            <motion.div
-              className="relative h-12 w-12 rounded-full border-2 border-white/10 border-t-white/60"
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 1,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-            />
-
-            {/* Loading message */}
-            <motion.p
-              className="mt-6 text-sm font-medium text-zinc-400"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              key={loadingMessage}
-            >
-              {loadingMessage}
-            </motion.p>
-          </motion.div>
+        {showConsole && (
+          <ConsoleOverlay
+            steps={getRandomizedScript(DEBATE_CREATION_SCRIPT)}
+            topic={consoleTopic}
+            onComplete={handleConsoleComplete}
+          />
         )}
       </AnimatePresence>
 
