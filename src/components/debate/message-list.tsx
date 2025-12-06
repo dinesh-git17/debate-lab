@@ -74,18 +74,54 @@ function EmptyState() {
   }
 
   return (
-    <div className="flex h-full flex-col items-center justify-center">
+    <div className="relative flex h-full flex-col items-center justify-center">
+      {/* Spotlight - depth behind text */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[800px]"
+        style={{
+          background:
+            'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 60%)',
+        }}
+      />
+
       {/* Title */}
-      <h1 className="text-center text-5xl font-semibold tracking-tighter text-white md:text-7xl">
+      <h1
+        className="text-center text-5xl font-semibold tracking-tighter md:text-7xl bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent"
+        style={{ textWrap: 'balance' }}
+      >
         {sanitizeTopic(topic)}
       </h1>
 
       {/* Metadata Pills */}
       <div className="mt-6 flex gap-3">
-        <div className="flex h-8 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.05] px-4 text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <div
+          className={cn(
+            'flex h-8 items-center justify-center rounded-full px-4',
+            'bg-white/[0.03]',
+            'text-xs font-medium uppercase tracking-wide text-zinc-400'
+          )}
+          style={{
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+          }}
+        >
           {formatDisplayName}
         </div>
-        <div className="flex h-8 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.05] px-4 text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <div
+          className={cn(
+            'flex h-8 items-center justify-center rounded-full px-4',
+            'bg-white/[0.03]',
+            'text-xs font-medium uppercase tracking-wide text-zinc-400'
+          )}
+          style={{
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+          }}
+        >
           2 Agents
         </div>
       </div>
@@ -94,7 +130,18 @@ function EmptyState() {
       <button
         onClick={handleStart}
         disabled={isLoading}
-        className="mt-10 rounded-full bg-white px-8 py-4 text-sm font-semibold text-black transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+        className={cn(
+          'mt-10 rounded-full bg-white px-8 py-4',
+          'text-sm font-semibold text-black',
+          // Radioactive halo - wide diffuse glow
+          'shadow-[0_0_80px_-10px_rgba(255,255,255,0.3)]',
+          // Transitions
+          'transition-all duration-300 ease-out',
+          // Hover: subtle scale + increased glow
+          'hover:scale-[1.02] hover:shadow-[0_0_100px_-10px_rgba(255,255,255,0.5)]',
+          // Disabled state
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none'
+        )}
       >
         {isLoading ? 'Starting...' : 'Start Debate'}
       </button>
