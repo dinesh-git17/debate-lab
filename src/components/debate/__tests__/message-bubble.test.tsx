@@ -271,12 +271,12 @@ describe('MessageBubble', () => {
 
   describe('different turn types', () => {
     const turnTypes = [
-      { type: 'opening', label: 'Opening Statement' },
-      { type: 'constructive', label: 'Constructive Argument' },
-      { type: 'rebuttal', label: 'Rebuttal' },
-      { type: 'closing', label: 'Closing Statement' },
-      { type: 'moderator_intro', label: 'Introduction' },
-      { type: 'moderator_summary', label: 'Summary' },
+      { type: 'opening', label: 'OPENING' },
+      { type: 'constructive', label: 'CONSTRUCTIVE' },
+      { type: 'rebuttal', label: 'REBUTTAL' },
+      { type: 'closing', label: 'CLOSING' },
+      { type: 'moderator_intro', label: 'INTRODUCTION' },
+      { type: 'moderator_summary', label: 'SUMMARY' },
     ] as const
 
     it.each(turnTypes)('should display $label for $type turn', ({ type, label }) => {
