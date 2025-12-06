@@ -89,14 +89,20 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
         valueSample: JSON.stringify(value).slice(0, 300),
       })
 
-      // Format: { "stream-id": { type: "...", data: "..." } }
+      // Format: { "stream-id": { type: "...", data: "..." or {...} } }
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         const valueObj = value as Record<string, unknown>
-        if ('data' in valueObj && typeof valueObj.data === 'string') {
+        if ('data' in valueObj) {
           try {
+            // Handle both string (needs parsing) and object (already parsed by Upstash)
+            const eventData =
+              typeof valueObj.data === 'string'
+                ? (JSON.parse(valueObj.data) as SSEEvent)
+                : (valueObj.data as SSEEvent)
+
             results.push({
               id: key,
-              event: JSON.parse(valueObj.data) as SSEEvent,
+              event: eventData,
             })
             continue
           } catch (e) {
