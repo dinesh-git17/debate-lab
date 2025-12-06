@@ -50,16 +50,17 @@ describe('MessageBubble', () => {
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.getByText('Opening Statement')).toBeInTheDocument()
+      expect(screen.getByText('OPENING')).toBeInTheDocument()
     })
 
     it('should render speaker icon', () => {
       const message = createMockMessage({ speaker: 'for' })
 
-      render(<MessageBubble message={message} />)
+      const { container } = render(<MessageBubble message={message} />)
 
-      // FOR speaker icon
-      expect(screen.getByText('👍')).toBeInTheDocument()
+      // FOR speaker uses SVG icon from react-icons
+      const svgIcon = container.querySelector('svg')
+      expect(svgIcon).toBeInTheDocument()
     })
 
     it('should have article role for accessibility', () => {
@@ -72,32 +73,24 @@ describe('MessageBubble', () => {
   })
 
   describe('speaker positions', () => {
-    it('should align FOR speaker to the left', () => {
+    it('should center all messages with max-width constraint', () => {
       const message = createMockMessage({ speaker: 'for' })
 
       const { container } = render(<MessageBubble message={message} />)
 
-      // The outer wrapper div has the justify class
-      const wrapper = container.firstChild as HTMLElement
-      expect(wrapper).toHaveClass('justify-start')
+      // All messages are centered with max-width constraint
+      const cardWrapper = container.querySelector('.mx-auto.max-w-3xl')
+      expect(cardWrapper).toBeInTheDocument()
     })
 
-    it('should align AGAINST speaker to the right', () => {
-      const message = createMockMessage({ speaker: 'against' })
-
-      const { container } = render(<MessageBubble message={message} />)
-
-      const wrapper = container.firstChild as HTMLElement
-      expect(wrapper).toHaveClass('justify-end')
-    })
-
-    it('should center moderator messages', () => {
+    it('should center moderator header content', () => {
       const message = createMockMessage({ speaker: 'moderator' })
 
       const { container } = render(<MessageBubble message={message} />)
 
-      const wrapper = container.firstChild as HTMLElement
-      expect(wrapper).toHaveClass('justify-center')
+      // Moderator header has justify-center class
+      const header = container.querySelector('.justify-center')
+      expect(header).toBeInTheDocument()
     })
   })
 
@@ -126,37 +119,27 @@ describe('MessageBubble', () => {
   })
 
   describe('completion state', () => {
-    it('should show token count when complete', () => {
+    it('should render correctly when complete', () => {
       const message = createMockMessage({
         isComplete: true,
-        tokenCount: 150,
       })
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.getByText('150 tokens')).toBeInTheDocument()
+      // Component renders without streaming indicator
+      expect(screen.queryByLabelText('Generating content')).not.toBeInTheDocument()
+      expect(screen.getByRole('article')).toBeInTheDocument()
     })
 
-    it('should not show token count when count is 0', () => {
+    it('should render message content when complete', () => {
       const message = createMockMessage({
         isComplete: true,
-        tokenCount: 0,
+        content: 'Completed message content',
       })
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.queryByText('0 tokens')).not.toBeInTheDocument()
-    })
-
-    it('should not show token count when undefined', () => {
-      // tokenCount is omitted, so it's undefined
-      const message = createMockMessage({
-        isComplete: true,
-      })
-
-      render(<MessageBubble message={message} />)
-
-      expect(screen.queryByText('tokens')).not.toBeInTheDocument()
+      expect(screen.getByText('Completed message content')).toBeInTheDocument()
     })
   })
 
@@ -173,16 +156,17 @@ describe('MessageBubble', () => {
       expect(screen.getByRole('article')).toBeInTheDocument()
     })
 
-    it('should show timestamp when message is complete', () => {
+    it('should show timestamp in header when showTimestamp is enabled', () => {
       const message = createMockMessage({
         isComplete: true,
+        timestamp: new Date('2024-01-15T10:30:00Z'),
       })
 
-      render(<MessageBubble message={message} />)
+      const { container } = render(<MessageBubble message={message} showTimestamp />)
 
-      // Footer section should be visible
-      const article = screen.getByRole('article')
-      expect(article.querySelector('.mt-2')).toBeInTheDocument()
+      // Timestamp is displayed in header with ml-auto class
+      const timestampElement = container.querySelector('.ml-auto')
+      expect(timestampElement).toBeInTheDocument()
     })
   })
 
@@ -195,7 +179,7 @@ describe('MessageBubble', () => {
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.getByText('2 violations')).toBeInTheDocument()
+      expect(screen.getByText('2 VIOLATIONS')).toBeInTheDocument()
     })
 
     it('should show singular violation when only one', () => {
@@ -206,7 +190,7 @@ describe('MessageBubble', () => {
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.getByText('1 violation')).toBeInTheDocument()
+      expect(screen.getByText('1 VIOLATION')).toBeInTheDocument()
     })
 
     it('should not show violations when empty', () => {
@@ -217,7 +201,7 @@ describe('MessageBubble', () => {
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.queryByText('violation')).not.toBeInTheDocument()
+      expect(screen.queryByText('VIOLATION')).not.toBeInTheDocument()
     })
   })
 
@@ -275,7 +259,7 @@ describe('MessageBubble', () => {
       { type: 'constructive', label: 'CONSTRUCTIVE' },
       { type: 'rebuttal', label: 'REBUTTAL' },
       { type: 'closing', label: 'CLOSING' },
-      { type: 'moderator_intro', label: 'INTRODUCTION' },
+      { type: 'moderator_intro', label: 'INTRO' },
       { type: 'moderator_summary', label: 'SUMMARY' },
     ] as const
 
