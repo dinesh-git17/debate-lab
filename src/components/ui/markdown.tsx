@@ -2,7 +2,6 @@
 
 'use client'
 
-import { memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -91,7 +90,7 @@ const components: Components = {
   td: ({ children }) => <td className="border border-border px-3 py-2">{children}</td>,
 }
 
-export const Markdown = memo(function Markdown({ content, className }: MarkdownProps) {
+export function Markdown({ content, className }: MarkdownProps) {
   return (
     <div className={cn('prose-sm prose-neutral dark:prose-invert max-w-none', className)}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
@@ -99,4 +98,4 @@ export const Markdown = memo(function Markdown({ content, className }: MarkdownP
       </ReactMarkdown>
     </div>
   )
-})
+}
