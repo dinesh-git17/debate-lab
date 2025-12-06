@@ -139,24 +139,30 @@ function EmptyState() {
       </div>
 
       {/* CTA - ambient glow */}
-      <button
-        onClick={handleStart}
-        disabled={isLoading}
-        className={cn(
-          'mt-10 rounded-full bg-white px-8 py-4',
-          'text-sm font-semibold text-black',
-          // Ambient glow - soft diffuse light
-          'shadow-[0_0_120px_-20px_rgba(255,255,255,0.25)]',
-          // Smooth transitions
-          'transition-all duration-500 ease-out',
-          // Hover: subtle scale + increased glow
-          'hover:scale-[1.02] hover:shadow-[0_0_140px_-20px_rgba(255,255,255,0.35)]',
-          // Disabled state
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none'
-        )}
-      >
-        {isLoading ? 'Starting...' : 'Start Debate'}
-      </button>
+      <div className="relative mt-10">
+        {/* Static glow layer - doesn't transition */}
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            boxShadow: '0 0 120px -20px rgba(255, 255, 255, 0.25)',
+          }}
+        />
+        <button
+          onClick={handleStart}
+          disabled={isLoading}
+          className={cn(
+            'relative rounded-full bg-white px-8 py-4',
+            'text-sm font-semibold text-black',
+            // Smooth scale transition only
+            'transition-transform duration-300 ease-out',
+            'hover:scale-[1.02]',
+            // Disabled state
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
+          )}
+        >
+          {isLoading ? 'Starting...' : 'Start Debate'}
+        </button>
+      </div>
     </div>
   )
 }
