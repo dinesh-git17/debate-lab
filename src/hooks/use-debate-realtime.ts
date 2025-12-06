@@ -57,7 +57,8 @@ const MAX_RECONNECT_DELAY = 30000
 async function fetchAndApplyMissedEvents(
   debateId: string,
   lastEventId: string | null,
-  applyEvent: (event: SSEEvent) => void
+  applyEvent: (event: SSEEvent) => void,
+  appliedEventIds: Set<string>
 ): Promise<string | null> {
   try {
     const url = lastEventId
@@ -74,7 +75,13 @@ async function fetchAndApplyMissedEvents(
 
     if (data.events && data.events.length > 0) {
       clientLogger.debug('Fetched events', { count: data.events.length, debateId })
-      for (const { event } of data.events) {
+      for (const { id, event } of data.events) {
+        // Skip already applied events to prevent duplicates
+        if (appliedEventIds.has(id)) {
+          clientLogger.debug('Skipping duplicate event', { id, type: event.type })
+          continue
+        }
+        appliedEventIds.add(id)
         applyEvent(event)
       }
       // Return the last event ID for tracking
@@ -96,6 +103,7 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttempts = useRef(0)
   const lastEventIdRef = useRef<string | null>(null)
+  const appliedEventIdsRef = useRef<Set<string>>(new Set())
   const debateIdRef = useRef(debateId)
   const onDebateCompleteRef = useRef(onDebateComplete)
   const onErrorRef = useRef(onError)
@@ -291,7 +299,8 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     lastEventIdRef.current = await fetchAndApplyMissedEvents(
       currentDebateId,
       lastEventIdRef.current,
-      applyEvent
+      applyEvent,
+      appliedEventIdsRef.current
     )
 
     // If Pusher is not configured, fall back to periodic polling
@@ -299,17 +308,29 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       clientLogger.warn('Pusher not configured, using polling fallback')
       store.setConnection('connected')
 
-      // Set up polling interval - use shorter interval for near-realtime experience
-      const pollInterval = setInterval(async () => {
+      // Use recursive setTimeout to prevent overlapping requests
+      let isPolling = true
+      const poll = async () => {
+        if (!isPolling) return
+
         lastEventIdRef.current = await fetchAndApplyMissedEvents(
           debateIdRef.current,
           lastEventIdRef.current,
-          applyEvent
+          applyEvent,
+          appliedEventIdsRef.current
         )
-      }, 500) // Poll every 500ms for better streaming experience
+
+        // Schedule next poll only after current one completes
+        if (isPolling) {
+          setTimeout(poll, 500)
+        }
+      }
+
+      // Start polling
+      setTimeout(poll, 500)
 
       unsubscribeRef.current = () => {
-        clearInterval(pollInterval)
+        isPolling = false
       }
 
       return
@@ -348,7 +369,8 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
               fetchAndApplyMissedEvents(
                 debateIdRef.current,
                 lastEventIdRef.current,
-                applyEvent
+                applyEvent,
+                appliedEventIdsRef.current
               ).then((newLastId) => {
                 lastEventIdRef.current = newLastId
               })
