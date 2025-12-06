@@ -9,7 +9,7 @@ import { DebateHeader } from '@/components/debate/debate-header'
 import { FloatingControls } from '@/components/debate/floating-controls'
 import { MessageList } from '@/components/debate/message-list'
 import { ShortcutsHelp } from '@/components/debate/shortcuts-help'
-import { useDebateStream } from '@/hooks/use-debate-stream'
+import { useDebateRealtime } from '@/hooks/use-debate-realtime'
 // import { clientLogger } from '@/lib/client-logger' // TODO: Re-enable with auto-start
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
@@ -154,7 +154,7 @@ export function DebatePageClient({
     hydrateFromServer,
   ])
 
-  useDebateStream({
+  useDebateRealtime({
     debateId,
     autoConnect: true,
   })

@@ -1,6 +1,8 @@
 // src/lib/debate-events.ts
 
+import { appendEvent } from '@/lib/event-store'
 import { logger } from '@/lib/logging'
+import { publishEvent } from '@/lib/pusher'
 
 import type { SSEEvent, SSEEventType } from '@/types/execution'
 
@@ -14,12 +16,14 @@ interface DebateSubscription {
 }
 
 class DebateEventEmitter {
+  // Local subscriptions - still useful for SSE fallback and local development
   private subscriptions: Map<string, DebateSubscription[]> = new Map()
+  // In-memory history - kept for SSE fallback only
   private eventHistory: Map<string, SSEEvent[]> = new Map()
   private maxHistorySize = 100
 
   /**
-   * Subscribe to events for a specific debate
+   * Subscribe to events for a specific debate (local/SSE fallback only)
    */
   subscribe(debateId: string, callback: EventCallback): () => void {
     const subscriptionId = `${debateId}_${Date.now()}_${Math.random().toString(36).slice(2)}`
@@ -54,9 +58,30 @@ class DebateEventEmitter {
   }
 
   /**
-   * Emit an event to all subscribers for a debate
+   * Emit an event to all subscribers for a debate.
+   * This now:
+   * 1. Persists to Redis Stream (for durability and catch-up)
+   * 2. Publishes to Pusher (for real-time delivery)
+   * 3. Notifies local subscribers (for SSE fallback)
    */
   emit(event: SSEEvent): void {
+    // 1. Persist to Redis Stream (fire-and-forget, don't block)
+    appendEvent(event.debateId, event).catch((error) => {
+      logger.error('Failed to persist event to Redis', error instanceof Error ? error : null, {
+        debateId: event.debateId,
+        eventType: event.type,
+      })
+    })
+
+    // 2. Publish to Pusher for real-time delivery (fire-and-forget)
+    publishEvent(event.debateId, event).catch((error) => {
+      logger.error('Failed to publish event to Pusher', error instanceof Error ? error : null, {
+        debateId: event.debateId,
+        eventType: event.type,
+      })
+    })
+
+    // 3. Notify local subscribers (for SSE fallback)
     const subscribers = this.subscriptions.get(event.debateId) ?? []
 
     for (const subscriber of subscribers) {
@@ -74,11 +99,13 @@ class DebateEventEmitter {
       }
     }
 
+    // Keep local history for SSE fallback
     this.addToHistory(event)
   }
 
   /**
-   * Emit a typed event with automatic timestamp
+   * Emit a typed event with automatic timestamp.
+   * This is the primary API used by the debate engine.
    */
   emitEvent<T extends SSEEventType>(
     debateId: string,
@@ -103,7 +130,8 @@ class DebateEventEmitter {
   }
 
   /**
-   * Get recent events for a debate (for replay on reconnect)
+   * Get recent events for a debate (for SSE replay on reconnect - local fallback only)
+   * For production, use event-store.ts functions instead.
    */
   getRecentEvents(debateId: string, since?: Date): SSEEvent[] {
     const history = this.eventHistory.get(debateId) ?? []
@@ -116,7 +144,7 @@ class DebateEventEmitter {
   }
 
   /**
-   * Add event to history
+   * Add event to local history
    */
   private addToHistory(event: SSEEvent): void {
     const history = this.eventHistory.get(event.debateId) ?? []

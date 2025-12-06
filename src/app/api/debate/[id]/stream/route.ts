@@ -22,6 +22,11 @@ const HEARTBEAT_INTERVAL = 30000
 /**
  * GET /api/debate/[id]/stream
  * Server-Sent Events stream for real-time debate updates
+ *
+ * @deprecated This SSE endpoint is kept for local development fallback only.
+ * In production, use Pusher for real-time events via the useDebateRealtime hook.
+ * Events are persisted to Redis Streams and can be fetched via /api/debate/[id]/events
+ * for catch-up after reconnection.
  */
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { id: debateId } = await params
