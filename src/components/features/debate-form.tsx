@@ -275,43 +275,39 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-10">
       {/* Section 1: Topic — Premium AnimatedTextarea with progress bar and sparkle button */}
       <div className="animate-section-reveal stagger-1">
-        <div className="relative">
-          <AnimatedTextarea
-            id="topic"
-            label="Debate Topic"
-            placeholder="Enter a topic you'd like to see debated. For example: 'Should AI be regulated by governments?'"
-            maxLength={500}
-            currentLength={isAnimating ? displayText.length : (topicValue?.length ?? 0)}
-            error={!!errors.topic}
-            helperText={
-              errors.topic?.message ?? "Enter a topic you'd like to see debated (10-500 characters)"
+        <AnimatedTextarea
+          id="topic"
+          label="Debate Topic"
+          placeholder="Enter a topic you'd like to see debated. For example: 'Should AI be regulated by governments?'"
+          maxLength={500}
+          currentLength={isAnimating ? displayText.length : (topicValue?.length ?? 0)}
+          error={!!errors.topic}
+          helperText={
+            errors.topic?.message ?? "Enter a topic you'd like to see debated (10-500 characters)"
+          }
+          aria-describedby={errors.topic ? 'topic-error' : 'topic-description'}
+          value={isAnimating ? displayText : topicValue}
+          onChange={(e) => {
+            if (!isAnimating) {
+              setValue('topic', e.target.value, { shouldValidate: true })
+              setHasBeenPolished(false) // Reset if user edits
             }
-            aria-describedby={errors.topic ? 'topic-error' : 'topic-description'}
-            value={isAnimating ? displayText : topicValue}
-            onChange={(e) => {
-              if (!isAnimating) {
-                setValue('topic', e.target.value, { shouldValidate: true })
-                setHasBeenPolished(false) // Reset if user edits
-              }
-            }}
-            onBlur={() => {
-              if (!isAnimating) {
-                handleTopicBlur()
-              }
-            }}
-            disabled={isAnimating}
-            className={cn(isAnimating && 'caret-transparent')}
-          />
-
-          {/* Sparkle button - positioned inside the textarea container */}
-          <div className="absolute right-4 top-11">
+          }}
+          onBlur={() => {
+            if (!isAnimating) {
+              handleTopicBlur()
+            }
+          }}
+          disabled={isAnimating}
+          className={cn(isAnimating && 'caret-transparent')}
+          actionSlot={
             <SparkleButton
               onClick={handlePolishClick}
               isLoading={isPolishing}
               disabled={isAnimating || !topicValue?.trim() || isSubmitting}
             />
-          </div>
-        </div>
+          }
+        />
       </div>
 
       <SectionDivider />

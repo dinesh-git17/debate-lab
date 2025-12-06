@@ -12,10 +12,15 @@ export interface AnimatedTextareaProps extends React.TextareaHTMLAttributes<HTML
   currentLength?: number | undefined
   helperText?: string | undefined
   label?: string | undefined
+  /** Optional action element (e.g., sparkle button) rendered in top-right of textarea */
+  actionSlot?: React.ReactNode | undefined
 }
 
 export const AnimatedTextarea = forwardRef<HTMLTextAreaElement, AnimatedTextareaProps>(
-  ({ className, error, maxLength, currentLength = 0, helperText, label, id, ...props }, ref) => {
+  (
+    { className, error, maxLength, currentLength = 0, helperText, label, id, actionSlot, ...props },
+    ref
+  ) => {
     const [isFocused, setIsFocused] = useState(false)
     const generatedId = useId()
     const textareaId = id ?? generatedId
@@ -101,6 +106,9 @@ export const AnimatedTextarea = forwardRef<HTMLTextAreaElement, AnimatedTextarea
             )}
             {...props}
           />
+
+          {/* Action slot (e.g., sparkle button) - top right inside textarea */}
+          {actionSlot && <div className="absolute right-3 top-3 z-10">{actionSlot}</div>}
 
           {/* Progress bar at bottom */}
           {maxLength && (
