@@ -128,6 +128,14 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     const data = event as SSEMessageData
     const store = useDebateViewStore.getState()
 
+    clientLogger.debug('Applying event', {
+      type: data.type,
+      turnId: data.turnId,
+      hasChunk: !!data.chunk,
+      chunkLength: data.chunk?.length,
+      messageCount: store.messages.length,
+    })
+
     switch (data.type) {
       case 'debate_started':
         store.setStatus('active')
@@ -159,6 +167,10 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
 
       case 'turn_streaming':
         if (data.turnId && data.chunk) {
+          const existingMessage = store.messages.find((m) => m.id === data.turnId)
+          if (!existingMessage) {
+            clientLogger.warn('turn_streaming: message not found', { turnId: data.turnId })
+          }
           store.appendToMessage(data.turnId, data.chunk)
         }
         break
@@ -276,14 +288,14 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       clientLogger.warn('Pusher not configured, using polling fallback')
       store.setConnection('connected')
 
-      // Set up polling interval
+      // Set up polling interval - use shorter interval for near-realtime experience
       const pollInterval = setInterval(async () => {
         lastEventIdRef.current = await fetchAndApplyMissedEvents(
           debateIdRef.current,
           lastEventIdRef.current,
           applyEvent
         )
-      }, 2000) // Poll every 2 seconds
+      }, 500) // Poll every 500ms for better streaming experience
 
       unsubscribeRef.current = () => {
         clearInterval(pollInterval)
