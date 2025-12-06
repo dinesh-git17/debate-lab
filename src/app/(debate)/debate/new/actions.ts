@@ -8,6 +8,7 @@ import { debateFormSchema } from '@/lib/schemas/debate-schema'
 import { validateAndSanitizeDebateConfig } from '@/lib/security'
 import { trackVisitFromHeaders, checkBan, hashIP } from '@/lib/security/abuse-tracker'
 import { createDebateSession } from '@/services/debate-service'
+import { sanitizeTopic } from '@/services/topic-sanitizer'
 
 import type { DebateFormValues } from '@/lib/schemas/debate-schema'
 import type { BlockReason } from '@/lib/security'
@@ -165,9 +166,15 @@ export async function createDebate(data: DebateFormValues): Promise<CreateDebate
     }
   }
 
+  // Sanitize topic via AI to create a well-formed debate question
+  const { sanitizedTopic, originalTopic } = await sanitizeTopic(
+    securityValidation.sanitizedConfig.topic
+  )
+
   // Use sanitized config for debate creation
   const result = await createDebateSession({
-    topic: securityValidation.sanitizedConfig.topic,
+    topic: sanitizedTopic,
+    originalTopic,
     turns: securityValidation.sanitizedConfig.turns,
     format: securityValidation.sanitizedConfig.format as DebateFormat,
     customRules: securityValidation.sanitizedConfig.customRules,
@@ -176,7 +183,8 @@ export async function createDebate(data: DebateFormValues): Promise<CreateDebate
   if (!result.success) {
     logger.error('Debate creation failed: Service error', null, {
       error: result.error,
-      topic: securityValidation.sanitizedConfig.topic.slice(0, 100),
+      topic: sanitizedTopic.slice(0, 100),
+      originalTopic: originalTopic.slice(0, 100),
       format: securityValidation.sanitizedConfig.format,
       turns: securityValidation.sanitizedConfig.turns,
     })
@@ -188,7 +196,8 @@ export async function createDebate(data: DebateFormValues): Promise<CreateDebate
 
   // Log successful debate creation
   logDebateEvent('debate_created', result.debateId!, {
-    topic: securityValidation.sanitizedConfig.topic.slice(0, 100),
+    topic: sanitizedTopic.slice(0, 100),
+    originalTopic: originalTopic.slice(0, 100),
     format: securityValidation.sanitizedConfig.format,
     turns: securityValidation.sanitizedConfig.turns,
     hasCustomRules: (securityValidation.sanitizedConfig.customRules?.length ?? 0) > 0,

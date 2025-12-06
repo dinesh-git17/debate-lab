@@ -51,6 +51,7 @@ export interface Debate {
 export interface DebateSession {
   id: string
   topic: string
+  originalTopic?: string | undefined
   turns: number
   format: DebateFormat
   customRules: string[]
@@ -64,6 +65,7 @@ export interface DebateSession {
 export interface DebateSessionPublic {
   id: string
   topic: string
+  originalTopic?: string | undefined
   turns: number
   format: DebateFormat
   customRules: string[]

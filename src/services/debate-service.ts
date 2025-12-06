@@ -27,10 +27,16 @@ export interface CreateDebateResult {
   error?: string | undefined
 }
 
+export interface CreateDebateInput extends DebateFormValues {
+  originalTopic?: string
+}
+
 /**
  * Creates a new debate session with random LLM assignment.
  */
-export async function createDebateSession(formData: DebateFormValues): Promise<CreateDebateResult> {
+export async function createDebateSession(
+  formData: CreateDebateInput
+): Promise<CreateDebateResult> {
   const debateId = generateDebateId()
   const log = createDebateLogger(debateId)
 
@@ -41,6 +47,7 @@ export async function createDebateSession(formData: DebateFormValues): Promise<C
     const session: DebateSession = {
       id: debateId,
       topic: formData.topic,
+      originalTopic: formData.originalTopic,
       turns: formData.turns,
       format: formData.format,
       customRules: formData.customRules ?? [],

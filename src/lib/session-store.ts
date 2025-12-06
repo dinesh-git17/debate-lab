@@ -56,6 +56,7 @@ function deserializeSession(json: string): DebateSession {
   const parsed = JSON.parse(json) as {
     id: string
     topic: string
+    originalTopic?: string
     turns: number
     format: DebateSession['format']
     customRules: string[]
@@ -228,6 +229,7 @@ export function toPublicSession(session: DebateSession): DebateSessionPublic {
   return {
     id: session.id,
     topic: session.topic,
+    originalTopic: session.originalTopic,
     turns: session.turns,
     format: session.format,
     customRules: session.customRules,
