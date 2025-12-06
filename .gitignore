@@ -48,3 +48,4 @@ next-env.d.ts
 
 # claude code local settings
 CLAUDE.local.md
+settings.local.json
