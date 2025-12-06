@@ -25,6 +25,9 @@ function buildCsp(): string {
       'https://api.openai.com',
       'https://api.anthropic.com',
       'https://api.x.ai',
+      // Pusher WebSocket and HTTP connections
+      'wss://*.pusher.com',
+      'https://*.pusher.com',
       ...(isDev ? ['ws://localhost:*', 'http://localhost:*'] : []),
       'https://vercel.live',
       'https://*.vercel.com',
