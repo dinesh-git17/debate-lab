@@ -83,7 +83,7 @@ function buildCsp(request: NextRequest): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.x.ai https://vercel.live https://*.vercel.com https://*.sentry.io${isLocal ? ' ws://localhost:* http://localhost:*' : ''}`,
+    `connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.x.ai wss://*.pusher.com https://*.pusher.com https://vercel.live https://*.vercel.com https://*.sentry.io${isLocal ? ' ws://localhost:* http://localhost:*' : ''}`,
     "frame-src 'self'",
     "frame-ancestors 'none'",
     "form-action 'self'",
