@@ -15,6 +15,10 @@ import type { BlockReason } from '@/lib/security'
 import type { DebateFormat } from '@/types/debate'
 import type { SecurityContext } from '@/types/security'
 
+interface CreateDebateData extends DebateFormValues {
+  alreadyPolished?: boolean
+}
+
 // Extract security context from headers in Server Actions
 async function getSecurityContext(): Promise<SecurityContext> {
   const headersList = await headers()
@@ -55,7 +59,7 @@ export interface CreateDebateActionResult {
   blockReason?: BlockReason | undefined
 }
 
-export async function createDebate(data: DebateFormValues): Promise<CreateDebateActionResult> {
+export async function createDebate(data: CreateDebateData): Promise<CreateDebateActionResult> {
   const validated = debateFormSchema.safeParse(data)
 
   if (!validated.success) {
@@ -167,13 +171,19 @@ export async function createDebate(data: DebateFormValues): Promise<CreateDebate
   }
 
   // Sanitize topic via AI to create a well-formed debate question
-  const { sanitizedTopic, originalTopic } = await sanitizeTopic(
-    securityValidation.sanitizedConfig.topic
-  )
+  // Skip if user already polished via sparkle button
+  let finalTopic = securityValidation.sanitizedConfig.topic
+  let originalTopic = securityValidation.sanitizedConfig.topic
+
+  if (!data.alreadyPolished) {
+    const sanitizeResult = await sanitizeTopic(securityValidation.sanitizedConfig.topic)
+    finalTopic = sanitizeResult.sanitizedTopic
+    originalTopic = sanitizeResult.originalTopic
+  }
 
   // Use sanitized config for debate creation
   const result = await createDebateSession({
-    topic: sanitizedTopic,
+    topic: finalTopic,
     originalTopic,
     turns: securityValidation.sanitizedConfig.turns,
     format: securityValidation.sanitizedConfig.format as DebateFormat,
@@ -183,7 +193,7 @@ export async function createDebate(data: DebateFormValues): Promise<CreateDebate
   if (!result.success) {
     logger.error('Debate creation failed: Service error', null, {
       error: result.error,
-      topic: sanitizedTopic.slice(0, 100),
+      topic: finalTopic.slice(0, 100),
       originalTopic: originalTopic.slice(0, 100),
       format: securityValidation.sanitizedConfig.format,
       turns: securityValidation.sanitizedConfig.turns,
@@ -196,12 +206,13 @@ export async function createDebate(data: DebateFormValues): Promise<CreateDebate
 
   // Log successful debate creation
   logDebateEvent('debate_created', result.debateId!, {
-    topic: sanitizedTopic.slice(0, 100),
+    topic: finalTopic.slice(0, 100),
     originalTopic: originalTopic.slice(0, 100),
     format: securityValidation.sanitizedConfig.format,
     turns: securityValidation.sanitizedConfig.turns,
     hasCustomRules: (securityValidation.sanitizedConfig.customRules?.length ?? 0) > 0,
     customRulesCount: securityValidation.sanitizedConfig.customRules?.length ?? 0,
+    alreadyPolished: data.alreadyPolished ?? false,
   })
 
   return {

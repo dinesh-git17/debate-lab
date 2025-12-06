@@ -160,13 +160,16 @@ export function DebatePageClient({
   })
 
   return (
-    <div
+    <motion.div
       className={cn(
         // Fullscreen fixed container - no navbar to account for
         'fixed inset-0 z-50 flex flex-col overflow-hidden',
         // Slightly off-black background for depth
         'bg-[#0a0a0b]'
       )}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
     >
       {/* Film grain - kills digital banding */}
       <div
@@ -208,6 +211,6 @@ export function DebatePageClient({
       </div>
 
       <div className="safe-area-inset-bottom" />
-    </div>
+    </motion.div>
   )
 }

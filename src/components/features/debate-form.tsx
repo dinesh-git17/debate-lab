@@ -12,6 +12,9 @@ import { ContentViolationModal } from '@/components/ui/content-violation-modal'
 import { PrimaryCTA, SecondaryCTA } from '@/components/ui/cta-buttons'
 import { ListPicker, type ListPickerOption } from '@/components/ui/list-picker'
 import { SegmentedControl, type SegmentOption } from '@/components/ui/segmented-control'
+import { SparkleButton } from '@/components/ui/sparkle-button'
+import { useTypewriter } from '@/hooks/use-typewriter'
+import { sanitizeTopicBasic } from '@/lib/sanitize-topic-basic'
 import {
   debateFormSchema,
   defaultValues,
@@ -32,8 +35,12 @@ interface DebateFormSubmitResult {
   blockReason?: BlockReason | undefined
 }
 
+export interface DebateFormSubmitData extends DebateFormValues {
+  alreadyPolished?: boolean
+}
+
 interface DebateFormProps {
-  onSubmit: (data: DebateFormValues) => Promise<DebateFormSubmitResult>
+  onSubmit: (data: DebateFormSubmitData) => Promise<DebateFormSubmitResult>
   isSubmitting?: boolean | undefined
 }
 
@@ -98,6 +105,15 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
   const [violationReason, setViolationReason] = useState<BlockReason | undefined>()
   const [violationMessage, setViolationMessage] = useState<string | undefined>()
 
+  // Sparkle button state
+  const [isPolishing, setIsPolishing] = useState(false)
+  const [hasBeenPolished, setHasBeenPolished] = useState(false)
+  const { isAnimating, displayText, animate } = useTypewriter({
+    eraseSpeed: 15,
+    typeSpeed: 25,
+    pauseBetween: 200,
+  })
+
   const form = useForm<DebateFormValues>({
     resolver: zodResolver(debateFormSchema),
     defaultValues,
@@ -105,7 +121,6 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
   })
 
   const {
-    register,
     handleSubmit,
     watch,
     setValue,
@@ -140,11 +155,60 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
     return () => subscription.unsubscribe()
   }, [watch])
 
+  // Sync displayText back to form when animation completes
+  useEffect(() => {
+    if (!isAnimating && displayText && hasBeenPolished) {
+      form.setValue('topic', displayText, {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+    }
+  }, [isAnimating, displayText, hasBeenPolished, form])
+
+  // Handle sparkle button click - polish topic with AI
+  const handlePolishClick = async () => {
+    const currentTopic = form.getValues('topic')
+    if (!currentTopic?.trim() || isPolishing || isAnimating) return
+
+    setIsPolishing(true)
+
+    try {
+      const response = await fetch('/api/topic/polish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: currentTopic }),
+      })
+
+      if (!response.ok) throw new Error('Failed to polish')
+
+      const data = (await response.json()) as {
+        success: boolean
+        polishedTopic: string
+        originalTopic: string
+      }
+
+      if (data.success && data.polishedTopic !== currentTopic) {
+        setHasBeenPolished(true)
+        // Trigger the erase/retype animation
+        await animate(currentTopic, data.polishedTopic)
+      }
+    } catch {
+      // Fallback: apply basic cleanup
+      const cleaned = sanitizeTopicBasic(currentTopic)
+      if (cleaned !== currentTopic) {
+        setHasBeenPolished(true)
+        await animate(currentTopic, cleaned)
+      }
+    } finally {
+      setIsPolishing(false)
+    }
+  }
+
   const handleFormSubmit = async (data: DebateFormValues) => {
     setSubmitError(null)
     setShowViolationModal(false)
 
-    const result = await onSubmit(data)
+    const result = await onSubmit({ ...data, alreadyPolished: hasBeenPolished })
 
     if (result.success) {
       localStorage.removeItem(STORAGE_KEY)
@@ -166,6 +230,7 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
     setShowViolationModal(false)
     setViolationReason(undefined)
     setViolationMessage(undefined)
+    setHasBeenPolished(false)
   }
 
   const handleCloseViolationModal = () => {
@@ -176,6 +241,20 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
 
   const handleCustomRulesChange = (rules: string[]) => {
     setValue('customRules', rules, { shouldValidate: true })
+  }
+
+  // Level 1: Instant client-side topic cleanup on blur
+  const handleTopicBlur = () => {
+    const currentValue = form.getValues('topic')
+    if (currentValue) {
+      const cleaned = sanitizeTopicBasic(currentValue)
+      if (cleaned !== currentValue) {
+        form.setValue('topic', cleaned, {
+          shouldValidate: true,
+          shouldDirty: true,
+        })
+      }
+    }
   }
 
   // Map options for SegmentedControl (turns)
@@ -194,21 +273,45 @@ export function DebateForm({ onSubmit, isSubmitting = false }: DebateFormProps) 
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-10">
-      {/* Section 1: Topic — Premium AnimatedTextarea with progress bar */}
+      {/* Section 1: Topic — Premium AnimatedTextarea with progress bar and sparkle button */}
       <div className="animate-section-reveal stagger-1">
-        <AnimatedTextarea
-          id="topic"
-          label="Debate Topic"
-          placeholder="Enter a topic you'd like to see debated. For example: 'Should AI be regulated by governments?'"
-          maxLength={500}
-          currentLength={topicValue?.length ?? 0}
-          error={!!errors.topic}
-          helperText={
-            errors.topic?.message ?? "Enter a topic you'd like to see debated (10-500 characters)"
-          }
-          aria-describedby={errors.topic ? 'topic-error' : 'topic-description'}
-          {...register('topic')}
-        />
+        <div className="relative">
+          <AnimatedTextarea
+            id="topic"
+            label="Debate Topic"
+            placeholder="Enter a topic you'd like to see debated. For example: 'Should AI be regulated by governments?'"
+            maxLength={500}
+            currentLength={isAnimating ? displayText.length : (topicValue?.length ?? 0)}
+            error={!!errors.topic}
+            helperText={
+              errors.topic?.message ?? "Enter a topic you'd like to see debated (10-500 characters)"
+            }
+            aria-describedby={errors.topic ? 'topic-error' : 'topic-description'}
+            value={isAnimating ? displayText : topicValue}
+            onChange={(e) => {
+              if (!isAnimating) {
+                setValue('topic', e.target.value, { shouldValidate: true })
+                setHasBeenPolished(false) // Reset if user edits
+              }
+            }}
+            onBlur={() => {
+              if (!isAnimating) {
+                handleTopicBlur()
+              }
+            }}
+            disabled={isAnimating}
+            className={cn(isAnimating && 'caret-transparent')}
+          />
+
+          {/* Sparkle button - positioned inside the textarea container */}
+          <div className="absolute right-4 top-11">
+            <SparkleButton
+              onClick={handlePolishClick}
+              isLoading={isPolishing}
+              disabled={isAnimating || !topicValue?.trim() || isSubmitting}
+            />
+          </div>
+        </div>
       </div>
 
       <SectionDivider />
