@@ -51,8 +51,8 @@ describe('MessageList', () => {
     it('should show empty state message when no messages', () => {
       render(<MessageList />)
 
-      expect(screen.getByText('Waiting for debate to begin...')).toBeInTheDocument()
-      expect(screen.getByText('Messages will appear here in real-time')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Start Debate' })).toBeInTheDocument()
+      expect(screen.getByText('2 Agents')).toBeInTheDocument()
     })
 
     it('should have status role for accessibility in empty state', () => {
