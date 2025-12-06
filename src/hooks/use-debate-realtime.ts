@@ -128,6 +128,12 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     const data = event as SSEMessageData
     const store = useDebateViewStore.getState()
 
+    // Skip events if debate is already completed (prevents replay)
+    if (store.status === 'completed' && data.type !== 'debate_completed') {
+      clientLogger.debug('Skipping event - debate already completed', { type: data.type })
+      return
+    }
+
     clientLogger.debug('Applying event', {
       type: data.type,
       turnId: data.turnId,
@@ -232,6 +238,11 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       case 'debate_completed':
         store.setStatus('completed')
         store.setCurrentTurn(null)
+        // Stop polling/subscription when debate completes
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current()
+          unsubscribeRef.current = null
+        }
         onDebateCompleteRef.current?.()
         break
 

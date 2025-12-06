@@ -76,9 +76,15 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
   setError: (error) => set({ error }),
 
   addMessage: (message) =>
-    set((state) => ({
-      messages: [...state.messages, message],
-    })),
+    set((state) => {
+      // Prevent duplicate messages
+      if (state.messages.some((m) => m.id === message.id)) {
+        // eslint-disable-next-line no-console
+        console.log('[Store] addMessage: duplicate ignored', message.id)
+        return state
+      }
+      return { messages: [...state.messages, message] }
+    }),
 
   updateMessage: (id, updates) =>
     set((state) => ({
