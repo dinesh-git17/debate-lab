@@ -76,21 +76,21 @@ function EmptyState() {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center">
-      {/* God Ray - breathing spotlight */}
+      {/* God Ray - ambient spotlight */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1000px] w-[1000px] -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1800px] w-[1800px] -translate-x-1/2 -translate-y-1/2"
         style={{
           background:
-            'radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 50%)',
+            'radial-gradient(circle at center, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.015) 30%, rgba(255, 255, 255, 0) 70%)',
         }}
         animate={{
-          scale: [1, 1.1, 1],
-          opacity: [1, 1.3, 1],
+          scale: [1, 1.03, 1],
+          opacity: [1, 1.1, 1],
         }}
         transition={{
-          duration: 4,
+          duration: 8,
           repeat: Infinity,
-          ease: 'easeInOut',
+          ease: [0.4, 0, 0.6, 1],
         }}
       />
 
@@ -138,19 +138,19 @@ function EmptyState() {
         </div>
       </div>
 
-      {/* CTA - bloom glow */}
+      {/* CTA - ambient glow */}
       <button
         onClick={handleStart}
         disabled={isLoading}
         className={cn(
           'mt-10 rounded-full bg-white px-8 py-4',
           'text-sm font-semibold text-black',
-          // Bloom - button emits light
-          'shadow-[0_0_60px_-15px_rgba(255,255,255,0.3)]',
-          // Transitions
-          'transition-all duration-300 ease-out',
-          // Hover: subtle scale + increased bloom
-          'hover:scale-[1.02] hover:shadow-[0_0_80px_-15px_rgba(255,255,255,0.5)]',
+          // Ambient glow - soft diffuse light
+          'shadow-[0_0_120px_-20px_rgba(255,255,255,0.25)]',
+          // Smooth transitions
+          'transition-all duration-500 ease-out',
+          // Hover: subtle scale + increased glow
+          'hover:scale-[1.02] hover:shadow-[0_0_140px_-20px_rgba(255,255,255,0.35)]',
           // Disabled state
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none'
         )}
