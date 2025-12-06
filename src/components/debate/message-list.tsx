@@ -271,6 +271,18 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
       result.push(msg)
       if (!displayedIds.has(msg.id)) break
     }
+    // Debug logging
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line no-console
+      console.log(
+        '[MessageList] visible:',
+        result.length,
+        'total:',
+        allMessages.length,
+        'displayed:',
+        displayedIds.size
+      )
+    }
     return result
   }, [allMessages, displayedIds])
 

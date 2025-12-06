@@ -122,6 +122,8 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
     set((state) => {
       const newSet = new Set(state.displayedMessageIds)
       newSet.add(id)
+      // eslint-disable-next-line no-console
+      console.log('[Store] markMessageDisplayed:', id, 'total displayed:', newSet.size)
       return { displayedMessageIds: newSet }
     }),
 

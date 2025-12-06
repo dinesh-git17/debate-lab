@@ -37,6 +37,8 @@ function MessageContent({
   useEffect(() => {
     if (isComplete && !hasCalledComplete.current) {
       hasCalledComplete.current = true
+      // eslint-disable-next-line no-console
+      console.log('[MessageContent] Animation complete, calling onAnimationComplete')
       onAnimationComplete?.()
     }
   }, [isComplete, onAnimationComplete])
