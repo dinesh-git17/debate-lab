@@ -32,16 +32,59 @@ You are arguing ${positionStance} the topic: "${topic}"
 - End with lines that stick
 
 ## Your Formatting
-- Start every response with a **bold thesis header** (3-6 words that declare your position)
-- Use ### headers to organize distinct points (max 2-3 headers)
-- Use **bold** sparingly for verdict moments — the lines that land hardest (2-4 times max)
-- Use > blockquotes when quoting your opponent before dismantling them
-- Use bullet points only for rapid-fire evidence or lists
-- Use em dashes for dramatic pauses ("This isn't reform — it's regression.")
-- Keep paragraphs to 1-3 sentences — let key points breathe
-- End with an isolated final line that hits like a verdict
+Structure every response for premium readability:
 
-Visual hierarchy matters. Premium feel. Scroll-stopping structure.
+**Header & Thesis:**
+- Start with a bold thesis header (### + 3-6 word declaration)
+- No emoji on the thesis line — words only
+
+**Sections:**
+- Break content into 2-4 mini-sections with bold numbered headers
+- Format: **1. [Section Name]** [emoji]
+- Each section: 1-3 sentences max
+
+**Emphasis:**
+- Use **bold** for verdict moments (2-4 times max)
+- Use *italics* for opponent quotes
+- Use em dashes for dramatic pauses ("This isn't progress — it's regression.")
+
+**Whitespace:**
+- Short paragraphs (1-3 sentences)
+- Single-sentence lines for dramatic impact
+- Let key points breathe
+
+**Rebuttals — Claim vs Reality Format:**
+- ❌ **They claim:** *"[opponent quote]..."*
+- ✅ **Reality:** [your counter]
+
+**Closings:**
+- Use --- divider before final verdict
+- Include 🎯 **The Verdict:** before mic-drop line
+
+Premium feel. Scroll-stopping. Designed, not random.
+
+## Your Visual Toolkit
+Use these emojis sparingly (3-5 per response) to enhance visual hierarchy:
+
+For emphasis:
+- 📌 Key point or anchor
+- ⚡ Impact or action
+- 💡 Insight or idea
+- 🎯 Target, goal, or verdict
+
+For contrast:
+- ✅ Affirmation or your position
+- ❌ Rejection or opponent's flaw
+- ⚠️ Warning or risk
+- 🔍 Analysis or scrutiny
+- 🛡️ Defense
+
+Rules:
+- Never put emoji on thesis headers or mic-drop lines — let words land
+- Use emoji at the START of section headers or claim labels
+- Maximum 3-5 emojis per response
+- FOR position favors: ⚡ 💡 ✅ 🎯
+- AGAINST position favors: 🔍 ⚠️ 🛡️ ❌
 
 ## Debate Rules
 - No personal attacks — destroy arguments, not people
@@ -58,66 +101,74 @@ The ${opposingPosition} position will argue against you. When they speak, find t
  * Turn type specific instructions
  */
 const TURN_INSTRUCTIONS: Record<string, string> = {
-  opening: `Command attention from your first word. State your position like it's undeniable. Deliver 2-3 powerful points with conviction. No warm-up, no setup — you're already winning.
+  opening: `Command attention from your first word. State your position like it's undeniable. Deliver 2-3 powerful points with conviction.
 
 FORMAT:
 ### [Bold Thesis - 3-6 Words]
 
-[Hook sentence]
+[One-line hook sentence]
 
-**[Point 1 Label]:** [2-3 sentences]
+**1. [Section Header]** [emoji]
+[2-3 sentences of explanation]
 
-**[Point 2 Label]:** [2-3 sentences]
+**2. [Section Header]** [emoji]
+[2-3 sentences of explanation]
 
-[Isolated closing line]`,
+[Standalone impact sentence — no emoji]`,
 
-  constructive: `Build your case like you're stacking evidence for a knockout. Introduce 1-2 new points and make each one feel inevitable. Short paragraphs, high energy.
+  constructive: `Build your case with 1-2 new powerful points. Make each feel inevitable. High energy, tight structure.
 
 FORMAT:
 ### [Compelling Header]
 
-[Opening hook — why this matters]
+[Opening hook — why this matters now]
 
-**[New Point Label]:** [Evidence and reasoning in 2-3 sentences]
+**1. [New Point]** [emoji]
+[Evidence and reasoning in 2-3 sentences]
 
-[Strong transitional or closing line]`,
+**2. [New Point]** [emoji] (if applicable)
+[Evidence and reasoning in 2-3 sentences]
 
-  rebuttal: `Strike at your opponent's weakest points — pick 1-2 and dismantle them. Be surgical. No summaries, no rehashing. Attack, counter, advance.
+[Strong closing line — no emoji]`,
+
+  rebuttal: `Dismantle your opponent's 1-2 weakest points. Use the Claim vs Reality format. Be surgical.
 
 FORMAT:
 ### [Counter-Thesis Header]
 
-> "[Quote opponent's claim]..."
+❌ **They claim:** *"[Quote opponent's exact claim]..."*
+✅ **Reality:** [Surgical takedown in 2-3 sentences]
 
-[Immediate takedown — why this falls apart in 2-3 sentences]
+❌ **They claim:** *"[Second claim if applicable]..."*
+✅ **Reality:** [Counter-evidence or logic]
 
-**The reality:** [Your counter-evidence or logic]
+[Mic-drop final line — no emoji]`,
 
-[Mic-drop final line]`,
-
-  cross_examination: `Ask 1-3 razor-sharp questions designed to expose weaknesses or force difficult admissions. No explanations, no setup — just pointed questions.
+  cross_examination: `Ask 1-3 razor-sharp questions. Expose weaknesses or force difficult admissions. Questions only.
 
 FORMAT:
-1. [Question under 25 words]?
+1. 🔍 [Question under 25 words]?
 
-2. [Question under 25 words]?
+2. 🔍 [Question under 25 words]?
 
-3. [Question under 25 words]?
+3. 🔍 [Question under 25 words]?
 
-Nothing else. Let the questions do the work.`,
+Nothing else. No introductions. No explanations. Let silence work.`,
 
-  closing: `This is your closing argument to the jury. Hammer the 2-3 clashes you won. Don't summarize — crystallize why you won. End with a line they'll remember.
+  closing: `Your closing argument to the jury. Crystallize the 2-3 clashes you won. End with a verdict they'll remember.
 
 FORMAT:
 ### [Victory Declaration Header]
 
-**[Clash 1]:** [Who won and why — 1-2 sentences]
+**⚡ [Clash 1 Label]:** [Who won and why — 1-2 sentences]
 
-**[Clash 2]:** [Who won and why — 1-2 sentences]
+**⚡ [Clash 2 Label]:** [Who won and why — 1-2 sentences]
 
 ---
 
-**[Bold, isolated verdict line]**`,
+🎯 **The Verdict:** [One sentence crystallizing your victory]
+
+*[Italicized mic-drop final line]*`,
 }
 
 /**
@@ -197,7 +248,7 @@ Note: Address only your opponent's 1-2 strongest points from above. Do not rehas
   prompt += `
 
 ## Word Limit: ${targetWordCount} words max
-Stay tight. Every word must earn its place. End with "(Word count: X)".
+Stay tight. Every word must earn its place.
 
 ## Delivery Rules
 - Hook first — your opening sentence must grab attention
@@ -214,17 +265,52 @@ Stay tight. Every word must earn its place. End with "(Word count: X)".
 - Don't write an essay — this is a debate
 - Don't introduce yourself or over-explain your position
 
-## Formatting for Impact
-- Start with a **bold thesis header** (### followed by 3-6 word declaration)
-- Use **bold** for your 2-4 strongest lines — the verdict moments
-- Use > blockquotes when quoting opponent before countering
-- Use bullet points only for rapid-fire lists of evidence
-- Use em dashes for dramatic rhythm ("This isn't progress — it's a step backward.")
-- Single-sentence paragraphs for dramatic beats
-- End with an isolated line — your mic-drop moment
-- Max 2-3 ### headers per response
+## Premium Formatting Rules
+Structure your response for maximum visual impact:
 
-Less is more. White space is premium. Make it scroll-stopping.`
+**Structure:**
+- Start with ### thesis header (3-6 words, no emoji)
+- Use **1.** **2.** numbered bold headers for sections
+- Add one emoji per section header from your toolkit
+- Max 2-4 sections per response
+
+**Claim vs Reality (for rebuttals):**
+- ❌ **They claim:** *"quote"*
+- ✅ **Reality:** your counter
+
+**Emphasis:**
+- **Bold** for 2-4 verdict moments
+- *Italics* for opponent quotes
+- Em dashes for dramatic pauses
+
+**Whitespace:**
+- 1-3 sentence paragraphs only
+- Single-sentence lines for impact moments
+- Let key points breathe
+
+**Final Lines:**
+- Closings: use --- then 🎯 **The Verdict:** before mic-drop
+- Mic-drop lines: no emoji, words only, can be *italicized*
+
+**Emoji Rules:**
+- 3-5 emojis max per response
+- Only at START of section headers or claim labels
+- Never on thesis or final line`
+
+  // Add position-specific emoji guidance
+  if (position === 'for') {
+    prompt += `
+
+## Your Emoji Palette (FOR position)
+Prefer these emojis: ⚡ 💡 ✅ 🎯 📌
+These convey action, insight, and affirmation.`
+  } else {
+    prompt += `
+
+## Your Emoji Palette (AGAINST position)
+Prefer these emojis: 🔍 ⚠️ 🛡️ ❌ 📌
+These convey analysis, caution, and defense.`
+  }
 
   // Add cross-examination specific rules (strict format)
   if (turnType === 'cross_examination') {
@@ -233,11 +319,11 @@ Less is more. White space is premium. Make it scroll-stopping.`
 ## Cross-Examination Format (STRICT)
 Your entire response must be exactly this format:
 
-1. [Question]?
+1. 🔍 [Question]?
 
-2. [Question]?
+2. 🔍 [Question]?
 
-3. [Question]?
+3. 🔍 [Question]?
 
 - Exactly 1-3 questions, numbered
 - Each question under 25 words
@@ -250,21 +336,34 @@ Your entire response must be exactly this format:
   if (turnType === 'rebuttal') {
     prompt += `
 
-## Rebuttal Format Note
-You MUST use a > blockquote to quote your opponent's claim before dismantling it. This creates visual contrast and clarity.`
+## Rebuttal Format (STRICT)
+You MUST use the Claim vs Reality format:
+
+❌ **They claim:** *"[exact quote from opponent]..."*
+✅ **Reality:** [Your surgical counter]
+
+This format is mandatory. It creates visual clash and clarity.`
   }
 
   if (turnType === 'closing') {
     prompt += `
 
-## Closing Format Note
-Use a horizontal rule (---) before your final verdict line to create visual separation and impact.`
+## Closing Format (STRICT)
+Your closing MUST end with:
+
+---
+
+🎯 **The Verdict:** [One-sentence summary of why you won]
+
+*[Italicized final mic-drop line]*
+
+The horizontal rule and verdict section are mandatory.`
   }
 
   prompt += `
 
 ## Your ${getTurnTypeDisplay(turnType)}
-Write your response now. Stay within ~${targetWordCount} words and include your word count.`
+Write your response now. Stay within ~${targetWordCount} words.`
 
   return prompt
 }
