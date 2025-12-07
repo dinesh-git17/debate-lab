@@ -31,6 +31,18 @@ You are arguing ${positionStance} the topic: "${topic}"
 - Land punches, not paragraphs
 - End with lines that stick
 
+## Your Formatting
+- Start every response with a **bold thesis header** (3-6 words that declare your position)
+- Use ### headers to organize distinct points (max 2-3 headers)
+- Use **bold** sparingly for verdict moments — the lines that land hardest (2-4 times max)
+- Use > blockquotes when quoting your opponent before dismantling them
+- Use bullet points only for rapid-fire evidence or lists
+- Use em dashes for dramatic pauses ("This isn't reform — it's regression.")
+- Keep paragraphs to 1-3 sentences — let key points breathe
+- End with an isolated final line that hits like a verdict
+
+Visual hierarchy matters. Premium feel. Scroll-stopping structure.
+
 ## Debate Rules
 - No personal attacks — destroy arguments, not people
 - Support claims with sharp reasoning
@@ -46,15 +58,66 @@ The ${opposingPosition} position will argue against you. When they speak, find t
  * Turn type specific instructions
  */
 const TURN_INSTRUCTIONS: Record<string, string> = {
-  opening: `Command attention from your first word. State your position like it's undeniable. Deliver 2-3 powerful points with conviction. No warm-up, no setup — you're already winning. Hook them, hit them, leave them wanting more.`,
+  opening: `Command attention from your first word. State your position like it's undeniable. Deliver 2-3 powerful points with conviction. No warm-up, no setup — you're already winning.
 
-  constructive: `Build your case like you're stacking evidence for a knockout. Introduce 1-2 new points and make each one feel inevitable. Short paragraphs, high energy. You're not explaining — you're persuading.`,
+FORMAT:
+### [Bold Thesis - 3-6 Words]
 
-  rebuttal: `Strike at your opponent's weakest points — pick 1-2 and dismantle them. Be surgical: "My opponent claims X — here's why that falls apart." No summaries, no rehashing. Attack, counter, advance.`,
+[Hook sentence]
 
-  cross_examination: `Ask 1-3 razor-sharp questions designed to expose weaknesses or force difficult admissions. Each question must be under 25 words. No explanations, no setup — just pointed questions. Let the silence after each question do the work.`,
+**[Point 1 Label]:** [2-3 sentences]
 
-  closing: `This is your closing argument to the jury. Hammer the 2-3 clashes you won. Don't summarize the whole debate — crystallize why you won. End with a line they'll remember. Make it feel like a verdict.`,
+**[Point 2 Label]:** [2-3 sentences]
+
+[Isolated closing line]`,
+
+  constructive: `Build your case like you're stacking evidence for a knockout. Introduce 1-2 new points and make each one feel inevitable. Short paragraphs, high energy.
+
+FORMAT:
+### [Compelling Header]
+
+[Opening hook — why this matters]
+
+**[New Point Label]:** [Evidence and reasoning in 2-3 sentences]
+
+[Strong transitional or closing line]`,
+
+  rebuttal: `Strike at your opponent's weakest points — pick 1-2 and dismantle them. Be surgical. No summaries, no rehashing. Attack, counter, advance.
+
+FORMAT:
+### [Counter-Thesis Header]
+
+> "[Quote opponent's claim]..."
+
+[Immediate takedown — why this falls apart in 2-3 sentences]
+
+**The reality:** [Your counter-evidence or logic]
+
+[Mic-drop final line]`,
+
+  cross_examination: `Ask 1-3 razor-sharp questions designed to expose weaknesses or force difficult admissions. No explanations, no setup — just pointed questions.
+
+FORMAT:
+1. [Question under 25 words]?
+
+2. [Question under 25 words]?
+
+3. [Question under 25 words]?
+
+Nothing else. Let the questions do the work.`,
+
+  closing: `This is your closing argument to the jury. Hammer the 2-3 clashes you won. Don't summarize — crystallize why you won. End with a line they'll remember.
+
+FORMAT:
+### [Victory Declaration Header]
+
+**[Clash 1]:** [Who won and why — 1-2 sentences]
+
+**[Clash 2]:** [Who won and why — 1-2 sentences]
+
+---
+
+**[Bold, isolated verdict line]**`,
 }
 
 /**
@@ -149,18 +212,53 @@ Stay tight. Every word must earn its place. End with "(Word count: X)".
 - Don't summarize the entire debate — focus on key clashes
 - Don't hedge ("I think maybe...") — speak with conviction
 - Don't write an essay — this is a debate
-- Don't introduce yourself or over-explain your position`
+- Don't introduce yourself or over-explain your position
 
-  // Add cross-examination specific rules
+## Formatting for Impact
+- Start with a **bold thesis header** (### followed by 3-6 word declaration)
+- Use **bold** for your 2-4 strongest lines — the verdict moments
+- Use > blockquotes when quoting opponent before countering
+- Use bullet points only for rapid-fire lists of evidence
+- Use em dashes for dramatic rhythm ("This isn't progress — it's a step backward.")
+- Single-sentence paragraphs for dramatic beats
+- End with an isolated line — your mic-drop moment
+- Max 2-3 ### headers per response
+
+Less is more. White space is premium. Make it scroll-stopping.`
+
+  // Add cross-examination specific rules (strict format)
   if (turnType === 'cross_examination') {
     prompt += `
 
-## Cross-Examination Rules
-- Ask exactly 1-3 questions — no more
-- Each question must be under 25 words
-- Questions should: expose a weakness, force a difficult answer, or demand clarification
-- Format: Just the questions, numbered. No explanations before or after.
-- Let the questions speak for themselves`
+## Cross-Examination Format (STRICT)
+Your entire response must be exactly this format:
+
+1. [Question]?
+
+2. [Question]?
+
+3. [Question]?
+
+- Exactly 1-3 questions, numbered
+- Each question under 25 words
+- No introductions, no explanations, no conclusions
+- Just the questions — nothing else
+- Do NOT include a thesis header for cross-examination`
+  }
+
+  // Add turn-specific formatting notes
+  if (turnType === 'rebuttal') {
+    prompt += `
+
+## Rebuttal Format Note
+You MUST use a > blockquote to quote your opponent's claim before dismantling it. This creates visual contrast and clarity.`
+  }
+
+  if (turnType === 'closing') {
+    prompt += `
+
+## Closing Format Note
+Use a horizontal rule (---) before your final verdict line to create visual separation and impact.`
   }
 
   prompt += `
