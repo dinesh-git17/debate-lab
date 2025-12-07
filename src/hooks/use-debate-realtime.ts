@@ -98,14 +98,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       return
     }
 
-    clientLogger.debug('Applying event', {
-      type: data.type,
-      seq: data.seq,
-      turnId: data.turnId,
-      hasChunk: !!data.chunk,
-      chunkLength: data.chunk?.length,
-    })
-
     switch (data.type) {
       case 'debate_started':
         store.setStatus('active')

@@ -38,6 +38,8 @@ interface DebateViewActions {
 interface ExtendedDebateViewState extends DebateViewState {
   // Set of message IDs that have finished displaying (animation complete)
   displayedMessageIds: Set<string>
+  // Flag to track if server said debate is complete but animations aren't done
+  pendingCompletion: boolean
 }
 
 type DebateViewStore = ExtendedDebateViewState & DebateViewActions
@@ -57,6 +59,7 @@ const initialState: ExtendedDebateViewState = {
   connection: 'disconnected',
   error: null,
   displayedMessageIds: new Set(),
+  pendingCompletion: false,
 }
 
 export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
@@ -69,7 +72,26 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
       format: info.format,
     }),
 
-  setStatus: (status) => set({ status }),
+  setStatus: (status) =>
+    set((state) => {
+      // Special handling for 'completed' status:
+      // Only delay completion if there are messages that haven't finished their reveal animation
+      if (status === 'completed') {
+        // If no messages yet, allow setting to completed directly
+        // (handles page reload of completed debate before hydration)
+        if (state.messages.length === 0) {
+          return { status: 'completed', pendingCompletion: false }
+        }
+
+        const allDisplayed = state.messages.every((m) => state.displayedMessageIds.has(m.id))
+
+        if (!allDisplayed) {
+          return { pendingCompletion: true }
+        }
+      }
+
+      return { status, pendingCompletion: false }
+    }),
 
   setConnection: (connection) => set({ connection }),
 
@@ -137,8 +159,19 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
     set((state) => {
       const newSet = new Set(state.displayedMessageIds)
       newSet.add(id)
-      // eslint-disable-next-line no-console
-      console.log('[Store] markMessageDisplayed:', id, 'total displayed:', newSet.size)
+
+      // Check if completion was pending and all messages are now displayed
+      if (state.pendingCompletion) {
+        const allDisplayed = state.messages.every((m) => newSet.has(m.id))
+        if (allDisplayed) {
+          return {
+            displayedMessageIds: newSet,
+            status: 'completed' as const,
+            pendingCompletion: false,
+          }
+        }
+      }
+
       return { displayedMessageIds: newSet }
     }),
 

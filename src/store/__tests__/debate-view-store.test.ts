@@ -70,8 +70,46 @@ describe('debate-view-store', () => {
       expect(useDebateViewStore.getState().status).toBe('active')
     })
 
-    it('should transition through status states', () => {
-      const statuses = ['ready', 'active', 'paused', 'completed', 'error'] as const
+    it('should set completed status when no messages exist', () => {
+      // This is critical for page reload of completed debates
+      act(() => {
+        useDebateViewStore.getState().setStatus('completed')
+      })
+
+      const state = useDebateViewStore.getState()
+      expect(state.status).toBe('completed')
+      expect(state.pendingCompletion).toBe(false)
+    })
+
+    it('should set pendingCompletion when messages exist but not all displayed', () => {
+      const message = createMockMessage({ id: 'msg-1' })
+
+      act(() => {
+        useDebateViewStore.getState().addMessage(message)
+        useDebateViewStore.getState().setStatus('completed')
+      })
+
+      const state = useDebateViewStore.getState()
+      expect(state.status).toBe('ready') // Still ready, not completed yet
+      expect(state.pendingCompletion).toBe(true)
+    })
+
+    it('should set completed status when all messages are displayed', () => {
+      const message = createMockMessage({ id: 'msg-1' })
+
+      act(() => {
+        useDebateViewStore.getState().addMessage(message)
+        useDebateViewStore.getState().markMessageDisplayed('msg-1')
+        useDebateViewStore.getState().setStatus('completed')
+      })
+
+      const state = useDebateViewStore.getState()
+      expect(state.status).toBe('completed')
+      expect(state.pendingCompletion).toBe(false)
+    })
+
+    it('should transition through non-completed status states', () => {
+      const statuses = ['ready', 'active', 'paused', 'error'] as const
 
       for (const status of statuses) {
         act(() => {

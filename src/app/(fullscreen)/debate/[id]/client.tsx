@@ -193,7 +193,11 @@ export function DebatePageClient({
       <DebateHeader debateId={debateId} className="relative z-10" />
 
       <main className="relative z-10 min-h-0 flex-1">
-        <MessageList autoScroll className="h-full" />
+        <MessageList
+          autoScroll
+          className="h-full"
+          initialStatus={mapPhaseToViewStatus(initialStatus)}
+        />
 
         {/* Shortcuts help - bottom right */}
         <motion.div

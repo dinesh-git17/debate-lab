@@ -139,7 +139,7 @@ export function compileSummaryPrompt(context: ModeratorContext): CompiledPrompt 
   return {
     systemPrompt,
     userPrompt,
-    maxTokens: 500,
+    maxTokens: 1200, // Increased from 500 - summary needs room for all sections
     temperature: 0.5,
   }
 }

@@ -61,30 +61,17 @@ export class EventSynchronizer {
     const seqEvent = event as SequencedEvent
     if (seqEvent.seq === undefined) {
       // Old event without seq - apply directly (backwards compatibility)
-      clientLogger.debug('[Sync] Event without seq, applying directly', { type: event.type })
       this.applyEvent(event)
       return
     }
 
-    // Skip if already applied
-    if (seqEvent.seq <= this.state.lastAppliedSeq) {
-      clientLogger.debug('[Sync] Skipping already-applied event', { seq: seqEvent.seq })
-      return
-    }
-
-    // Skip if already buffered
-    if (this.state.buffer.has(seqEvent.seq)) {
-      clientLogger.debug('[Sync] Skipping already-buffered event', { seq: seqEvent.seq })
+    // Skip if already applied or buffered
+    if (seqEvent.seq <= this.state.lastAppliedSeq || this.state.buffer.has(seqEvent.seq)) {
       return
     }
 
     // Add to buffer
     this.state.buffer.set(seqEvent.seq, seqEvent)
-    clientLogger.debug('[Sync] Buffered event', {
-      seq: seqEvent.seq,
-      type: event.type,
-      bufferSize: this.state.buffer.size,
-    })
 
     // Try to flush if initial sync is complete
     if (this.state.isInitialSyncComplete) {
@@ -194,7 +181,6 @@ export class EventSynchronizer {
     // Get all buffered seqs and sort them
     const sortedSeqs = [...this.state.buffer.keys()].sort((a, b) => a - b)
 
-    let appliedCount = 0
     let gapDetected = false
 
     for (const seq of sortedSeqs) {
@@ -208,7 +194,6 @@ export class EventSynchronizer {
           this.applyEvent(event)
           this.state.lastAppliedSeq = seq
           this.state.buffer.delete(seq)
-          appliedCount++
         } catch (error) {
           clientLogger.error('[Sync] Error applying event', { seq, error })
           // Don't advance lastAppliedSeq, will retry on next flush
@@ -221,21 +206,8 @@ export class EventSynchronizer {
         // Gap detected: seq > expectedSeq
         // Stop flushing - need to fetch missing events
         gapDetected = true
-        clientLogger.warn('[Sync] Gap detected', {
-          expectedSeq,
-          gotSeq: seq,
-          gap: seq - expectedSeq,
-        })
         break
       }
-    }
-
-    if (appliedCount > 0) {
-      clientLogger.debug('[Sync] Flushed events', {
-        appliedCount,
-        lastAppliedSeq: this.state.lastAppliedSeq,
-        remainingBuffer: this.state.buffer.size,
-      })
     }
 
     // Schedule gap fill if needed (debounced)
@@ -276,11 +248,6 @@ export class EventSynchronizer {
     if (missingSeqs.length === 0) {
       return
     }
-
-    clientLogger.info('[Sync] Filling gaps', {
-      count: missingSeqs.length,
-      range: `${missingSeqs[0]}-${missingSeqs[missingSeqs.length - 1]}`,
-    })
 
     try {
       // Fetch from just before the first missing seq

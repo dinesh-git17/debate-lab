@@ -15,12 +15,14 @@ interface UseChunkedDisplayOptions {
   isStreaming: boolean
   /** Has turn_completed fired? */
   isComplete: boolean
-  /** Delay between chunks in ms (default: 400ms) */
+  /** Delay between chunks in ms (default: 1000ms for ~120-150 WPM) */
   chunkDelayMs?: number
-  /** Minimum chunk size (default: 20) */
+  /** Minimum chunk size (default: 8) */
   minChunkSize?: number
-  /** Maximum chunk size (default: 300) */
+  /** Maximum chunk size (default: 20) */
   maxChunkSize?: number
+  /** Initial delay before starting to reveal text (default: 800ms) */
+  initialDelayMs?: number
   /** Callback when new chunk is revealed */
   onChunkRevealed?: () => void
 }
@@ -38,7 +40,13 @@ interface UseChunkedDisplayReturn {
   progress: number
 }
 
-const DEFAULT_CHUNK_DELAY_MS = 400
+// Target: 120-150 WPM (natural reading speed)
+// 120 WPM ≈ 10 chars/second, 150 WPM ≈ 12.5 chars/second
+// With chunks of 8-20 chars at 1000ms intervals = 8-20 chars/sec ≈ 80-200 WPM average ~120-150 WPM
+const DEFAULT_CHUNK_DELAY_MS = 1000
+const DEFAULT_MIN_CHUNK_SIZE = 8
+const DEFAULT_MAX_CHUNK_SIZE = 20
+const DEFAULT_INITIAL_DELAY_MS = 800 // Natural pause before speaker starts
 
 export function useChunkedDisplay(options: UseChunkedDisplayOptions): UseChunkedDisplayReturn {
   const {
@@ -47,13 +55,16 @@ export function useChunkedDisplay(options: UseChunkedDisplayOptions): UseChunked
     isStreaming,
     isComplete,
     chunkDelayMs = DEFAULT_CHUNK_DELAY_MS,
-    minChunkSize,
-    maxChunkSize,
+    minChunkSize = DEFAULT_MIN_CHUNK_SIZE,
+    maxChunkSize = DEFAULT_MAX_CHUNK_SIZE,
+    initialDelayMs = DEFAULT_INITIAL_DELAY_MS,
     onChunkRevealed,
   } = options
 
   const [displayContent, setDisplayContent] = useState('')
+  const [isInitialDelayComplete, setIsInitialDelayComplete] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const initialDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastMessageIdRef = useRef<string | null>(null)
   const rawContentRef = useRef(rawContent)
   const isCompleteRef = useRef(isComplete)
@@ -72,16 +83,42 @@ export function useChunkedDisplay(options: UseChunkedDisplayOptions): UseChunked
     onChunkRevealedRef.current = onChunkRevealed
   }, [onChunkRevealed])
 
-  // Reset display content when message ID changes (new message)
+  // Reset display content and initial delay when message ID changes (new message)
   useEffect(() => {
     if (messageId !== lastMessageIdRef.current) {
       lastMessageIdRef.current = messageId
       setDisplayContent('')
-    }
-  }, [messageId])
 
-  // Reveal all remaining content
+      // Clear any existing initial delay timer
+      if (initialDelayRef.current) {
+        clearTimeout(initialDelayRef.current)
+        initialDelayRef.current = null
+      }
+
+      // For hydrated messages (already complete), skip the delay entirely
+      if (isComplete && rawContent.length > 0) {
+        setIsInitialDelayComplete(true)
+        return
+      }
+
+      // For streaming messages, apply initial delay (natural pause before speaker starts)
+      setIsInitialDelayComplete(false)
+      initialDelayRef.current = setTimeout(() => {
+        setIsInitialDelayComplete(true)
+      }, initialDelayMs)
+    }
+
+    return () => {
+      if (initialDelayRef.current) {
+        clearTimeout(initialDelayRef.current)
+        initialDelayRef.current = null
+      }
+    }
+  }, [messageId, initialDelayMs, isComplete, rawContent.length])
+
+  // Reveal all remaining content (also skips initial delay)
   const revealAll = useCallback(() => {
+    setIsInitialDelayComplete(true)
     setDisplayContent(rawContentRef.current)
   }, [])
 
@@ -119,7 +156,7 @@ export function useChunkedDisplay(options: UseChunkedDisplayOptions): UseChunked
     })
   }, [minChunkSize, maxChunkSize])
 
-  // Set up the interval for chunk processing
+  // Set up the interval for chunk processing (only after initial delay)
   useEffect(() => {
     // Clear any existing interval
     if (intervalRef.current) {
@@ -127,10 +164,15 @@ export function useChunkedDisplay(options: UseChunkedDisplayOptions): UseChunked
       intervalRef.current = null
     }
 
+    // Don't start processing until initial delay is complete
+    if (!isInitialDelayComplete) {
+      return
+    }
+
     // Start processing chunks
     intervalRef.current = setInterval(processNextChunk, chunkDelayMs)
 
-    // Also process immediately on mount and when content changes
+    // Also process immediately when delay completes
     processNextChunk()
 
     return () => {
@@ -139,7 +181,7 @@ export function useChunkedDisplay(options: UseChunkedDisplayOptions): UseChunked
         intervalRef.current = null
       }
     }
-  }, [chunkDelayMs, processNextChunk])
+  }, [chunkDelayMs, processNextChunk, isInitialDelayComplete])
 
   // When streaming completes, process any remaining content
   useEffect(() => {
@@ -160,7 +202,10 @@ export function useChunkedDisplay(options: UseChunkedDisplayOptions): UseChunked
 
   // Calculate derived state
   const isBuffering = rawContent.length > displayContent.length
-  const isTyping = isStreaming && displayContent.length === 0
+  // isTyping is true during initial delay OR when streaming with no content yet
+  const isTyping =
+    (!isInitialDelayComplete && rawContent.length > 0) ||
+    (isStreaming && displayContent.length === 0)
   const progress = calculateProgress(rawContent, displayContent)
 
   return {

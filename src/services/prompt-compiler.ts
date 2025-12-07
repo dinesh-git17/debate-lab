@@ -170,7 +170,7 @@ export function getMaxTokensForTurn(turnType: string): number {
     moderator_intro: 200,
     moderator_transition: 80,
     moderator_intervention: 120,
-    moderator_summary: 500,
+    moderator_summary: 1200, // Increased from 500 - summary needs room for all sections
     opening: 500,
     constructive: 600,
     rebuttal: 500,

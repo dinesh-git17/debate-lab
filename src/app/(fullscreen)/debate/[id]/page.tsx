@@ -9,6 +9,9 @@ import { DebatePageClient } from './client'
 
 import type { Metadata } from 'next'
 
+// Ensure page is always dynamically rendered (no caching)
+export const dynamic = 'force-dynamic'
+
 interface DebatePageProps {
   params: Promise<{ id: string }>
 }

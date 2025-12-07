@@ -6,9 +6,10 @@ import { memo, useEffect, useRef } from 'react'
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa'
 import { LuScale } from 'react-icons/lu'
 
-import { TypingIndicator } from '@/components/debate/typing-indicator'
-import { Markdown } from '@/components/ui/markdown'
-import { useChunkedDisplay } from '@/hooks/use-chunked-display'
+import { AnimatedText } from '@/components/debate/animated-text'
+import { ThinkingIndicator } from '@/components/debate/thinking-indicator'
+import { useSmoothReveal } from '@/hooks/use-smooth-reveal'
+import { ANIMATION_CONFIG } from '@/lib/animation-config'
 import {
   getSpeakerConfig,
   getTurnTypeShortLabel,
@@ -28,6 +29,8 @@ interface MessageBubbleProps {
   isActive?: boolean
   /** Whether this is the first message (no anchor needed) */
   isFirst?: boolean
+  /** Skip animation - show content immediately (for hydrated/historical messages) */
+  skipAnimation?: boolean
 }
 
 /**
@@ -59,6 +62,7 @@ function MessageContent({
   isComplete,
   speaker,
   onAnimationComplete,
+  skipAnimation,
 }: {
   messageId: string
   content: string
@@ -66,26 +70,27 @@ function MessageContent({
   isComplete: boolean
   speaker: TurnSpeaker
   onAnimationComplete?: (() => void) | undefined
+  skipAnimation?: boolean
 }) {
   const hasCalledComplete = useRef(false)
 
-  const { displayContent, isTyping, isBuffering } = useChunkedDisplay({
+  // Debaters get a "thinking" delay, moderator speaks immediately
+  const initialDelayMs = speaker === 'moderator' ? 0 : ANIMATION_CONFIG.DEBATER_THINKING_DELAY_MS
+
+  const { displayContent, isTyping, isRevealing, newContentStartIndex } = useSmoothReveal({
     messageId,
     rawContent: content,
     isStreaming,
     isComplete,
-    chunkDelayMs: 400,
+    skipAnimation: skipAnimation ?? false,
+    initialDelayMs,
+    onRevealComplete: () => {
+      if (!hasCalledComplete.current) {
+        hasCalledComplete.current = true
+        onAnimationComplete?.()
+      }
+    },
   })
-
-  // Call onAnimationComplete when ALL content is revealed AND isComplete
-  useEffect(() => {
-    if (isComplete && !isBuffering && displayContent === content && !hasCalledComplete.current) {
-      hasCalledComplete.current = true
-      // eslint-disable-next-line no-console
-      console.log('[MessageContent] Animation complete, calling onAnimationComplete')
-      onAnimationComplete?.()
-    }
-  }, [isComplete, isBuffering, displayContent, content, onAnimationComplete])
 
   // Reset the ref when message changes
   useEffect(() => {
@@ -95,18 +100,15 @@ function MessageContent({
   return (
     <div className="prose prose-invert max-w-none">
       {isTyping ? (
-        // Show typing indicator when API is streaming but we have no chunks yet
-        <TypingIndicator speaker={speaker} />
+        // Show thinking indicator when API is streaming but we have no content yet
+        <ThinkingIndicator speaker={speaker} />
       ) : (
         <div className="font-serif text-lg leading-loose font-light text-zinc-200 antialiased">
-          <Markdown content={displayContent} />
-          {isBuffering && (
-            // Show cursor while we have more content to reveal
-            <span
-              className="ml-1 inline-block h-4 w-2 animate-pulse bg-current align-middle"
-              aria-label="Generating content"
-            />
-          )}
+          <AnimatedText
+            content={displayContent}
+            isRevealing={isRevealing}
+            newContentStartIndex={newContentStartIndex}
+          />
         </div>
       )}
     </div>
@@ -119,6 +121,7 @@ export const MessageBubble = memo(function MessageBubble({
   onAnimationComplete,
   isActive = true,
   isFirst = false,
+  skipAnimation = false,
 }: MessageBubbleProps) {
   const config = getSpeakerConfig(message.speaker)
   const gradient = SPEAKER_GRADIENTS[message.speaker]
@@ -233,6 +236,7 @@ export const MessageBubble = memo(function MessageBubble({
               isComplete={message.isComplete}
               speaker={message.speaker}
               onAnimationComplete={onAnimationComplete}
+              skipAnimation={skipAnimation}
             />
           </div>
 

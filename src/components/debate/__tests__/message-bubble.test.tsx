@@ -32,6 +32,35 @@ vi.mock('@/hooks/use-chunked-display', () => ({
   }),
 }))
 
+// Mock the useSmoothReveal hook to return content immediately (skip animation in tests)
+vi.mock('@/hooks/use-smooth-reveal', () => ({
+  useSmoothReveal: ({
+    rawContent,
+    isStreaming,
+    isComplete,
+    onRevealComplete,
+  }: {
+    rawContent: string
+    isStreaming: boolean
+    isComplete: boolean
+    onRevealComplete?: () => void
+  }) => {
+    // Call onRevealComplete immediately if content is complete
+    if (isComplete && onRevealComplete) {
+      // Use setTimeout to simulate async behavior
+      setTimeout(() => onRevealComplete(), 0)
+    }
+    return {
+      displayContent: rawContent,
+      isRevealing: false,
+      isTyping: isStreaming && rawContent.length === 0,
+      progress: 100,
+      revealAll: () => {},
+      newContentStartIndex: 0,
+    }
+  },
+}))
+
 function createMockMessage(overrides: Partial<DebateMessage> = {}): DebateMessage {
   return {
     id: 'msg-1',
@@ -114,15 +143,16 @@ describe('MessageBubble', () => {
   })
 
   describe('streaming state', () => {
-    it('should show streaming indicator when streaming', () => {
+    it('should show streaming indicator when streaming with no content', () => {
       const message = createMockMessage({
+        content: '', // No content yet - shows typing indicator
         isStreaming: true,
         isComplete: false,
       })
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.getByLabelText('Generating content')).toBeInTheDocument()
+      expect(screen.getByLabelText('Generating response')).toBeInTheDocument()
     })
 
     it('should not show streaming indicator when not streaming', () => {
@@ -133,7 +163,7 @@ describe('MessageBubble', () => {
 
       render(<MessageBubble message={message} />)
 
-      expect(screen.queryByLabelText('Generating content')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('Generating response')).not.toBeInTheDocument()
     })
   })
 
@@ -146,7 +176,7 @@ describe('MessageBubble', () => {
       render(<MessageBubble message={message} />)
 
       // Component renders without streaming indicator
-      expect(screen.queryByLabelText('Generating content')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('Generating response')).not.toBeInTheDocument()
       expect(screen.getByRole('article')).toBeInTheDocument()
     })
 

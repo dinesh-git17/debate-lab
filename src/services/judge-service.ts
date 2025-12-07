@@ -103,7 +103,7 @@ export async function getJudgeAnalysis(
       params: {
         systemPrompt: JUDGE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
-        maxTokens: 4000,
+        maxTokens: 8000, // Increased from 4000 - judge analysis is comprehensive
         temperature: 0.3,
       },
       enableRetry: true,
@@ -145,6 +145,11 @@ function parseJudgeResponse(
   forModel: string,
   againstModel: string
 ): JudgeAnalysis {
+  // Validate response is not empty
+  if (!response || response.trim().length === 0) {
+    throw new Error('Judge analysis response was empty - AI returned no content')
+  }
+
   let jsonStr = response
 
   const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/)
@@ -157,7 +162,32 @@ function parseJudgeResponse(
     }
   }
 
-  const parsed = JSON.parse(jsonStr) as ParsedJudgeResponse
+  // Validate extracted JSON string is not empty
+  if (!jsonStr || jsonStr.trim().length === 0) {
+    throw new Error(
+      `Failed to extract JSON from judge response. Response preview: ${response.slice(0, 200)}...`
+    )
+  }
+
+  // Check for truncated JSON (missing closing braces)
+  const openBraces = (jsonStr.match(/\{/g) || []).length
+  const closeBraces = (jsonStr.match(/\}/g) || []).length
+  if (openBraces > closeBraces) {
+    throw new Error(
+      `Judge response appears truncated (${openBraces} open braces, ${closeBraces} close braces). ` +
+        `Response may have exceeded token limit. Last 100 chars: ...${jsonStr.slice(-100)}`
+    )
+  }
+
+  let parsed: ParsedJudgeResponse
+  try {
+    parsed = JSON.parse(jsonStr) as ParsedJudgeResponse
+  } catch (parseError) {
+    throw new Error(
+      `Failed to parse judge JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}. ` +
+        `Last 100 chars: ...${jsonStr.slice(-100)}`
+    )
+  }
 
   const forScores = buildParticipantScores('for', 'FOR (Affirmative)', forModel, parsed.forAnalysis)
   const againstScores = buildParticipantScores(

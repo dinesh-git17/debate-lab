@@ -253,14 +253,19 @@ function WaitingState() {
 interface MessageListProps {
   className?: string
   autoScroll?: boolean
+  /** Initial status from server - used as fallback before store is hydrated */
+  initialStatus?: 'ready' | 'active' | 'paused' | 'completed' | 'error'
 }
 
-export function MessageList({ className, autoScroll = true }: MessageListProps) {
+export function MessageList({ className, autoScroll = true, initialStatus }: MessageListProps) {
   // Subscribe to messages, displayedMessageIds, and status to trigger re-renders
   const allMessages = useDebateViewStore((s) => s.messages)
   const displayedIds = useDebateViewStore((s) => s.displayedMessageIds)
-  const status = useDebateViewStore((s) => s.status)
-  const currentTurnId = useDebateViewStore((s) => s.currentTurnId)
+  const storeStatus = useDebateViewStore((s) => s.status)
+
+  // Use initialStatus as fallback when store hasn't been hydrated yet
+  // This prevents showing EmptyState on page refresh for completed debates
+  const status = storeStatus === 'ready' && initialStatus ? initialStatus : storeStatus
   const markMessageDisplayed = useDebateViewStore((s) => s.markMessageDisplayed)
 
   // Get visible messages: all displayed + the first non-displayed (currently animating)
@@ -270,18 +275,6 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
     for (const msg of allMessages) {
       result.push(msg)
       if (!displayedIds.has(msg.id)) break
-    }
-    // Debug logging
-    if (typeof window !== 'undefined') {
-      // eslint-disable-next-line no-console
-      console.log(
-        '[MessageList] visible:',
-        result.length,
-        'total:',
-        allMessages.length,
-        'displayed:',
-        displayedIds.size
-      )
     }
     return result
   }, [allMessages, displayedIds])
@@ -295,50 +288,121 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
   )
   const containerRef = useRef<HTMLDivElement>(null)
   const isUserScrolling = useRef(false)
-  const lastMessageCount = useRef(0)
+  const lastScrollTop = useRef(0)
+  const scrollLockUntil = useRef(0)
+  const scrollEndTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Track if we have messages to determine when container becomes available
+  const hasMessages = messages.length > 0
+
+  // Only auto-scroll during active debate, not after completion
+  const shouldAutoScroll = autoScroll && hasMessages && status !== 'completed'
+
+  // RAF-based continuous scroll - single source of truth for auto-scrolling
+  // Keeps content visible above the safe zone during text reveal
   useEffect(() => {
-    if (!autoScroll || isUserScrolling.current) return
+    if (!shouldAutoScroll) return
 
-    const container = containerRef.current
-    if (container) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: messages.length > lastMessageCount.current ? 'smooth' : 'auto',
-      })
-    }
-
-    lastMessageCount.current = messages.length
-  }, [messages, currentTurnId, autoScroll])
-
-  useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    let scrollTimeout: ReturnType<typeof setTimeout> | null = null
+    let rafId: number | null = null
+    let isRunning = true
+
+    const checkAndScroll = () => {
+      if (!isRunning) return
+
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const targetScrollTop = scrollHeight - clientHeight
+      const distanceFromBottom = targetScrollTop - scrollTop
+
+      // Skip if user is manually scrolling
+      if (!isUserScrolling.current && distanceFromBottom > 1) {
+        // Smooth lerp towards bottom - lower = smoother, higher = snappier
+        const lerpFactor = 0.08
+        const newScrollTop = scrollTop + distanceFromBottom * lerpFactor
+
+        // Lock scroll detection briefly to prevent false user-scroll detection
+        scrollLockUntil.current = Date.now() + 50
+        container.scrollTop = newScrollTop
+      }
+
+      rafId = requestAnimationFrame(checkAndScroll)
+    }
+
+    // Start the RAF loop
+    rafId = requestAnimationFrame(checkAndScroll)
+
+    return () => {
+      isRunning = false
+      if (rafId) {
+        cancelAnimationFrame(rafId)
+      }
+    }
+  }, [shouldAutoScroll])
+
+  // User scroll detection - detect when user intentionally scrolls away
+  // During active debate: snap back after user stops scrolling
+  useEffect(() => {
+    if (!hasMessages) return
+
+    const container = containerRef.current
+    if (!container) return
+
+    // Initialize lastScrollTop to current position
+    lastScrollTop.current = container.scrollTop
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100
+      const now = Date.now()
 
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
+      // Skip if we're in the lock period after a programmatic scroll
+      if (now < scrollLockUntil.current) {
+        lastScrollTop.current = scrollTop
+        return
       }
 
-      scrollTimeout = setTimeout(() => {
-        isUserScrolling.current = !isAtBottom
-      }, 150)
+      // Detect user scrolling UP (away from content)
+      const scrollDelta = scrollTop - lastScrollTop.current
+      const scrolledUp = scrollDelta < -5 // Small threshold to ignore micro-movements
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+
+      // User is scrolling if they scrolled up significantly and are far from bottom
+      if (scrolledUp && distanceFromBottom > 200) {
+        isUserScrolling.current = true
+
+        // Clear any existing timeout
+        if (scrollEndTimeoutRef.current) {
+          clearTimeout(scrollEndTimeoutRef.current)
+        }
+
+        // Set timeout to snap back after user stops scrolling (only during active debate)
+        if (status !== 'completed') {
+          scrollEndTimeoutRef.current = setTimeout(() => {
+            isUserScrolling.current = false
+          }, 1500) // Snap back 1.5s after user stops scrolling
+        }
+      } else if (distanceFromBottom < 100) {
+        // User scrolled back to bottom - re-enable auto-scroll
+        isUserScrolling.current = false
+        if (scrollEndTimeoutRef.current) {
+          clearTimeout(scrollEndTimeoutRef.current)
+          scrollEndTimeoutRef.current = null
+        }
+      }
+
+      lastScrollTop.current = scrollTop
     }
 
     container.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => {
       container.removeEventListener('scroll', handleScroll)
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
+      if (scrollEndTimeoutRef.current) {
+        clearTimeout(scrollEndTimeoutRef.current)
       }
     }
-  }, [])
+  }, [hasMessages, status])
 
   if (messages.length === 0) {
     // Show empty state with "Start Debate" only when debate hasn't started
@@ -355,8 +419,9 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
       )
     }
 
-    // Show waiting state when debate is active/paused but messages haven't loaded yet
-    if (status === 'active' || status === 'paused') {
+    // Show waiting state when debate is active/paused/completed but messages haven't loaded yet
+    // This handles the case where page is refreshed - messages are being hydrated from server
+    if (status === 'active' || status === 'paused' || status === 'completed') {
       return (
         <div
           className={cn('h-full', className)}
@@ -384,7 +449,8 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
 
       <div
         ref={containerRef}
-        className="scroll-smooth overflow-y-auto px-4 py-6 h-full"
+        className="overflow-y-auto px-4 py-6 h-full"
+        style={{ scrollBehavior: 'auto' }}
         role="log"
         aria-live="polite"
         aria-label="Debate messages"
@@ -393,6 +459,8 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
           {messages.map((message, index) => {
             const isLastMessage = index === messages.length - 1
             const isFirstMessage = index === 0
+            // Skip animation for messages that were already displayed (hydrated from server)
+            const shouldSkipAnimation = displayedIds.has(message.id)
             return (
               <MessageBubble
                 key={message.id}
@@ -401,6 +469,7 @@ export function MessageList({ className, autoScroll = true }: MessageListProps) 
                 onAnimationComplete={() => handleAnimationComplete(message.id)}
                 isActive={isLastMessage}
                 isFirst={isFirstMessage}
+                skipAnimation={shouldSkipAnimation}
               />
             )
           })}

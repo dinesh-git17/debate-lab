@@ -185,7 +185,7 @@ describe('MessageList', () => {
   })
 
   describe('auto scroll behavior', () => {
-    it('should have scroll-smooth class', () => {
+    it('should have scrollable container', () => {
       const message = createMockMessage({ id: 'msg-1' })
 
       act(() => {
@@ -194,7 +194,8 @@ describe('MessageList', () => {
 
       render(<MessageList />)
 
-      expect(screen.getByRole('log')).toHaveClass('scroll-smooth')
+      // Note: scroll-smooth was removed to fix RAF-based auto-scroll race conditions
+      expect(screen.getByRole('log')).toHaveClass('overflow-y-auto')
     })
 
     it('should respect autoScroll prop', () => {
