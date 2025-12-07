@@ -10,15 +10,15 @@ import type { TurnConfig, TurnType, TurnSpeaker } from '@/types/turn'
  * Rough conversion: 1 token ≈ 0.75 words
  */
 export const TOKEN_LIMITS: Record<TurnType, { min: number; max: number }> = {
-  opening: { min: 400, max: 2000 },
-  constructive: { min: 400, max: 2000 },
-  rebuttal: { min: 400, max: 2000 },
-  cross_examination: { min: 200, max: 1000 },
-  closing: { min: 400, max: 1600 },
-  moderator_intro: { min: 200, max: 800 },
-  moderator_transition: { min: 50, max: 250 },
-  moderator_intervention: { min: 100, max: 400 },
-  moderator_summary: { min: 500, max: 1600 },
+  opening: { min: 150, max: 600 },
+  constructive: { min: 125, max: 500 },
+  rebuttal: { min: 75, max: 300 },
+  cross_examination: { min: 40, max: 150 },
+  closing: { min: 90, max: 350 },
+  moderator_intro: { min: 75, max: 300 },
+  moderator_transition: { min: 25, max: 100 },
+  moderator_intervention: { min: 50, max: 200 },
+  moderator_summary: { min: 150, max: 600 },
 }
 
 /**
@@ -26,15 +26,15 @@ export const TOKEN_LIMITS: Record<TurnType, { min: number; max: number }> = {
  * These guide the LLM to structure properly; actual API token limits are higher for buffer.
  */
 export const TARGET_WORD_COUNTS: Record<TurnType, number> = {
-  opening: 800,
-  constructive: 800,
-  rebuttal: 800,
-  cross_examination: 400,
-  closing: 650,
-  moderator_intro: 300,
-  moderator_transition: 75,
-  moderator_intervention: 150,
-  moderator_summary: 600,
+  opening: 300,
+  constructive: 250,
+  rebuttal: 150,
+  cross_examination: 75,
+  closing: 175,
+  moderator_intro: 150,
+  moderator_transition: 50,
+  moderator_intervention: 100,
+  moderator_summary: 300,
 }
 
 /**
