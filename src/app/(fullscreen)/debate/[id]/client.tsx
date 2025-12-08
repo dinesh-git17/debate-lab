@@ -212,7 +212,7 @@ export function DebatePageClient({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Ambient lighting - behind everything, delayed fade-in to prevent flash */}
+      {/* Ambient lighting */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -230,11 +230,17 @@ export function DebatePageClient({
         />
       </motion.div>
 
-      {/* Vignette with breathing animation - darkens edges, focuses eye on center */}
+      {/* Vignette */}
       <motion.div
         className="pointer-events-none fixed inset-0 z-[5]"
         style={{
-          background: `radial-gradient(circle at center, transparent ${status === 'completed' ? '38%' : '40%'}, #000 100%)`,
+          background: `radial-gradient(circle at center,
+            transparent ${status === 'completed' ? '30%' : '32%'},
+            rgba(0, 0, 0, 0.1) ${status === 'completed' ? '45%' : '48%'},
+            rgba(0, 0, 0, 0.35) ${status === 'completed' ? '60%' : '65%'},
+            rgba(0, 0, 0, 0.7) 82%,
+            #000 100%
+          )`,
         }}
         animate={{
           scale: [1, 1.03, 1],
@@ -248,12 +254,22 @@ export function DebatePageClient({
         }}
       />
 
-      {/* Film grain - topmost overlay */}
+      {/* Film grain */}
       <FilmGrain className="z-[100]" />
 
-      <DebateHeader debateId={debateId} className="relative z-10" />
+      {/* Subtle backdrop blur to smooth lighting/grain artifacts */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[110]"
+        style={{
+          backdropFilter: 'blur(0.5px)',
+          WebkitBackdropFilter: 'blur(0.5px)',
+        }}
+        aria-hidden="true"
+      />
 
-      <main className="relative z-10 min-h-0 flex-1">
+      <DebateHeader debateId={debateId} className="relative z-[120]" />
+
+      <main className="relative z-[115] min-h-0 flex-1">
         <MessageList
           autoScroll
           className="h-full"
@@ -262,7 +278,7 @@ export function DebatePageClient({
 
         {/* Shortcuts help - bottom right */}
         <motion.div
-          className="absolute bottom-4 right-4 z-10"
+          className="absolute bottom-4 right-4 z-[115]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.8, ease: 'easeOut' }}
@@ -273,7 +289,7 @@ export function DebatePageClient({
 
       {/* Floating controls - only visible during active debate or completed */}
       {(status === 'active' || status === 'paused' || status === 'completed') && (
-        <div className="relative z-10">
+        <div className="relative z-[115]">
           <FloatingControls debateId={debateId} />
         </div>
       )}

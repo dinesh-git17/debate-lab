@@ -76,25 +76,19 @@ function EmptyState() {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24">
-      {/* God Ray - entrance fade + heartbeat */}
+      {/* God Ray - gradient-only approach (no blur filter) */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1600px] w-[1600px] -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2"
         style={{
-          background: `radial-gradient(circle at center,
-            rgba(255, 255, 255, 0.018) 0%,
-            rgba(255, 255, 255, 0.014) 8%,
-            rgba(255, 255, 255, 0.01) 18%,
-            rgba(255, 255, 255, 0.006) 30%,
-            rgba(255, 255, 255, 0.003) 45%,
-            rgba(255, 255, 255, 0.001) 60%,
-            rgba(255, 255, 255, 0) 75%
-          )`,
-          filter: 'blur(100px)',
+          width: 800,
+          height: 800,
+          background:
+            'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.025) 0%, transparent 70%)',
         }}
         initial={{ opacity: 0, scale: 1 }}
         animate={{
           opacity: 1,
-          scale: [1, 1.03, 1],
+          scale: [1, 1.05, 1],
         }}
         transition={{
           opacity: { duration: 1.2, ease: 'easeOut' },
@@ -187,13 +181,6 @@ function EmptyState() {
           damping: 15,
         }}
       >
-        {/* Static glow layer */}
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            boxShadow: '0 0 120px -20px rgba(255, 255, 255, 0.25)',
-          }}
-        />
         <motion.button
           onClick={handleStart}
           disabled={isLoading}
@@ -202,6 +189,9 @@ function EmptyState() {
             'text-sm font-semibold text-black',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
+          style={{
+            filter: 'drop-shadow(0 0 25px rgba(255, 255, 255, 0.15))',
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >

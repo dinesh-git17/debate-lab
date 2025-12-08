@@ -84,7 +84,7 @@ export function FilmGrain({ className }: FilmGrainProps) {
             ? '0 0'
             : `${coarseOffset.x}px ${coarseOffset.y}px`,
           opacity: 0.025,
-          mixBlendMode: 'overlay',
+          mixBlendMode: 'soft-light',
           willChange: prefersReducedMotion ? 'auto' : 'background-position',
         }}
         aria-hidden="true"
@@ -99,7 +99,7 @@ export function FilmGrain({ className }: FilmGrainProps) {
             ? '50px 50px'
             : `${fineOffset.x}px ${fineOffset.y}px`,
           opacity: 0.02,
-          mixBlendMode: 'overlay',
+          mixBlendMode: 'soft-light',
           backgroundSize: '200px 200px',
           willChange: prefersReducedMotion ? 'auto' : 'background-position',
         }}

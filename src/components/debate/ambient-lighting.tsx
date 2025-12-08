@@ -149,22 +149,19 @@ export function AmbientLighting({
 
   return (
     <div className={cn('pointer-events-none fixed inset-0', className)}>
-      {/* Layer 1: Atmospheric Wash - largest, most subtle, heavily blurred */}
+      {/* Layer 1: Atmospheric Wash - largest, most subtle, gradient-only (no blur) */}
       <motion.div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{
-          width: 1600,
-          height: 1600,
+          width: 1200,
+          height: 1200,
           borderRadius: '50%',
           background: buildRadialGradient(atmosphericColor, [
             { percent: 0, opacityRatio: 1 },
-            { percent: 15, opacityRatio: 0.7 },
-            { percent: 35, opacityRatio: 0.4 },
-            { percent: 55, opacityRatio: 0.15 },
-            { percent: 75, opacityRatio: 0.05 },
+            { percent: 30, opacityRatio: 0.5 },
+            { percent: 60, opacityRatio: 0.15 },
             { percent: 100, opacityRatio: 0 },
           ]),
-          filter: 'blur(120px) saturate(0.6)',
         }}
         animate={
           prefersReducedMotion
@@ -182,24 +179,21 @@ export function AmbientLighting({
         }}
       />
 
-      {/* Layer 2: Speaker Aura - follows active speaker color, blurred */}
+      {/* Layer 2: Speaker Aura - follows active speaker color, gradient-only (no blur) */}
       <AnimatePresence mode="sync">
         <motion.div
           key={`${activeSpeaker}-${phase}`}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           style={{
-            width: 900,
-            height: 900,
+            width: 800,
+            height: 800,
             borderRadius: '50%',
             background: buildRadialGradient(glowColor, [
               { percent: 0, opacityRatio: 1 },
-              { percent: 15, opacityRatio: 0.7 },
-              { percent: 35, opacityRatio: 0.4 },
+              { percent: 25, opacityRatio: 0.5 },
               { percent: 55, opacityRatio: 0.15 },
-              { percent: 75, opacityRatio: 0.05 },
               { percent: 100, opacityRatio: 0 },
             ]),
-            filter: 'blur(100px) saturate(0.6)',
           }}
           initial={
             prefersReducedMotion
@@ -228,23 +222,22 @@ export function AmbientLighting({
         />
       </AnimatePresence>
 
-      {/* Layer 3: Focal Bloom - tight, centered, subtle glow */}
+      {/* Layer 3: Focal Bloom - tight, centered, subtle glow, gradient-only (no blur) */}
       <motion.div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{
-          width: 400,
-          height: 400,
+          width: 500,
+          height: 500,
           borderRadius: '50%',
           background: buildRadialGradient(
             phase === 'completed' ? 'hsla(220, 10%, 60%, 0.012)' : 'hsla(0, 0%, 100%, 0.01)',
             [
               { percent: 0, opacityRatio: 1 },
-              { percent: 20, opacityRatio: 0.6 },
-              { percent: 45, opacityRatio: 0.25 },
-              { percent: 70, opacityRatio: 0 },
+              { percent: 30, opacityRatio: 0.4 },
+              { percent: 60, opacityRatio: 0.1 },
+              { percent: 100, opacityRatio: 0 },
             ]
           ),
-          filter: 'blur(60px) saturate(0.6)',
         }}
         animate={
           prefersReducedMotion
@@ -263,15 +256,14 @@ export function AmbientLighting({
         }}
       />
 
-      {/* Completed state overlay - cool silver wash */}
+      {/* Completed state overlay - cool silver wash, gradient-only (no blur) */}
       <AnimatePresence>
         {phase === 'completed' && (
           <motion.div
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(ellipse 150% 120% at 50% 50%, hsla(220, 15%, 50%, 0.02) 0%, transparent 50%)',
-              filter: 'blur(40px)',
+                'radial-gradient(ellipse 150% 120% at 50% 50%, hsla(220, 15%, 50%, 0.015) 0%, transparent 60%)',
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
