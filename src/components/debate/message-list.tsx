@@ -447,14 +447,18 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
 
       <div
         ref={containerRef}
-        className="overflow-y-auto px-4 py-6 h-full"
+        className="overflow-y-auto px-4 h-full"
         style={{ scrollBehavior: 'auto' }}
         role="log"
         aria-live="polite"
         aria-label="Debate messages"
       >
         <div
-          className="relative"
+          className={cn(
+            'relative flex flex-col',
+            // Center content when only 1 message, otherwise align to start
+            messages.length === 1 ? 'min-h-full justify-center' : 'py-6'
+          )}
           style={{
             maxWidth: 'clamp(480px, 55vw, 680px)',
             marginLeft: '48.5%',
