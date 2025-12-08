@@ -21,9 +21,9 @@ const AMBIENT_COLORS = {
     glowIntense: 'hsla(350, 89%, 60%, 0.06)',
   },
   moderator: {
-    primary: 'hsl(38, 92%, 50%)',
-    glow: 'hsla(38, 92%, 50%, 0.03)',
-    glowIntense: 'hsla(38, 92%, 50%, 0.05)',
+    primary: 'hsl(42, 70%, 48%)',
+    glow: 'hsla(42, 65%, 45%, 0.025)',
+    glowIntense: 'hsla(42, 65%, 45%, 0.04)',
   },
   neutral: 'hsla(0, 0%, 100%, 0.02)',
   completed: 'hsla(220, 10%, 50%, 0.03)',
@@ -121,8 +121,8 @@ export function AmbientLighting({
           width: 1600,
           height: 1600,
           borderRadius: '50%',
-          background: `radial-gradient(circle at center, ${atmosphericColor} 0%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.01)')} 40%, transparent 80%)`,
-          filter: 'blur(80px)',
+          background: `radial-gradient(circle at center, ${atmosphericColor} 0%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.018)')} 10%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.012)')} 25%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.006)')} 45%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.002)')} 65%, transparent 85%)`,
+          filter: 'blur(120px)',
         }}
         animate={
           prefersReducedMotion
@@ -149,8 +149,8 @@ export function AmbientLighting({
             width: 900,
             height: 900,
             borderRadius: '50%',
-            background: `radial-gradient(circle at center, ${glowColor} 0%, ${glowColor.replace(/[\d.]+\)$/, '0.02)')} 30%, transparent 70%)`,
-            filter: 'blur(60px)',
+            background: `radial-gradient(circle at center, ${glowColor} 0%, ${glowColor.replace(/[\d.]+\)$/, '0.035)')} 8%, ${glowColor.replace(/[\d.]+\)$/, '0.02)')} 20%, ${glowColor.replace(/[\d.]+\)$/, '0.01)')} 35%, ${glowColor.replace(/[\d.]+\)$/, '0.004)')} 55%, ${glowColor.replace(/[\d.]+\)$/, '0.001)')} 75%, transparent 100%)`,
+            filter: 'blur(100px)',
           }}
           initial={
             prefersReducedMotion
@@ -187,9 +187,13 @@ export function AmbientLighting({
           height: 400,
           borderRadius: '50%',
           background: `radial-gradient(circle at center, ${
-            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.015)' : 'hsla(0, 0%, 100%, 0.012)'
-          } 0%, transparent 60%)`,
-          filter: 'blur(40px)',
+            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.012)' : 'hsla(0, 0%, 100%, 0.01)'
+          } 0%, ${
+            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.008)' : 'hsla(0, 0%, 100%, 0.006)'
+          } 20%, ${
+            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.003)' : 'hsla(0, 0%, 100%, 0.002)'
+          } 45%, transparent 70%)`,
+          filter: 'blur(60px)',
         }}
         animate={
           prefersReducedMotion

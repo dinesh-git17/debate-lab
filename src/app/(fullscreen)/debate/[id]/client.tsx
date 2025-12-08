@@ -212,13 +212,23 @@ export function DebatePageClient({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Ambient lighting - behind everything */}
-      <AmbientLighting
-        activeSpeaker={activeSpeaker}
-        isStreaming={isStreaming}
-        phase={ambientPhase}
+      {/* Ambient lighting - behind everything, delayed fade-in to prevent flash */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{
+          duration: 1.2,
+          delay: 0.25,
+          ease: [0.4, 0, 0.2, 1],
+        }}
         className="z-0"
-      />
+      >
+        <AmbientLighting
+          activeSpeaker={activeSpeaker}
+          isStreaming={isStreaming}
+          phase={ambientPhase}
+        />
+      </motion.div>
 
       {/* Vignette with breathing animation - darkens edges, focuses eye on center */}
       <motion.div
