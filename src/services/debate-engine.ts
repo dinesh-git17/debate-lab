@@ -1,5 +1,6 @@
 // src/services/debate-engine.ts
 
+import { BatchedStreamEmitter } from '@/lib/batched-emitter'
 import { getProviderForPosition } from '@/lib/debate-assignment'
 import { debateEvents } from '@/lib/debate-events'
 import { getEngineState, storeEngineState } from '@/lib/engine-store'
@@ -32,6 +33,13 @@ import { TurnSequencer } from '@/services/turn-sequencer'
 import type { DebateSession, LLMProvider } from '@/types/debate'
 import type { GenerateResult, LLMProviderType } from '@/types/llm'
 import type { DebateEngineState, DebateProgress, TurnConfig, TurnProvider } from '@/types/turn'
+
+/**
+ * Feature flag for batched streaming optimization.
+ * When enabled, streaming tokens are batched (200ms window) before emitting,
+ * reducing Pusher messages by ~90% while maintaining smooth client-side animation.
+ */
+const BATCH_STREAMING_ENABLED = process.env.BATCH_STREAMING === 'true'
 
 export interface DebateEngineContext {
   session: DebateSession
@@ -694,7 +702,6 @@ export async function executeNextTurn(debateId: string): Promise<{
 
     // Generate with streaming
     let fullContent = ''
-    let accumulatedLength = 0
 
     const stream = generateStream({
       provider,
@@ -706,15 +713,44 @@ export async function executeNextTurn(debateId: string): Promise<{
       },
     })
 
-    for await (const chunk of stream) {
-      fullContent += chunk.content
-      accumulatedLength += chunk.content.length
-      // CRITICAL: Must await to ensure seq numbers are assigned in order
-      await debateEvents.emitEvent(debateId, 'turn_streaming', {
+    if (BATCH_STREAMING_ENABLED) {
+      // Batched streaming: buffer tokens and emit in batches (200ms window)
+      // Reduces Pusher messages by ~90% while maintaining smooth UX via client-side animation
+      const batcher = new BatchedStreamEmitter({
+        debateId,
         turnId,
-        chunk: chunk.content,
-        accumulatedLength,
+        onFlush: async (batchedChunk: string) => {
+          await debateEvents.emitEvent(debateId, 'turn_streaming', {
+            turnId,
+            chunk: batchedChunk,
+            accumulatedLength: batcher.getAccumulatedLength(),
+          })
+        },
+        batchIntervalMs: 200,
+        maxBatchSize: 150,
       })
+
+      for await (const chunk of stream) {
+        fullContent += chunk.content
+        await batcher.addChunk(chunk.content)
+      }
+
+      // Flush any remaining content before completing the turn
+      await batcher.finalize()
+    } else {
+      // Legacy streaming: emit every token individually
+      let accumulatedLength = 0
+
+      for await (const chunk of stream) {
+        fullContent += chunk.content
+        accumulatedLength += chunk.content.length
+        // CRITICAL: Must await to ensure seq numbers are assigned in order
+        await debateEvents.emitEvent(debateId, 'turn_streaming', {
+          turnId,
+          chunk: chunk.content,
+          accumulatedLength,
+        })
+      }
     }
 
     // Get final result from generator return value
