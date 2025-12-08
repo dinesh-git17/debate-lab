@@ -78,18 +78,18 @@ function EmptyState() {
     <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24">
       {/* God Ray - entrance fade + heartbeat */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1200px] w-[1200px] -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1600px] w-[1600px] -translate-x-1/2 -translate-y-1/2"
         style={{
           background: `radial-gradient(circle at center,
-            rgba(255, 255, 255, 0.02) 0%,
-            rgba(255, 255, 255, 0.016) 10%,
-            rgba(255, 255, 255, 0.012) 25%,
-            rgba(255, 255, 255, 0.007) 40%,
-            rgba(255, 255, 255, 0.003) 60%,
-            rgba(255, 255, 255, 0.001) 80%,
-            transparent 100%
+            rgba(255, 255, 255, 0.018) 0%,
+            rgba(255, 255, 255, 0.014) 8%,
+            rgba(255, 255, 255, 0.01) 18%,
+            rgba(255, 255, 255, 0.006) 30%,
+            rgba(255, 255, 255, 0.003) 45%,
+            rgba(255, 255, 255, 0.001) 60%,
+            rgba(255, 255, 255, 0) 75%
           )`,
-          filter: 'blur(80px)',
+          filter: 'blur(100px)',
         }}
         initial={{ opacity: 0, scale: 1 }}
         animate={{
