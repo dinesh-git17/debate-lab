@@ -413,20 +413,28 @@ FORMAT:
 
 [Impact line — standalone, quotable, NO LABEL]
 
-[Final standalone line — no emoji, no "Verdict" label]
+---
+
+[Final punchline — no emoji]
+
+*[Italicized mic-drop line]*
 
 SPACING IS MANDATORY:
 - Blank line after thesis header
 - Blank line before each impact line
 - Blank line between sections
+- --- divider before final punchlines
 
 HOW TO END (NO VERDICT):
-Just end with a strong standalone line. Examples:
-- "That's the foundation everything else rests on."
-- "The evidence speaks for itself."
-- "This is where the conversation has to start."
+Use --- then two closing lines. Examples:
 
-Do NOT use "The Verdict:" or any labeled closer in openings.`,
+---
+
+That's the foundation everything else rests on.
+
+*The evidence speaks for itself.*
+
+Do NOT use "The Verdict:" — that's for closings only.`,
 
   constructive: `Build your case with 1-2 new powerful points. Make each feel inevitable. High energy, tight structure.
 
@@ -447,7 +455,11 @@ FORMAT:
 
 [Impact line — standalone, NO label]
 
-[Strong closing line — no emoji, no "Verdict" label]`,
+---
+
+[Final punchline — no emoji]
+
+*[Italicized mic-drop line]*`,
 
   rebuttal: `Dismantle your opponent's 1-2 weakest points. Be surgical.
 
@@ -474,7 +486,11 @@ FORMAT EXAMPLE (Claim vs Reality):
 
 ✅ **Reality:** [Surgical takedown in 2-3 sentences]
 
-[Standalone impact line — NO "Verdict" label]
+---
+
+[Final punchline]
+
+*[Italicized mic-drop line]*
 
 FORMAT EXAMPLE (Question + Answer):
 ### [Counter-Thesis Header]
@@ -483,7 +499,11 @@ FORMAT EXAMPLE (Question + Answer):
 
 💡 **The answer:** [Your response in 2-3 sentences]
 
-[Standalone impact line — NO "Verdict" label]
+---
+
+[Final punchline]
+
+*[Italicized mic-drop line]*
 
 FORMAT EXAMPLE (Concession + Pivot):
 ### [Counter-Thesis Header]
@@ -492,15 +512,22 @@ FORMAT EXAMPLE (Concession + Pivot):
 
 ⚡ **But here's the problem:** [Pivot to your counter — 2-3 sentences]
 
-[Standalone impact line — NO "Verdict" label]
+---
+
+[Final punchline]
+
+*[Italicized mic-drop line]*
 
 HOW TO END REBUTTALS (NO VERDICT):
-Just use a strong standalone line:
-- "That's the flaw they can't escape."
-- "Their logic collapses under its own weight."
-- "The assumption doesn't survive scrutiny."
+Use --- then two closing lines. Examples:
 
-Do NOT use "The Verdict:" in rebuttals.`,
+---
+
+That's the flaw they can't escape.
+
+*Their logic collapses under its own weight.*
+
+Do NOT use "The Verdict:" — that's for closings only.`,
 
   cross_examination: `Ask 1-3 razor-sharp questions. Expose weaknesses or force difficult admissions. Questions only.
 
@@ -674,11 +701,11 @@ Structure your response for maximum visual impact:
 Walls of text = amateur hour.
 White space = premium, scannable, professional.
 
-**Final Lines:**
-- CLOSINGS ONLY: use --- then 🎯 **The Verdict:** before mic-drop
-- OPENINGS & REBUTTALS: end with standalone impact line (no label, no "Verdict")
-- Mic-drop lines: no emoji, words only, can be *italicized*
-- "The Verdict" is RESERVED for closing statements — never use it elsewhere
+**Final Lines (ALL turn types use --- divider before ending):**
+- CLOSINGS: --- then 🎯 **The Verdict:** then *italicized mic-drop*
+- OPENINGS/REBUTTALS/CONSTRUCTIVES: --- then punchline then *italicized mic-drop*
+- Last line is ALWAYS *italicized* (no emoji, words only)
+- "The Verdict" label is RESERVED for closing statements only
 
 **Emoji Rules (STRICT):**
 - 3-5 emojis max per response
@@ -772,16 +799,23 @@ Choose the format that hits hardest. Options:
 **Their argument assumes:** [assumption]
 **That breaks because:** [why it fails]
 
-Pick ONE format per clash point. You can mix formats if addressing multiple points.`
+Pick ONE format per clash point. Then end with:
+
+---
+
+[Punchline]
+
+*[Italicized mic-drop]*`
   }
 
   if (turnType === 'opening') {
     prompt += `
 
 ## Opening Format Reminder
-- End with a standalone impact line — NO labeled verdict
-- "The Verdict" is for closings only
-- Just end with a strong, quotable line that captures your position`
+- Use --- divider before your final two lines
+- First closing line: strong punchline (no emoji)
+- Last line: *italicized mic-drop*
+- "The Verdict" is for closings only — don't use it here`
   }
 
   if (turnType === 'closing') {
