@@ -3,9 +3,11 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useMemo } from 'react'
 
+import { AmbientLighting } from '@/components/debate/ambient-lighting'
 import { DebateHeader } from '@/components/debate/debate-header'
+import { FilmGrain } from '@/components/debate/film-grain'
 import { FloatingControls } from '@/components/debate/floating-controls'
 import { MessageList } from '@/components/debate/message-list'
 import { ShortcutsHelp } from '@/components/debate/shortcuts-help'
@@ -17,6 +19,10 @@ import { useDebateViewStore } from '@/store/debate-view-store'
 import type { DebateHistoryResponse } from '@/app/api/debate/[id]/history/route'
 import type { DebatePhase } from '@/types/debate'
 import type { DebateMessage, DebateViewStatus } from '@/types/debate-ui'
+import type { TurnSpeaker } from '@/types/turn'
+
+// TurnSpeaker and AmbientSpeaker use the same values
+type AmbientSpeaker = TurnSpeaker
 
 interface DebatePageClientProps {
   debateId: string
@@ -53,6 +59,37 @@ export function DebatePageClient({
 }: DebatePageClientProps) {
   const { setDebateInfo, setStatus, setProgress, hydrateMessages, reset } = useDebateViewStore()
   const status = useDebateViewStore((s) => s.status)
+  const messages = useDebateViewStore((s) => s.messages)
+  const displayedMessageIds = useDebateViewStore((s) => s.displayedMessageIds)
+
+  // Derive active speaker from the currently VISIBLE message (syncs with UI, not buffer)
+  // The visible message is either:
+  // - The first message NOT in displayedMessageIds (currently animating)
+  // - Or the last displayed message if all are displayed
+  const { activeSpeaker, isStreaming } = useMemo(() => {
+    if (messages.length === 0) {
+      return { activeSpeaker: null, isStreaming: false }
+    }
+
+    // Find the currently animating message (first non-displayed)
+    let visibleMessage = null
+    for (const msg of messages) {
+      visibleMessage = msg
+      if (!displayedMessageIds.has(msg.id)) {
+        break // This is the currently animating message
+      }
+    }
+
+    if (!visibleMessage) {
+      return { activeSpeaker: null, isStreaming: false }
+    }
+
+    return {
+      activeSpeaker: visibleMessage.speaker as AmbientSpeaker,
+      isStreaming: visibleMessage.isStreaming && !displayedMessageIds.has(visibleMessage.id),
+    }
+  }, [messages, displayedMessageIds])
+
   const hasAutoStarted = useRef(false)
   const hasHydrated = useRef(false)
   const previousDebateId = useRef<string | null>(null)
@@ -160,6 +197,9 @@ export function DebatePageClient({
     autoConnect: true,
   })
 
+  // Determine ambient phase
+  const ambientPhase = status === 'completed' ? 'completed' : 'active'
+
   return (
     <motion.div
       className={cn(
@@ -172,23 +212,34 @@ export function DebatePageClient({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Film grain - kills digital banding */}
-      <div
-        className="pointer-events-none fixed inset-0 z-[100]"
+      {/* Ambient lighting - behind everything */}
+      <AmbientLighting
+        activeSpeaker={activeSpeaker}
+        isStreaming={isStreaming}
+        phase={ambientPhase}
+        className="z-0"
+      />
+
+      {/* Vignette with breathing animation - darkens edges, focuses eye on center */}
+      <motion.div
+        className="pointer-events-none fixed inset-0 z-[5]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          opacity: 0.03,
-          mixBlendMode: 'overlay',
+          background: `radial-gradient(circle at center, transparent ${status === 'completed' ? '38%' : '40%'}, #000 100%)`,
+        }}
+        animate={{
+          scale: [1, 1.03, 1],
+        }}
+        transition={{
+          scale: {
+            duration: 14,
+            repeat: Infinity,
+            ease: [0.4, 0, 0.2, 1],
+          },
         }}
       />
 
-      {/* Vignette - darkens edges, focuses eye on center */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background: 'radial-gradient(circle at center, transparent 40%, #000 100%)',
-        }}
-      />
+      {/* Film grain - topmost overlay */}
+      <FilmGrain className="z-[100]" />
 
       <DebateHeader debateId={debateId} className="relative z-10" />
 

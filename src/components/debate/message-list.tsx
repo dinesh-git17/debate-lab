@@ -455,21 +455,32 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         aria-live="polite"
         aria-label="Debate messages"
       >
-        <div className="relative mx-auto max-w-3xl">
+        <div
+          className="relative"
+          style={{
+            maxWidth: 'clamp(480px, 55vw, 680px)',
+            marginLeft: '48.5%',
+            transform: 'translateX(-50%)',
+          }}
+        >
           {messages.map((message, index) => {
             const isLastMessage = index === messages.length - 1
             const isFirstMessage = index === 0
             // Skip animation for messages that were already displayed (hydrated from server)
             const shouldSkipAnimation = displayedIds.has(message.id)
+            // Calculate depth index: 0 = active (last), 1 = adjacent, 2+ = distant
+            // In completed state, all cards should be fully focused (depthIndex = 0)
+            const depthIndex = status === 'completed' ? 0 : messages.length - 1 - index
             return (
               <MessageBubble
                 key={message.id}
                 message={message}
                 showTimestamp={message.isComplete}
                 onAnimationComplete={() => handleAnimationComplete(message.id)}
-                isActive={isLastMessage}
+                isActive={isLastMessage || status === 'completed'}
                 isFirst={isFirstMessage}
                 skipAnimation={shouldSkipAnimation}
+                depthIndex={depthIndex}
               />
             )
           })}

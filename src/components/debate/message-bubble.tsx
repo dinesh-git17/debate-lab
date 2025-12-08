@@ -31,6 +31,8 @@ interface MessageBubbleProps {
   isFirst?: boolean
   /** Skip animation - show content immediately (for hydrated/historical messages) */
   skipAnimation?: boolean
+  /** Depth index for desaturation: 0 = active, 1 = adjacent, 2+ = distant */
+  depthIndex?: number
 }
 
 /**
@@ -115,6 +117,19 @@ function MessageContent({
   )
 }
 
+// Depth filter values for desaturation effect
+const DEPTH_FILTERS = {
+  active: 'none',
+  adjacent: 'saturate(0.95) contrast(0.98)',
+  distant: 'saturate(0.90) contrast(0.95)',
+} as const
+
+function getDepthFilter(depthIndex: number): string {
+  if (depthIndex === 0) return DEPTH_FILTERS.active
+  if (depthIndex === 1) return DEPTH_FILTERS.adjacent
+  return DEPTH_FILTERS.distant
+}
+
 export const MessageBubble = memo(function MessageBubble({
   message,
   showTimestamp = false,
@@ -122,6 +137,7 @@ export const MessageBubble = memo(function MessageBubble({
   isActive = true,
   isFirst = false,
   skipAnimation = false,
+  depthIndex = 0,
 }: MessageBubbleProps) {
   const config = getSpeakerConfig(message.speaker)
   const gradient = SPEAKER_GRADIENTS[message.speaker]
@@ -158,8 +174,13 @@ export const MessageBubble = memo(function MessageBubble({
         className={cn(
           'relative mx-auto max-w-3xl overflow-hidden rounded-xl',
           // Solid background to mask the timeline - matches page bg
-          'bg-[#0a0a0b]'
+          'bg-[#0a0a0b]',
+          // Smooth transition for depth filter
+          'transition-[filter] duration-400 ease-out'
         )}
+        style={{
+          filter: getDepthFilter(depthIndex),
+        }}
       >
         {/* Content wrapper with focus mode effects */}
         <div
