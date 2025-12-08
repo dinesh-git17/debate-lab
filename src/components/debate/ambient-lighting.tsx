@@ -7,22 +7,23 @@ import { useEffect, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
-// Color tokens (HSL) - reduced opacity for subtler effect
+// Color tokens (HSL) - matched to speaker card colors from speaker-config.ts
+// For: blue-500 (#3b82f6), Against: rose-500 (#f43f5e), Moderator: amber-500 (#f59e0b)
 const AMBIENT_COLORS = {
   for: {
-    primary: 'hsl(210, 80%, 55%)',
-    glow: 'hsla(210, 90%, 60%, 0.04)',
-    glowIntense: 'hsla(210, 90%, 60%, 0.06)',
+    primary: 'hsl(217, 91%, 60%)',
+    glow: 'hsla(217, 91%, 60%, 0.04)',
+    glowIntense: 'hsla(217, 91%, 60%, 0.06)',
   },
   against: {
-    primary: 'hsl(25, 85%, 55%)',
-    glow: 'hsla(25, 90%, 58%, 0.04)',
-    glowIntense: 'hsla(25, 90%, 58%, 0.06)',
+    primary: 'hsl(350, 89%, 60%)',
+    glow: 'hsla(350, 89%, 60%, 0.04)',
+    glowIntense: 'hsla(350, 89%, 60%, 0.06)',
   },
   moderator: {
-    primary: 'hsl(270, 60%, 60%)',
-    glow: 'hsla(270, 70%, 60%, 0.03)',
-    glowIntense: 'hsla(270, 70%, 60%, 0.05)',
+    primary: 'hsl(38, 92%, 50%)',
+    glow: 'hsla(38, 92%, 50%, 0.03)',
+    glowIntense: 'hsla(38, 92%, 50%, 0.05)',
   },
   neutral: 'hsla(0, 0%, 100%, 0.02)',
   completed: 'hsla(220, 10%, 50%, 0.03)',
