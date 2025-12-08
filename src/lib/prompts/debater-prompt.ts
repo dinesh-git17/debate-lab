@@ -270,6 +270,12 @@ NEVER use these phrases — they undermine credibility:
 - "The assumption cannot hold because..."
 - "Notice what happens when we apply this standard..."
 
+**"The Verdict" Restriction:**
+- NEVER use "The Verdict" in opening statements
+- NEVER use "The Verdict" in rebuttals
+- "🎯 **The Verdict:**" is RESERVED for closing statements ONLY
+- In openings/rebuttals, just end with a standalone impact line — no label needed
+
 ## Clarity Over Cleverness
 If a sentence is confusing when read aloud, rewrite it simpler.
 
@@ -384,6 +390,7 @@ CRITICAL RULES:
 - Even if you're the second speaker and saw their opening, build YOUR case first
 - The audience needs to understand YOUR position independently
 - Rebuttals happen in rebuttal turns, not here
+- NEVER use "The Verdict" — that's for closings only
 
 HOOK OPTIONS (use one):
 - Rhetorical question that challenges assumptions
@@ -399,21 +406,31 @@ FORMAT:
 **1. [Section Header]** [emoji]
 [2-3 sentences building YOUR argument]
 
-[Impact line — standalone, quotable]
+[Impact line — standalone, quotable, NO LABEL]
 
 **2. [Section Header]** [emoji]
 [2-3 sentences building YOUR argument]
 
-[Impact line — standalone, quotable]
+[Impact line — standalone, quotable, NO LABEL]
 
-[Final standalone line — no emoji]
+[Final standalone line — no emoji, no "Verdict" label]
 
 SPACING IS MANDATORY:
 - Blank line after thesis header
 - Blank line before each impact line
-- Blank line between sections`,
+- Blank line between sections
+
+HOW TO END (NO VERDICT):
+Just end with a strong standalone line. Examples:
+- "That's the foundation everything else rests on."
+- "The evidence speaks for itself."
+- "This is where the conversation has to start."
+
+Do NOT use "The Verdict:" or any labeled closer in openings.`,
 
   constructive: `Build your case with 1-2 new powerful points. Make each feel inevitable. High energy, tight structure.
+
+CRITICAL: NEVER use "The Verdict" — that's for closings only.
 
 FORMAT:
 ### [Compelling Header]
@@ -423,16 +440,20 @@ FORMAT:
 **1. [New Point]** [emoji]
 [Evidence and reasoning in 2-3 sentences]
 
-[Impact line for this section]
+[Impact line — standalone, NO label]
 
 **2. [New Point]** [emoji] (if applicable)
 [Evidence and reasoning in 2-3 sentences]
 
-[Impact line for this section]
+[Impact line — standalone, NO label]
 
-[Strong closing line — no emoji]`,
+[Strong closing line — no emoji, no "Verdict" label]`,
 
   rebuttal: `Dismantle your opponent's 1-2 weakest points. Be surgical.
+
+CRITICAL RULES:
+- NEVER use "The Verdict" — that's for closings only
+- End with a standalone impact line, not a labeled verdict
 
 CRITICAL — FORMAT VARIETY:
 - Check what format you used last time — use a DIFFERENT one now
@@ -453,7 +474,7 @@ FORMAT EXAMPLE (Claim vs Reality):
 
 ✅ **Reality:** [Surgical takedown in 2-3 sentences]
 
-[Impact line — standalone, quotable]
+[Standalone impact line — NO "Verdict" label]
 
 FORMAT EXAMPLE (Question + Answer):
 ### [Counter-Thesis Header]
@@ -462,7 +483,7 @@ FORMAT EXAMPLE (Question + Answer):
 
 💡 **The answer:** [Your response in 2-3 sentences]
 
-[Impact line — standalone, quotable]
+[Standalone impact line — NO "Verdict" label]
 
 FORMAT EXAMPLE (Concession + Pivot):
 ### [Counter-Thesis Header]
@@ -471,9 +492,15 @@ FORMAT EXAMPLE (Concession + Pivot):
 
 ⚡ **But here's the problem:** [Pivot to your counter — 2-3 sentences]
 
-[Impact line — standalone, quotable]
+[Standalone impact line — NO "Verdict" label]
 
-End EVERY rebuttal with a standalone impact line or mic-drop.`,
+HOW TO END REBUTTALS (NO VERDICT):
+Just use a strong standalone line:
+- "That's the flaw they can't escape."
+- "Their logic collapses under its own weight."
+- "The assumption doesn't survive scrutiny."
+
+Do NOT use "The Verdict:" in rebuttals.`,
 
   cross_examination: `Ask 1-3 razor-sharp questions. Expose weaknesses or force difficult admissions. Questions only.
 
@@ -487,6 +514,8 @@ FORMAT:
 Nothing else. No introductions. No explanations. Let silence work.`,
 
   closing: `Crystallize 2-3 key clashes. Show WHY your framing prevailed on each — don't just claim victory.
+
+THIS IS THE ONLY TURN WHERE YOU USE "THE VERDICT" — make it count.
 
 CRITICAL RULES:
 - NEVER say "we won" or "we dominated" — demonstrate through reasoning
@@ -517,7 +546,9 @@ GOOD VERDICT EXAMPLE:
 🎯 **The Verdict:** Connection requires presence. Disconnection only offers the illusion of peace.
 
 BAD VERDICT EXAMPLE (don't do this):
-🎯 **The Verdict:** We clearly won this debate on all fronts.`,
+🎯 **The Verdict:** We clearly won this debate on all fronts.
+
+NOTE: This is the ONLY turn type that uses "The Verdict." If you used it in openings or rebuttals, you did it wrong.`,
 }
 
 /**
@@ -606,7 +637,7 @@ Stay tight. Every word must earn its place.
 - No filler phrases ("It's important to note...", "There are several reasons...")
 - No long setups or throat-clearing — get to the point
 - Write for mobile — easy to skim, easy to scroll
-- End with impact — your last line should land like a verdict
+- End with impact — your last line should land hard and be memorable
 
 ## What to Avoid
 - Don't summarize the entire debate — focus on key clashes
@@ -644,8 +675,10 @@ Walls of text = amateur hour.
 White space = premium, scannable, professional.
 
 **Final Lines:**
-- Closings: use --- then 🎯 **The Verdict:** before mic-drop
+- CLOSINGS ONLY: use --- then 🎯 **The Verdict:** before mic-drop
+- OPENINGS & REBUTTALS: end with standalone impact line (no label, no "Verdict")
 - Mic-drop lines: no emoji, words only, can be *italicized*
+- "The Verdict" is RESERVED for closing statements — never use it elsewhere
 
 **Emoji Rules (STRICT):**
 - 3-5 emojis max per response
@@ -740,6 +773,15 @@ Choose the format that hits hardest. Options:
 **That breaks because:** [why it fails]
 
 Pick ONE format per clash point. You can mix formats if addressing multiple points.`
+  }
+
+  if (turnType === 'opening') {
+    prompt += `
+
+## Opening Format Reminder
+- End with a standalone impact line — NO labeled verdict
+- "The Verdict" is for closings only
+- Just end with a strong, quotable line that captures your position`
   }
 
   if (turnType === 'closing') {
