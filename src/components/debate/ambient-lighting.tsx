@@ -41,6 +41,40 @@ const EASING = {
   smoothInOut: [0.4, 0, 0.2, 1] as const,
 }
 
+/**
+ * Extract opacity value from an hsla color string
+ * e.g., 'hsla(220, 10%, 50%, 0.015)' → 0.015
+ */
+function extractOpacity(color: string): number {
+  const match = color.match(/([\d.]+)\)$/)
+  return match?.[1] ? parseFloat(match[1]) : 0.01
+}
+
+/**
+ * Replace opacity in an hsla color string
+ */
+function withOpacity(color: string, opacity: number): string {
+  return color.replace(/[\d.]+\)$/, `${opacity.toFixed(4)})`)
+}
+
+/**
+ * Build a radial gradient with monotonically decreasing opacity
+ * All stops are relative percentages of the base opacity
+ */
+function buildRadialGradient(
+  color: string,
+  stops: Array<{ percent: number; opacityRatio: number }>
+): string {
+  const baseOpacity = extractOpacity(color)
+  const gradientStops = stops
+    .map(({ percent, opacityRatio }) => {
+      if (opacityRatio === 0) return `transparent ${percent}%`
+      return `${withOpacity(color, baseOpacity * opacityRatio)} ${percent}%`
+    })
+    .join(', ')
+  return `radial-gradient(circle at center, ${gradientStops})`
+}
+
 type SpeakerType = 'for' | 'against' | 'moderator'
 
 interface AmbientLightingProps {
@@ -122,7 +156,14 @@ export function AmbientLighting({
           width: 1600,
           height: 1600,
           borderRadius: '50%',
-          background: `radial-gradient(circle at center, ${atmosphericColor} 0%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.018)')} 10%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.012)')} 25%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.006)')} 45%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.002)')} 65%, transparent 85%)`,
+          background: buildRadialGradient(atmosphericColor, [
+            { percent: 0, opacityRatio: 1 },
+            { percent: 15, opacityRatio: 0.7 },
+            { percent: 35, opacityRatio: 0.4 },
+            { percent: 55, opacityRatio: 0.15 },
+            { percent: 75, opacityRatio: 0.05 },
+            { percent: 100, opacityRatio: 0 },
+          ]),
           filter: 'blur(120px) saturate(0.6)',
         }}
         animate={
@@ -150,7 +191,14 @@ export function AmbientLighting({
             width: 900,
             height: 900,
             borderRadius: '50%',
-            background: `radial-gradient(circle at center, ${glowColor} 0%, ${glowColor.replace(/[\d.]+\)$/, '0.035)')} 8%, ${glowColor.replace(/[\d.]+\)$/, '0.02)')} 20%, ${glowColor.replace(/[\d.]+\)$/, '0.01)')} 35%, ${glowColor.replace(/[\d.]+\)$/, '0.004)')} 55%, ${glowColor.replace(/[\d.]+\)$/, '0.001)')} 75%, transparent 100%)`,
+            background: buildRadialGradient(glowColor, [
+              { percent: 0, opacityRatio: 1 },
+              { percent: 15, opacityRatio: 0.7 },
+              { percent: 35, opacityRatio: 0.4 },
+              { percent: 55, opacityRatio: 0.15 },
+              { percent: 75, opacityRatio: 0.05 },
+              { percent: 100, opacityRatio: 0 },
+            ]),
             filter: 'blur(100px) saturate(0.6)',
           }}
           initial={
@@ -187,13 +235,15 @@ export function AmbientLighting({
           width: 400,
           height: 400,
           borderRadius: '50%',
-          background: `radial-gradient(circle at center, ${
-            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.012)' : 'hsla(0, 0%, 100%, 0.01)'
-          } 0%, ${
-            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.008)' : 'hsla(0, 0%, 100%, 0.006)'
-          } 20%, ${
-            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.003)' : 'hsla(0, 0%, 100%, 0.002)'
-          } 45%, transparent 70%)`,
+          background: buildRadialGradient(
+            phase === 'completed' ? 'hsla(220, 10%, 60%, 0.012)' : 'hsla(0, 0%, 100%, 0.01)',
+            [
+              { percent: 0, opacityRatio: 1 },
+              { percent: 20, opacityRatio: 0.6 },
+              { percent: 45, opacityRatio: 0.25 },
+              { percent: 70, opacityRatio: 0 },
+            ]
+          ),
           filter: 'blur(60px) saturate(0.6)',
         }}
         animate={
