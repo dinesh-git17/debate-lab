@@ -40,6 +40,7 @@ export interface ModeratorContext {
   nextTurnType?: TurnType | undefined
   previousTurnContent?: string | undefined
   previousTurnSpeaker?: TurnSpeaker | undefined
+  previousTurnType?: TurnType | undefined
   violations?: ViolationRecord[] | undefined
 }
 

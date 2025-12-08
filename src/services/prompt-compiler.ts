@@ -66,6 +66,7 @@ export function buildModeratorContext(
     nextTurnType: nextTurnConfig?.type,
     previousTurnContent: previousTurn?.content,
     previousTurnSpeaker: previousTurn?.speaker,
+    previousTurnType: previousTurn?.config.type,
     violations,
   }
 }

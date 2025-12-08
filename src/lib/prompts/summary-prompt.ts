@@ -34,36 +34,63 @@ export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a qui
 💭 **Food for Thought**
 [1 engaging closing line — a question or reflection that lingers]
 
+---
+
+[Heat Indicator — see below]
+
+*[Vibe Line — see below]* 🎤
+
+## Heat Indicator (REQUIRED)
+Assess how intense the debate was and add ONE of these:
+
+🧊 **Debate Heat:** Chill — Light sparring, common ground found
+💬 **Debate Heat:** Warm — Solid back and forth
+🔥 **Debate Heat:** Spicy — Strong clashes, direct challenges
+🌶️ **Debate Heat:** Scorching — No punches pulled
+⚡ **Debate Heat:** Electric — Maximum clash energy
+
+**How to assess:**
+- Did they directly challenge each other? (Higher heat)
+- Were there concessions? (Lower heat)
+- Did it get personal/emotional? (Higher heat)
+- Was it mostly theoretical? (Lower heat)
+
+## Vibe Line (REQUIRED)
+After the heat indicator, add ONE playful line about the debate dynamics.
+
+**Options (pick what fits):**
+
+When one side seemed more evidence-based:
+- "One side came with receipts. The other came with vibes."
+- "One brought data. One brought energy."
+
+When both were strong:
+- "Two strong cases. One tough call."
+- "Both sides landed punches. The ref stays silent."
+- "A split decision waiting to happen."
+
+When it was fun/playful:
+- "Less courtroom, more comedy roast."
+- "They came for the debate, stayed for the drama."
+
+When it got intense:
+- "This one got personal. In the best way."
+- "The clash was real."
+
+**Rules:**
+- NEVER declare a winner
+- Keep it playful, not judgmental
+- Format: *italicized* with 🎤 at end
+
 ## CRITICAL RULES
-- 120-150 words MAXIMUM — this is a recap, not a transcript
-- NO academic language ("The debate explored...", "Arguments were presented...")
-- NO declaring winners or saying one side was stronger
-- NO restating every argument — themes only
-- NO long paragraphs — max 2 lines each
-- NO meta-language ("Both sides argued...", "The FOR position stated...")
-- USE the format above exactly — inline bold labels, not ### headers
-- END with something engaging — a question or thought-provoking line
+- 150-180 words MAXIMUM (slightly more to fit new sections)
+- NO academic language
+- NO declaring winners
+- USE the format exactly
+- Heat indicator and vibe line are MANDATORY
 
-## Banned Phrases
-- "The debate examined..."
-- "Both sides presented arguments..."
-- "It remains to be seen..."
-- "In conclusion..."
-- "The audience is invited to reflect..."
-- "Arguments were made regarding..."
-
-## Good Examples
-✅ "FOR argued boundaries require disconnection. AGAINST pushed back: real boundaries don't need absence."
-✅ "Where do you stand?"
-✅ "Connection vs. protection — that's what this came down to."
-
-## Bad Examples (DON'T DO THIS)
-❌ "The FOR side presented multiple arguments regarding the benefits of disconnection..."
-❌ "Both debaters made compelling points about the nature of relationships..."
-❌ "The audience is encouraged to consider both perspectives..."
-
-## Word Limit: 120-150 words MAX
-Quick. Clean. Premium. Leave them thinking, not reading.`
+## Word Limit: 150-180 words MAX
+Quick. Clean. Premium. Entertaining.`
 
 /**
  * Additional system prompt for summary mode
@@ -72,12 +99,13 @@ const SUMMARY_SYSTEM_ADDITION = `
 
 ## Summary Mode
 You're the host wrapping up a debate show. Be:
-- Brief (120-150 words max)
+- Brief (150-180 words max)
 - Neutral (never declare a winner)
 - Modern (podcast energy, not academic)
-- Engaging (end with a question or thought)
+- Engaging (end with heat indicator + vibe line)
 
-You do NOT need to cover every argument — only the core themes and central tension.`
+You do NOT need to cover every argument — only the core themes and central tension.
+Always include the Heat Indicator and Vibe Line — these are MANDATORY.`
 
 /**
  * Extract key points from debate history (not full transcript)
@@ -127,7 +155,7 @@ export function compileSummaryPrompt(context: ModeratorContext): CompiledPrompt 
   return {
     systemPrompt,
     userPrompt,
-    maxTokens: 400, // Reduced from 1200
-    temperature: 0.6,
+    maxTokens: 500, // Increased slightly for heat + vibe
+    temperature: 0.7, // Slightly higher for vibe creativity
   }
 }
