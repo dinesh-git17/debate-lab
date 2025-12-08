@@ -2,34 +2,61 @@
 
 import { buildModeratorSystemPrompt } from './moderator-system'
 
-import type { CompiledPrompt, DebateHistoryEntry, ModeratorContext } from '@/types/prompts'
+import type { CompiledPrompt, ModeratorContext } from '@/types/prompts'
 import type { TurnType } from '@/types/turn'
 
 /**
- * Template for turn transitions
+ * Template for turn transitions - punchy, ESPN-style handoffs
  */
-export const TRANSITION_PROMPT_TEMPLATE = `You are transitioning between speakers in the debate. Generate a brief transition that:
-
-1. Acknowledges the previous speaker finished (without evaluating quality)
-2. Announces the next speaker and their turn type
-3. Optionally provides a neutral, factual observation about the debate state
+export const TRANSITION_PROMPT_TEMPLATE = `Generate a quick, punchy transition between speakers. You're a show host keeping things moving.
 
 ## Current State
-- Debate Topic: "{{topic}}"
-- Previous Speaker: {{previousSpeaker}} ({{previousTurnType}})
-- Next Speaker: {{nextSpeaker}} ({{nextTurnType}})
-- Turn Progress: {{currentTurnNumber}} of {{totalTurns}} debater turns
+- Next Speaker: {{nextSpeaker}}
+- Next Turn Type: {{nextTurnType}}
+- Turn: {{currentTurnNumber}} of {{totalTurns}}
 
-{{previousTurnSection}}
+## Style
+- ESPN commentator energy
+- 15-25 words MAX
+- No evaluation of previous turn
+- Just hand off to the next speaker
 
-## Guidelines
-- Keep it SHORT (30-50 words maximum)
-- Do NOT evaluate or praise the previous argument
-- Simply announce the transition neutrally
-- You may note what type of response is expected (rebuttal, constructive, etc.)
+## Transition Templates (vary these — don't repeat the same one):
 
-## Your Transition
-Write a brief moderator transition.`
+**For openings:**
+- "{{nextSpeaker}}, let's hear your case."
+- "{{nextSpeaker}}, the floor is yours."
+- "{{nextSpeaker}}, make your opening."
+
+**After an opening (to second opener):**
+- "Strong start. {{nextSpeaker}}, your turn to lay it out."
+- "Points on the board. {{nextSpeaker}}, let's hear your side."
+- "{{nextSpeaker}}, time to make your case."
+
+**For rebuttals:**
+- "{{nextSpeaker}}, your response."
+- "Time to clash. {{nextSpeaker}}, counter."
+- "{{nextSpeaker}}, take it apart."
+
+**For closings:**
+- "Final statements. {{nextSpeaker}}, close it out."
+- "Last word incoming. {{nextSpeaker}}, bring it home."
+- "{{nextSpeaker}}, closing time."
+
+## Rules
+- 15-25 words MAXIMUM
+- NO summarizing the previous turn
+- NO evaluating quality ("Great argument...")
+- NO explaining what comes next in detail
+- Just energy + handoff
+
+## Format
+Write ONE line. That's it. Example:
+
+"Points made. {{nextSpeaker}}, your response."
+
+## Word Limit: 15-25 words
+Quick. Clean. Keep it moving.`
 
 /**
  * Get display name for turn type
@@ -52,100 +79,23 @@ function getTurnTypeDisplay(turnType: TurnType | undefined): string {
 }
 
 /**
- * Determine expected turn type based on context
- * Uses the actual next turn type from the sequence when available
- */
-function getExpectedTurnType(context: ModeratorContext): string {
-  // Use the actual next turn type if provided (preferred)
-  if (context.nextTurnType) {
-    return getTurnTypeDisplay(context.nextTurnType)
-  }
-
-  // Fallback to inference based on debate history (for backwards compatibility)
-  const lastTurn = context.debateHistory.at(-1)
-  if (!lastTurn) return 'opening statement'
-
-  if (lastTurn.turnType === 'opening') {
-    return context.currentTurnNumber <= 2 ? 'opening statement' : 'rebuttal'
-  }
-  if (lastTurn.turnType === 'constructive') {
-    return 'rebuttal'
-  }
-  if (lastTurn.turnType === 'rebuttal') {
-    return context.currentTurnNumber >= context.totalTurns - 1 ? 'closing statement' : 'rebuttal'
-  }
-  if (lastTurn.turnType === 'cross_examination') {
-    return 'response'
-  }
-  return 'response'
-}
-
-/**
- * Extract key sentences from content for summary
- */
-function extractKeySentences(content: string, count: number): string {
-  const sentences = content.match(/[^.!?]+[.!?]+/g) ?? []
-  return sentences.slice(0, count).join(' ').trim()
-}
-
-/**
- * Build previous turn section
- */
-function buildPreviousTurnSection(
-  previousTurnContent: string | undefined,
-  previousSpeaker: string
-): string {
-  if (!previousTurnContent) {
-    return ''
-  }
-
-  const summary = extractKeySentences(previousTurnContent, 2)
-  return `## Previous Turn Summary
-The ${previousSpeaker} position just completed their turn. Key points touched on (factually, not evaluatively):
-${summary}
-
-`
-}
-
-/**
- * Get speaker label for display
- */
-function getSpeakerLabel(speaker: string | undefined): string {
-  if (!speaker) return 'Unknown'
-  return speaker === 'for' ? 'FOR' : speaker === 'against' ? 'AGAINST' : 'MODERATOR'
-}
-
-/**
  * Compile transition prompt with context
  */
 export function compileTransitionPrompt(context: ModeratorContext): CompiledPrompt {
   const systemPrompt = buildModeratorSystemPrompt(context.format)
 
-  const lastDebaterTurn = context.debateHistory
-    .filter((h: DebateHistoryEntry) => h.speaker !== 'moderator')
-    .at(-1)
+  const nextSpeakerLabel = context.nextSpeaker === 'for' ? 'FOR' : 'AGAINST'
+  const nextTurnType = getTurnTypeDisplay(context.nextTurnType)
 
-  const previousSpeakerLabel = getSpeakerLabel(context.previousTurnSpeaker)
-  const nextSpeakerLabel = getSpeakerLabel(context.nextSpeaker)
-
-  const previousTurnSection = buildPreviousTurnSection(
-    context.previousTurnContent,
-    previousSpeakerLabel
-  )
-
-  const userPrompt = TRANSITION_PROMPT_TEMPLATE.replace('{{topic}}', context.topic)
-    .replace('{{previousSpeaker}}', previousSpeakerLabel)
-    .replace('{{previousTurnType}}', getTurnTypeDisplay(lastDebaterTurn?.turnType))
-    .replace('{{nextSpeaker}}', nextSpeakerLabel)
-    .replace('{{nextTurnType}}', getExpectedTurnType(context))
+  const userPrompt = TRANSITION_PROMPT_TEMPLATE.replace(/\{\{nextSpeaker\}\}/g, nextSpeakerLabel)
+    .replace('{{nextTurnType}}', nextTurnType)
     .replace('{{currentTurnNumber}}', String(context.currentTurnNumber))
     .replace('{{totalTurns}}', String(context.totalTurns))
-    .replace('{{previousTurnSection}}', previousTurnSection)
 
   return {
     systemPrompt,
     userPrompt,
-    maxTokens: 150,
-    temperature: 0.5,
+    maxTokens: 75, // Reduced from 150
+    temperature: 0.7,
   }
 }

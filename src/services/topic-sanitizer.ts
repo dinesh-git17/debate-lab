@@ -27,7 +27,7 @@ function getOpenAIClient(): OpenAI {
 }
 
 /**
- * Sanitizes a raw debate topic into a well-formed, neutral debate question.
+ * Lightly polishes a debate topic while preserving its original tone and personality.
  * Uses GPT-4o-mini for speed and cost efficiency.
  * Falls back to basic capitalization if the API fails.
  */
@@ -42,31 +42,60 @@ export async function sanitizeTopic(rawTopic: string): Promise<SanitizeTopicResu
       messages: [
         {
           role: 'system',
-          content: `You are a debate topic editor. Transform user input into a clear, neutral, grammatically correct debate question.
+          content: `You are a debate topic editor. LIGHTLY polish user input while PRESERVING its original tone, meaning, and personality.
 
-Rules:
-- Output ONLY the reformulated topic, nothing else
-- Maximum 15 words
-- Use proper capitalization and punctuation
-- Frame as a question when appropriate (use "Should...", "Is...", "Does...", etc.)
-- Keep it neutral - don't bias toward either side
-- If input is already well-formed, return it with minor polish
-- Expand vague inputs into specific debatable propositions`,
+CRITICAL — PRESERVE:
+- Original tone (playful, serious, provocative)
+- Relationship words ("your partner", "your friend", "your mom")
+- Intentional emphasis and word choices
+- The core framing and context
+- Humor and personality
+
+DO NOT:
+- Make playful topics sound formal/academic
+- Remove personality or humor
+- Change the debate premise
+- Over-formalize casual language
+
+ONLY FIX:
+- Grammar errors
+- Missing punctuation
+- Unclear phrasing (while keeping tone)
+
+OUTPUT:
+- Return ONLY the polished topic as a plain sentence
+- NO quotes around your response
+- Maximum 20 words
+- Keep it as close to original as possible
+- If it's already good, return it with minimal changes
+
+EXAMPLES:
+Input: if your partner steals your hoodie does that make it theirs
+Output: If your partner steals your hoodie, does that make it legally theirs?
+
+Input: pineapple on pizza is a war crime
+Output: Is pineapple on pizza a culinary war crime?
+
+Input: should you tell your friend their breath stinks
+Output: Should you tell your friend their breath stinks?`,
         },
         {
           role: 'user',
-          content: `Transform this into a debate topic: "${originalTopic}"`,
+          content: `Lightly polish this debate topic (preserve tone and meaning): "${originalTopic}"`,
         },
       ],
-      max_tokens: 50,
+      max_tokens: 75,
       temperature: 0.3,
     })
 
-    const sanitizedTopic = response.choices[0]?.message?.content?.trim()
+    let sanitizedTopic = response.choices[0]?.message?.content?.trim()
 
     if (!sanitizedTopic) {
       throw new Error('Empty response from API')
     }
+
+    // Strip any quotes the model might have added
+    sanitizedTopic = sanitizedTopic.replace(/^["']|["']$/g, '')
 
     logger.info('Topic sanitized successfully', {
       original: originalTopic.slice(0, 50),

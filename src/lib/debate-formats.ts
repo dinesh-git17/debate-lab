@@ -16,9 +16,9 @@ export const TOKEN_LIMITS: Record<TurnType, { min: number; max: number }> = {
   cross_examination: { min: 40, max: 150 },
   closing: { min: 90, max: 350 },
   moderator_intro: { min: 40, max: 200 },
-  moderator_transition: { min: 25, max: 100 },
+  moderator_transition: { min: 15, max: 75 }, // Reduced for punchy handoffs
   moderator_intervention: { min: 50, max: 200 },
-  moderator_summary: { min: 150, max: 600 },
+  moderator_summary: { min: 75, max: 400 }, // Reduced for premium recap
 }
 
 /**
@@ -32,9 +32,9 @@ export const TARGET_WORD_COUNTS: Record<TurnType, number> = {
   cross_examination: 75,
   closing: 175,
   moderator_intro: 80,
-  moderator_transition: 50,
+  moderator_transition: 25, // Reduced for punchy handoffs
   moderator_intervention: 100,
-  moderator_summary: 300,
+  moderator_summary: 150, // Reduced for premium recap
 }
 
 /**

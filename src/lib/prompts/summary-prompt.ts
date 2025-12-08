@@ -1,145 +1,133 @@
 // src/lib/prompts/summary-prompt.ts
 
-import { buildModeratorSystemPrompt, getFormatDisplayName } from './moderator-system'
+import { buildModeratorSystemPrompt } from './moderator-system'
 
 import type { CompiledPrompt, DebateHistoryEntry, ModeratorContext } from '@/types/prompts'
-import type { TurnType } from '@/types/turn'
 
 /**
- * Template for final debate summary
+ * Template for final debate summary - premium podcast-style wrap-up
  */
-export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a neutral, comprehensive summary that helps the audience understand both positions without declaring a winner.
+export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a quick, premium recap — NOT an academic analysis.
 
-## Debate Information
-- Topic: "{{topic}}"
-- Format: {{format}}
-- Total Turns Completed: {{turnsCompleted}}
+## Your Voice
+- Podcast host wrapping up an episode
+- Quick, insightful, leaves them thinking
+- Modern editorial tone — NYT briefing, not dissertation
+- Warm-neutral, never robotic
 
-## Complete Debate Transcript
-{{debateTranscript}}
+## Debate Topic
+"{{topic}}"
 
-{{violationsSection}}
+## Key Points to Reference
+{{keyPoints}}
 
-## Your Summary Must Include:
+## FORMAT (follow exactly):
 
-### 1. Topic Recap (1-2 sentences)
-Restate what was being debated.
+📋 **Quick Recap**
+[1 sentence — what was debated and why it matters]
 
-### 2. FOR Position Summary (2-3 sentences)
-- Main arguments presented
-- Key evidence or reasoning offered
-- How they responded to challenges
+⚔️ **The Clash**
+• **FOR:** [Their core argument in 1 line — max 15 words]
+• **AGAINST:** [Their core argument in 1 line — max 15 words]
+• **The tension:** [What this debate really came down to — 1 line]
 
-### 3. AGAINST Position Summary (2-3 sentences)
-- Main arguments presented
-- Key evidence or reasoning offered
-- How they responded to challenges
+💭 **Food for Thought**
+[1 engaging closing line — a question or reflection that lingers]
 
-### 4. Key Points of Clash (2-3 sentences)
-Where did the debaters most directly engage with each other's arguments?
+## CRITICAL RULES
+- 120-150 words MAXIMUM — this is a recap, not a transcript
+- NO academic language ("The debate explored...", "Arguments were presented...")
+- NO declaring winners or saying one side was stronger
+- NO restating every argument — themes only
+- NO long paragraphs — max 2 lines each
+- NO meta-language ("Both sides argued...", "The FOR position stated...")
+- USE the format above exactly — inline bold labels, not ### headers
+- END with something engaging — a question or thought-provoking line
 
-### 5. Closing Note (1-2 sentences)
-Thank participants, invite audience reflection. Do NOT declare a winner or state which side was more convincing.
+## Banned Phrases
+- "The debate examined..."
+- "Both sides presented arguments..."
+- "It remains to be seen..."
+- "In conclusion..."
+- "The audience is invited to reflect..."
+- "Arguments were made regarding..."
 
-## Critical Rules for Summary
-- NEVER declare a winner or loser
-- NEVER say one side was "more convincing" or "stronger"
-- NEVER express your opinion on the topic
-- Give EQUAL word count and attention to both sides
-- Use neutral language: "argued that" not "correctly pointed out"
-- If one side had violations, mention factually without editorializing
+## Good Examples
+✅ "FOR argued boundaries require disconnection. AGAINST pushed back: real boundaries don't need absence."
+✅ "Where do you stand?"
+✅ "Connection vs. protection — that's what this came down to."
 
-## Response Format
-Write a summary of 250-350 words. Use the section headers provided.`
+## Bad Examples (DON'T DO THIS)
+❌ "The FOR side presented multiple arguments regarding the benefits of disconnection..."
+❌ "Both debaters made compelling points about the nature of relationships..."
+❌ "The audience is encouraged to consider both perspectives..."
+
+## Word Limit: 120-150 words MAX
+Quick. Clean. Premium. Leave them thinking, not reading.`
 
 /**
  * Additional system prompt for summary mode
  */
 const SUMMARY_SYSTEM_ADDITION = `
 
-## Summary Mode Instructions
-You are now in summary mode. Your ONLY job is to provide a balanced, neutral recap. Any hint of favoritism will undermine the entire debate's credibility. Treat this as a journalistic summary, not an evaluation.`
+## Summary Mode
+You're the host wrapping up a debate show. Be:
+- Brief (120-150 words max)
+- Neutral (never declare a winner)
+- Modern (podcast energy, not academic)
+- Engaging (end with a question or thought)
+
+You do NOT need to cover every argument — only the core themes and central tension.`
 
 /**
- * Get turn type label for transcript
+ * Extract key points from debate history (not full transcript)
+ * Only includes the thesis/opening line from each major turn
  */
-function getTurnTypeLabel(turnType: TurnType): string {
-  const labels: Record<string, string> = {
-    opening: 'Opening Statement',
-    constructive: 'Constructive Argument',
-    rebuttal: 'Rebuttal',
-    cross_examination: 'Cross-Examination',
-    closing: 'Closing Statement',
-    moderator_intervention: 'Moderator Intervention',
-  }
-  return labels[turnType] ?? 'Response'
-}
+function buildKeyPoints(history: DebateHistoryEntry[]): string {
+  const forTurns = history.filter((h) => h.speaker === 'for')
+  const againstTurns = history.filter((h) => h.speaker === 'against')
 
-/**
- * Get speaker label for transcript
- */
-function getSpeakerLabel(speaker: string): string {
-  return speaker === 'for' ? 'FOR' : speaker === 'against' ? 'AGAINST' : 'MODERATOR'
-}
-
-/**
- * Build debate transcript from history
- */
-function buildDebateTranscript(history: DebateHistoryEntry[]): string {
-  return history
-    .filter((entry) => entry.speaker !== 'moderator' || entry.turnType === 'moderator_intervention')
-    .map((entry) => {
-      const label =
-        entry.speaker === 'moderator'
-          ? '[MODERATOR INTERVENTION]'
-          : `[${getSpeakerLabel(entry.speaker)}] ${getTurnTypeLabel(entry.turnType)}`
-      return `${label}\n${entry.content}`
-    })
-    .join('\n\n---\n\n')
-}
-
-/**
- * Build violations section for summary
- */
-function buildViolationsSection(context: ModeratorContext): string {
-  if (!context.violations || context.violations.length === 0) {
-    return ''
+  // Get first sentence from opening and closing for each side
+  const extractFirstSentence = (content: string): string => {
+    const match = content.match(/[^.!?]+[.!?]+/)
+    return match ? match[0].trim() : content.slice(0, 100) + '...'
   }
 
-  const violationsList = context.violations
-    .map((v) => `- Turn ${v.turnNumber}: ${getSpeakerLabel(v.speaker)} - ${v.ruleViolated}`)
-    .join('\n')
+  const forOpening = forTurns.find((t) => t.turnType === 'opening')
+  const forClosing = forTurns.find((t) => t.turnType === 'closing')
+  const againstOpening = againstTurns.find((t) => t.turnType === 'opening')
+  const againstClosing = againstTurns.find((t) => t.turnType === 'closing')
 
-  return `## Rule Violations During Debate
-${violationsList}
+  let keyPoints = '**FOR Position:**\n'
+  if (forOpening) keyPoints += `- Opening: ${extractFirstSentence(forOpening.content)}\n`
+  if (forClosing) keyPoints += `- Closing: ${extractFirstSentence(forClosing.content)}\n`
 
-`
+  keyPoints += '\n**AGAINST Position:**\n'
+  if (againstOpening) keyPoints += `- Opening: ${extractFirstSentence(againstOpening.content)}\n`
+  if (againstClosing) keyPoints += `- Closing: ${extractFirstSentence(againstClosing.content)}\n`
+
+  return keyPoints
 }
 
 /**
- * Compile summary prompt with full debate context
+ * Compile summary prompt with key points only (not full transcript)
  */
 export function compileSummaryPrompt(context: ModeratorContext): CompiledPrompt {
   const baseSystemPrompt = buildModeratorSystemPrompt(context.format)
   const systemPrompt = baseSystemPrompt + SUMMARY_SYSTEM_ADDITION
 
-  const debaterTurnsCompleted = context.debateHistory.filter(
-    (h) => h.speaker !== 'moderator'
-  ).length
+  // Only pass key points, not full transcript (reduces verbosity)
+  const keyPoints = buildKeyPoints(context.debateHistory)
 
-  const debateTranscript = buildDebateTranscript(context.debateHistory)
-  const violationsSection = buildViolationsSection(context)
-
-  const userPrompt = SUMMARY_PROMPT_TEMPLATE.replace('{{topic}}', context.topic)
-    .replace('{{format}}', getFormatDisplayName(context.format))
-    .replace('{{turnsCompleted}}', String(debaterTurnsCompleted))
-    .replace('{{debateTranscript}}', debateTranscript)
-    .replace('{{violationsSection}}', violationsSection)
+  const userPrompt = SUMMARY_PROMPT_TEMPLATE.replace('{{topic}}', context.topic).replace(
+    '{{keyPoints}}',
+    keyPoints
+  )
 
   return {
     systemPrompt,
     userPrompt,
-    maxTokens: 1200, // Increased from 500 - summary needs room for all sections
-    temperature: 0.5,
+    maxTokens: 400, // Reduced from 1200
+    temperature: 0.6,
   }
 }
