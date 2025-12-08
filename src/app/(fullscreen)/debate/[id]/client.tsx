@@ -217,8 +217,8 @@ export function DebatePageClient({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{
-          duration: 1.2,
-          delay: 0.25,
+          duration: 1.5,
+          delay: 0.4,
           ease: [0.4, 0, 0.2, 1],
         }}
         className="z-0"

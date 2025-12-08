@@ -9,24 +9,25 @@ import { cn } from '@/lib/utils'
 
 // Color tokens (HSL) - matched to speaker card colors from speaker-config.ts
 // For: blue-500 (#3b82f6), Against: rose-500 (#f43f5e), Moderator: amber-500 (#f59e0b)
+// Opacity values halved for subtler ambient effect
 const AMBIENT_COLORS = {
   for: {
     primary: 'hsl(217, 91%, 60%)',
-    glow: 'hsla(217, 91%, 60%, 0.04)',
-    glowIntense: 'hsla(217, 91%, 60%, 0.06)',
+    glow: 'hsla(217, 91%, 60%, 0.015)',
+    glowIntense: 'hsla(217, 91%, 60%, 0.025)',
   },
   against: {
     primary: 'hsl(350, 89%, 60%)',
-    glow: 'hsla(350, 89%, 60%, 0.04)',
-    glowIntense: 'hsla(350, 89%, 60%, 0.06)',
+    glow: 'hsla(350, 89%, 60%, 0.015)',
+    glowIntense: 'hsla(350, 89%, 60%, 0.025)',
   },
   moderator: {
     primary: 'hsl(42, 70%, 48%)',
-    glow: 'hsla(42, 65%, 45%, 0.025)',
-    glowIntense: 'hsla(42, 65%, 45%, 0.04)',
+    glow: 'hsla(42, 65%, 45%, 0.012)',
+    glowIntense: 'hsla(42, 65%, 45%, 0.02)',
   },
-  neutral: 'hsla(0, 0%, 100%, 0.02)',
-  completed: 'hsla(220, 10%, 50%, 0.03)',
+  neutral: 'hsla(0, 0%, 100%, 0.01)',
+  completed: 'hsla(220, 10%, 50%, 0.015)',
 } as const
 
 // Animation timing tokens
@@ -122,7 +123,7 @@ export function AmbientLighting({
           height: 1600,
           borderRadius: '50%',
           background: `radial-gradient(circle at center, ${atmosphericColor} 0%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.018)')} 10%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.012)')} 25%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.006)')} 45%, ${atmosphericColor.replace(/[\d.]+\)$/, '0.002)')} 65%, transparent 85%)`,
-          filter: 'blur(120px)',
+          filter: 'blur(120px) saturate(0.6)',
         }}
         animate={
           prefersReducedMotion
@@ -150,7 +151,7 @@ export function AmbientLighting({
             height: 900,
             borderRadius: '50%',
             background: `radial-gradient(circle at center, ${glowColor} 0%, ${glowColor.replace(/[\d.]+\)$/, '0.035)')} 8%, ${glowColor.replace(/[\d.]+\)$/, '0.02)')} 20%, ${glowColor.replace(/[\d.]+\)$/, '0.01)')} 35%, ${glowColor.replace(/[\d.]+\)$/, '0.004)')} 55%, ${glowColor.replace(/[\d.]+\)$/, '0.001)')} 75%, transparent 100%)`,
-            filter: 'blur(100px)',
+            filter: 'blur(100px) saturate(0.6)',
           }}
           initial={
             prefersReducedMotion
@@ -193,7 +194,7 @@ export function AmbientLighting({
           } 20%, ${
             phase === 'completed' ? 'hsla(220, 10%, 60%, 0.003)' : 'hsla(0, 0%, 100%, 0.002)'
           } 45%, transparent 70%)`,
-          filter: 'blur(60px)',
+          filter: 'blur(60px) saturate(0.6)',
         }}
         animate={
           prefersReducedMotion
