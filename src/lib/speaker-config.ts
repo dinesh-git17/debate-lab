@@ -85,11 +85,32 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
     .trim(),
 }
 
-// Enhanced gradient for active state (wider, more intense glow bleed)
+// Enhanced gradient for active state - exponential decay for natural light falloff
 export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {
-  for: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 180px)',
-  against: 'linear-gradient(90deg, rgba(244, 63, 94, 0.15) 0%, transparent 180px)',
-  moderator: 'linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, transparent 180px)',
+  for: `linear-gradient(90deg,
+    rgba(59, 130, 246, 0.14) 0%,
+    rgba(59, 130, 246, 0.10) 25px,
+    rgba(59, 130, 246, 0.055) 70px,
+    rgba(59, 130, 246, 0.025) 130px,
+    rgba(59, 130, 246, 0.008) 190px,
+    rgba(59, 130, 246, 0) 260px
+  )`.replace(/\s+/g, ' '),
+  against: `linear-gradient(90deg,
+    rgba(244, 63, 94, 0.14) 0%,
+    rgba(244, 63, 94, 0.10) 25px,
+    rgba(244, 63, 94, 0.055) 70px,
+    rgba(244, 63, 94, 0.025) 130px,
+    rgba(244, 63, 94, 0.008) 190px,
+    rgba(244, 63, 94, 0) 260px
+  )`.replace(/\s+/g, ' '),
+  moderator: `linear-gradient(90deg,
+    rgba(245, 158, 11, 0.12) 0%,
+    rgba(245, 158, 11, 0.085) 25px,
+    rgba(245, 158, 11, 0.045) 70px,
+    rgba(245, 158, 11, 0.02) 130px,
+    rgba(245, 158, 11, 0.006) 190px,
+    rgba(245, 158, 11, 0) 260px
+  )`.replace(/\s+/g, ' '),
 }
 
 export function getSpeakerConfig(speaker: TurnSpeaker): SpeakerConfig {

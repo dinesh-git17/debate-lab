@@ -199,8 +199,8 @@ export const MessageBubble = memo(function MessageBubble({
       <div
         className={cn(
           'relative mx-auto max-w-3xl overflow-hidden rounded-xl',
-          // Solid background to mask the timeline - matches page bg
-          'bg-[#0a0a0b]',
+          // Slightly lighter than page bg for separation
+          'bg-[#0f0f11]',
           // Smooth transition for depth filter
           'transition-[filter] duration-400 ease-out'
         )}
@@ -212,7 +212,7 @@ export const MessageBubble = memo(function MessageBubble({
         <div
           className={cn(
             'relative rounded-xl overflow-hidden',
-            'border border-white/[0.05]',
+            'border border-white/[0.08]',
             'backdrop-blur-xl',
             'p-8',
             // Focus mode: inactive messages are faded, desaturated, and slightly recessed
@@ -223,19 +223,23 @@ export const MessageBubble = memo(function MessageBubble({
           style={{
             // Transform: scale up and lift when active
             transform: isActive ? 'scale(1.015) translateY(-2px)' : 'scale(1) translateY(0)',
-            // Multi-layered speaker-colored glow when active
-            boxShadow: isActive ? activeShadow : 'none',
+            // Multi-layered shadows: inner depth + speaker glow (when active) + ground shadow
+            boxShadow: isActive
+              ? `inset 0 -40px 60px rgba(0, 0, 0, 0.25), ${activeShadow}, 0 25px 50px rgba(0, 0, 0, 0.4)`
+              : 'inset 0 -30px 50px rgba(0, 0, 0, 0.2), 0 10px 30px rgba(0, 0, 0, 0.2)',
             // Spring-like transition for premium feel
             transition:
               'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
           }}
         >
-          {/* Glass overlay - slightly brighter when active */}
+          {/* Glass overlay with top-lit gradient for depth */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundColor: isActive ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.01)',
-              transition: 'background-color 0.4s ease-out',
+              background: isActive
+                ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0.015) 100%)'
+                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 30%, rgba(255, 255, 255, 0.008) 100%)',
+              transition: 'background 0.4s ease-out',
             }}
             aria-hidden="true"
           />
