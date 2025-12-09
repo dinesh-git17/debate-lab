@@ -14,7 +14,9 @@ import {
   getSpeakerConfig,
   getTurnTypeShortLabel,
   SPEAKER_GRADIENTS,
+  SPEAKER_ACTIVE_GRADIENTS,
   SPEAKER_BADGE_COLORS,
+  SPEAKER_ACTIVE_SHADOWS,
 } from '@/lib/speaker-config'
 import { cn } from '@/lib/utils'
 
@@ -146,8 +148,12 @@ export const MessageBubble = memo(function MessageBubble({
   depthIndex = 0,
 }: MessageBubbleProps) {
   const config = getSpeakerConfig(message.speaker)
-  const gradient = SPEAKER_GRADIENTS[message.speaker]
   const badgeColors = SPEAKER_BADGE_COLORS[message.speaker]
+  // Use enhanced gradient when active, standard when inactive
+  const gradient = isActive
+    ? SPEAKER_ACTIVE_GRADIENTS[message.speaker]
+    : SPEAKER_GRADIENTS[message.speaker]
+  const activeShadow = SPEAKER_ACTIVE_SHADOWS[message.speaker]
   const isCenter = config.position === 'center'
 
   // Track when the client-side reveal animation is complete
@@ -209,19 +215,28 @@ export const MessageBubble = memo(function MessageBubble({
             'border border-white/[0.05]',
             'backdrop-blur-xl',
             'p-8',
-            'transition-all duration-500',
-            // Focus mode: inactive messages are faded and slightly desaturated
+            // Focus mode: inactive messages are faded, desaturated, and slightly recessed
             isActive
               ? 'opacity-100 grayscale-0'
-              : 'opacity-50 grayscale-[0.3] group-hover:opacity-100 group-hover:grayscale-0',
-            // Active card glow
-            isActive && 'ring-1 ring-white/10 shadow-2xl',
-            isActive && config.glowColor
+              : 'opacity-40 grayscale-[0.2] group-hover:opacity-80 group-hover:grayscale-0'
           )}
+          style={{
+            // Transform: scale up and lift when active
+            transform: isActive ? 'scale(1.015) translateY(-2px)' : 'scale(1) translateY(0)',
+            // Multi-layered speaker-colored glow when active
+            boxShadow: isActive ? activeShadow : 'none',
+            // Spring-like transition for premium feel
+            transition:
+              'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
+          }}
         >
-          {/* Glass overlay */}
+          {/* Glass overlay - slightly brighter when active */}
           <div
-            className={cn('absolute inset-0 pointer-events-none', config.bgColor)}
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundColor: isActive ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.01)',
+              transition: 'background-color 0.4s ease-out',
+            }}
             aria-hidden="true"
           />
 

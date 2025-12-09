@@ -56,6 +56,42 @@ export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
   moderator: 'text-amber-400 border-amber-400/50 bg-amber-400/10',
 }
 
+// Multi-layered box shadows for active card glow effect
+// Layer 1: tight edge definition | Layer 2: core glow | Layer 3: ambient bleed | Layer 4: rim light
+export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
+  for: `
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 1px rgba(59, 130, 246, 0.3),
+    0 4px 20px rgba(59, 130, 246, 0.2),
+    0 8px 40px rgba(59, 130, 246, 0.1)
+  `
+    .replace(/\s+/g, ' ')
+    .trim(),
+  against: `
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 1px rgba(244, 63, 94, 0.3),
+    0 4px 20px rgba(244, 63, 94, 0.2),
+    0 8px 40px rgba(244, 63, 94, 0.1)
+  `
+    .replace(/\s+/g, ' ')
+    .trim(),
+  moderator: `
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 1px rgba(245, 158, 11, 0.3),
+    0 4px 20px rgba(245, 158, 11, 0.2),
+    0 8px 40px rgba(245, 158, 11, 0.1)
+  `
+    .replace(/\s+/g, ' ')
+    .trim(),
+}
+
+// Enhanced gradient for active state (wider, more intense glow bleed)
+export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {
+  for: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 180px)',
+  against: 'linear-gradient(90deg, rgba(244, 63, 94, 0.15) 0%, transparent 180px)',
+  moderator: 'linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, transparent 180px)',
+}
+
 export function getSpeakerConfig(speaker: TurnSpeaker): SpeakerConfig {
   return SPEAKER_CONFIGS[speaker]
 }
