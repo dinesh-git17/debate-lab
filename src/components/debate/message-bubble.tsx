@@ -348,22 +348,33 @@ export const MessageBubble = memo(function MessageBubble({
               )}
             </div>
 
-            {/* Row 2: Phase/Turn Type Label */}
-            <div className={cn(isCenter && 'flex justify-center')}>
-              <span className="text-[12px] font-medium text-zinc-400 tracking-wide">
+            {/* Row 2: Phase/Turn Type Label with centered dividers */}
+            <div className="flex items-center gap-3">
+              {/* Left divider */}
+              <div
+                className="flex-1 h-px"
+                style={{
+                  background:
+                    'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 100%)',
+                }}
+                aria-hidden="true"
+              />
+
+              {/* Phase label */}
+              <span className="text-[11px] font-medium text-zinc-500 tracking-wide uppercase">
                 {getTurnTypeShortLabel(message.turnType)}
               </span>
-            </div>
 
-            {/* Zone separator - subtle gradient divider */}
-            <div
-              className="absolute bottom-0 left-0 right-0 h-px"
-              style={{
-                background:
-                  'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 20%, rgba(255, 255, 255, 0.06) 80%, transparent 100%)',
-              }}
-              aria-hidden="true"
-            />
+              {/* Right divider */}
+              <div
+                className="flex-1 h-px"
+                style={{
+                  background:
+                    'linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%)',
+                }}
+                aria-hidden="true"
+              />
+            </div>
           </div>
 
           {/* Body: Editorial content with optical alignment */}
