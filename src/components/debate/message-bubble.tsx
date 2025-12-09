@@ -15,9 +15,9 @@ import {
   getTurnTypeShortLabel,
   SPEAKER_GRADIENTS,
   SPEAKER_ACTIVE_GRADIENTS,
-  SPEAKER_BADGE_COLORS,
   SPEAKER_ACTIVE_SHADOWS,
   SPEAKER_INACTIVE_SHADOWS,
+  SPEAKER_PILL_STYLES,
 } from '@/lib/speaker-config'
 import { cn } from '@/lib/utils'
 
@@ -42,7 +42,7 @@ interface MessageBubbleProps {
  * Speaker icons using react-icons
  */
 function SpeakerIcon({ type, className }: { type: string; className?: string }) {
-  const iconClass = cn('w-3 h-3', className)
+  const iconClass = cn('w-3 h-3 flex-shrink-0', className)
 
   switch (type) {
     case 'thumbs-up':
@@ -109,10 +109,10 @@ function MessageContent({
         <ThinkingIndicator speaker={speaker} />
       ) : (
         <div
-          className="text-lg leading-[1.7] font-normal text-zinc-100 antialiased tracking-[-0.01em]"
+          className="text-[17px] leading-[1.75] font-normal text-zinc-100 antialiased tracking-[-0.01em]"
           style={{
             fontFamily: 'var(--font-inter), system-ui, sans-serif',
-            textShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+            textShadow: '0 0 30px rgba(255, 255, 255, 0.08)',
           }}
         >
           <AnimatedText
@@ -149,12 +149,12 @@ export const MessageBubble = memo(function MessageBubble({
   depthIndex = 0,
 }: MessageBubbleProps) {
   const config = getSpeakerConfig(message.speaker)
-  const badgeColors = SPEAKER_BADGE_COLORS[message.speaker]
   // Use enhanced gradient when active, standard when inactive
   const gradient = isActive
     ? SPEAKER_ACTIVE_GRADIENTS[message.speaker]
     : SPEAKER_GRADIENTS[message.speaker]
   const activeShadow = SPEAKER_ACTIVE_SHADOWS[message.speaker]
+  const pillStyles = SPEAKER_PILL_STYLES[message.speaker]
   const isCenter = config.position === 'center'
 
   // Track when the client-side reveal animation is complete
@@ -219,21 +219,21 @@ export const MessageBubble = memo(function MessageBubble({
             'rounded-2xl',
             // Stronger blur for frosted effect
             'backdrop-blur-2xl backdrop-saturate-150',
-            // More generous padding for premium feel
-            'p-10',
-            // Focus mode opacity
+            // 8px grid system: 48px horizontal, 40px vertical (asymmetric for optical balance)
+            'px-12 py-10',
+            // Focus mode opacity with enhanced hover
             isActive
               ? 'opacity-100 grayscale-0'
-              : 'opacity-35 grayscale-[0.25] group-hover:opacity-70 group-hover:grayscale-0'
+              : 'opacity-30 grayscale-[0.3] group-hover:opacity-65 group-hover:grayscale-[0.1] group-hover:scale-[1.005]'
           )}
           style={{
             // TRUE GLASS: Semi-transparent background
-            backgroundColor: isActive ? 'rgba(18, 18, 22, 0.75)' : 'rgba(15, 15, 18, 0.6)',
+            backgroundColor: isActive ? 'rgba(18, 18, 22, 0.78)' : 'rgba(15, 15, 18, 0.55)',
             // 3D Transform: lift and scale when active
-            transform: isActive ? 'scale(1.02) translateY(-4px)' : 'scale(0.98) translateY(0)',
+            transform: isActive ? 'scale(1.02) translateY(-4px)' : 'scale(0.985) translateY(0)',
             // Full 3D shadow system
             boxShadow: isActive ? activeShadow : SPEAKER_INACTIVE_SHADOWS,
-            // Spring transition
+            // Spring transition with all properties
             transition:
               'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease-out, background-color 0.4s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
           }}
@@ -306,34 +306,68 @@ export const MessageBubble = memo(function MessageBubble({
             aria-hidden="true"
           />
 
-          {/* Header: Physical Badge System */}
-          <div
-            className={cn('relative flex items-baseline gap-2 mb-6', isCenter && 'justify-center')}
-          >
-            {/* Role Badge - Physical Chip */}
+          {/* Header Zone - Two-row information architecture */}
+          <div className={cn('relative mb-8', isCenter && 'text-center')}>
+            {/* Row 1: Speaker Identity + Timestamp */}
             <div
               className={cn(
-                'inline-flex items-center gap-1.5 px-2 py-1 rounded border',
-                badgeColors
+                'flex items-center gap-3 mb-3',
+                isCenter ? 'justify-center' : 'justify-between'
               )}
             >
-              <SpeakerIcon type={config.icon} />
-              <span className="text-[9px] font-bold tracking-widest uppercase">
-                {config.shortLabel}
+              {/* Speaker Pill Badge - Premium gradient style */}
+              <div
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full"
+                style={{
+                  background: pillStyles.background,
+                  border: `1px solid ${pillStyles.border}`,
+                  boxShadow: isActive ? pillStyles.glow : 'none',
+                  transition: 'box-shadow 0.3s ease-out',
+                }}
+              >
+                <SpeakerIcon type={config.icon} className="w-3.5 h-3.5" />
+                <span
+                  className="text-[11px] font-semibold tracking-[0.15em] uppercase"
+                  style={{ color: pillStyles.text }}
+                >
+                  {config.shortLabel}
+                </span>
+              </div>
+
+              {/* Timestamp - Right aligned in header (not footer) */}
+              {showTimestamp && isRevealComplete && (
+                <span className="text-[11px] text-zinc-500 font-mono tabular-nums tracking-wide">
+                  {message.timestamp
+                    .toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    })
+                    .toLowerCase()}
+                </span>
+              )}
+            </div>
+
+            {/* Row 2: Phase/Turn Type Label */}
+            <div className={cn(isCenter && 'flex justify-center')}>
+              <span className="text-[12px] font-medium text-zinc-400 tracking-wide">
+                {getTurnTypeShortLabel(message.turnType)}
               </span>
             </div>
 
-            {/* Divider */}
-            <span className="w-px h-3 bg-zinc-700/50" aria-hidden="true" />
-
-            {/* Phase Label */}
-            <span className="text-zinc-500 font-mono text-[10px] uppercase tracking-wide">
-              {getTurnTypeShortLabel(message.turnType)}
-            </span>
+            {/* Zone separator - subtle gradient divider */}
+            <div
+              className="absolute bottom-0 left-0 right-0 h-px"
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 20%, rgba(255, 255, 255, 0.06) 80%, transparent 100%)',
+              }}
+              aria-hidden="true"
+            />
           </div>
 
-          {/* Body: Editorial Serif */}
-          <div className="relative">
+          {/* Body: Editorial content with optical alignment */}
+          <div className="relative -ml-0.5">
             <MessageContent
               messageId={message.id}
               content={message.content}
@@ -345,24 +379,9 @@ export const MessageBubble = memo(function MessageBubble({
             />
           </div>
 
-          {/* Timestamp footer - only show after client-side reveal animation is complete */}
-          {showTimestamp && isRevealComplete && (
-            <div className="relative mt-4 flex justify-end">
-              <span className="text-[10px] text-zinc-500/60 font-mono tabular-nums">
-                {message.timestamp
-                  .toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                  })
-                  .toLowerCase()}
-              </span>
-            </div>
-          )}
-
           {/* Violations footer (only if violations exist) */}
           {message.violations && message.violations.length > 0 && (
-            <div className="relative mt-6 flex items-center gap-3 border-t border-white/5 pt-4">
+            <div className="relative mt-8 flex items-center gap-3 pt-6 border-t border-white/[0.04]">
               <span className="text-xs text-amber-400 font-mono">
                 {message.violations.length} VIOLATION{message.violations.length > 1 ? 'S' : ''}
               </span>

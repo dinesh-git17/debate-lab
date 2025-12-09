@@ -101,6 +101,39 @@ export const SPEAKER_INACTIVE_SHADOWS = [
   '0 10px 30px -5px rgba(0, 0, 0, 0.3)',
 ].join(', ')
 
+// Gradient pill badge styles for premium speaker identification
+// Uses subtle gradient from 15% to 5% opacity for depth
+export const SPEAKER_PILL_STYLES: Record<
+  TurnSpeaker,
+  {
+    background: string
+    text: string
+    border: string
+    glow: string
+  }
+> = {
+  for: {
+    background:
+      'linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0.06) 100%)',
+    text: 'rgb(147, 197, 253)', // blue-300
+    border: 'rgba(59, 130, 246, 0.25)',
+    glow: '0 0 20px rgba(59, 130, 246, 0.15)',
+  },
+  against: {
+    background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.18) 0%, rgba(244, 63, 94, 0.06) 100%)',
+    text: 'rgb(253, 164, 175)', // rose-300
+    border: 'rgba(244, 63, 94, 0.25)',
+    glow: '0 0 20px rgba(244, 63, 94, 0.15)',
+  },
+  moderator: {
+    background:
+      'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)',
+    text: 'rgb(252, 211, 77)', // amber-300
+    border: 'rgba(245, 158, 11, 0.2)',
+    glow: '0 0 20px rgba(245, 158, 11, 0.12)',
+  },
+}
+
 // Enhanced gradient for active state - exponential decay for natural light falloff
 export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {
   for: `linear-gradient(90deg,
