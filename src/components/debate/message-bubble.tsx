@@ -2,7 +2,7 @@
 
 'use client'
 
-import { memo, useEffect, useRef } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa'
 import { LuScale } from 'react-icons/lu'
 
@@ -105,7 +105,7 @@ function MessageContent({
         // Show thinking indicator when API is streaming but we have no content yet
         <ThinkingIndicator speaker={speaker} />
       ) : (
-        <div className="font-serif text-lg leading-loose font-light text-zinc-200 antialiased">
+        <div className="font-sans text-lg leading-[1.7] font-normal text-zinc-200 antialiased tracking-[-0.01em]">
           <AnimatedText
             content={displayContent}
             isRevealing={isRevealing}
@@ -143,6 +143,20 @@ export const MessageBubble = memo(function MessageBubble({
   const gradient = SPEAKER_GRADIENTS[message.speaker]
   const badgeColors = SPEAKER_BADGE_COLORS[message.speaker]
   const isCenter = config.position === 'center'
+
+  // Track when the client-side reveal animation is complete
+  // (separate from message.isComplete which reflects server state)
+  const [isRevealComplete, setIsRevealComplete] = useState(skipAnimation)
+
+  // Reset reveal state when message changes
+  useEffect(() => {
+    setIsRevealComplete(skipAnimation)
+  }, [message.id, skipAnimation])
+
+  const handleAnimationComplete = useCallback(() => {
+    setIsRevealComplete(true)
+    onAnimationComplete?.()
+  }, [onAnimationComplete])
 
   return (
     <div
@@ -220,7 +234,7 @@ export const MessageBubble = memo(function MessageBubble({
 
           {/* Header: Physical Badge System */}
           <div
-            className={cn('relative flex items-center gap-2.5 mb-6', isCenter && 'justify-center')}
+            className={cn('relative flex items-baseline gap-2 mb-6', isCenter && 'justify-center')}
           >
             {/* Role Badge - Physical Chip */}
             <div
@@ -235,17 +249,13 @@ export const MessageBubble = memo(function MessageBubble({
               </span>
             </div>
 
-            {/* Phase Label - Plain text */}
+            {/* Divider */}
+            <span className="w-px h-3 bg-zinc-700/50" aria-hidden="true" />
+
+            {/* Phase Label */}
             <span className="text-zinc-500 font-mono text-[10px] uppercase tracking-wide">
               {getTurnTypeShortLabel(message.turnType)}
             </span>
-
-            {/* Timestamp */}
-            {showTimestamp && (
-              <span className="text-xs text-zinc-600 font-mono ml-auto">
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            )}
           </div>
 
           {/* Body: Editorial Serif */}
@@ -256,10 +266,25 @@ export const MessageBubble = memo(function MessageBubble({
               isStreaming={message.isStreaming}
               isComplete={message.isComplete}
               speaker={message.speaker}
-              onAnimationComplete={onAnimationComplete}
+              onAnimationComplete={handleAnimationComplete}
               skipAnimation={skipAnimation}
             />
           </div>
+
+          {/* Timestamp footer - only show after client-side reveal animation is complete */}
+          {showTimestamp && isRevealComplete && (
+            <div className="relative mt-4 flex justify-end">
+              <span className="text-[10px] text-zinc-500/60 font-mono tabular-nums">
+                {message.timestamp
+                  .toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  })
+                  .toLowerCase()}
+              </span>
+            </div>
+          )}
 
           {/* Violations footer (only if violations exist) */}
           {message.violations && message.violations.length > 0 && (
