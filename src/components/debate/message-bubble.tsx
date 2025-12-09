@@ -39,6 +39,8 @@ interface MessageBubbleProps {
   skipAnimation?: boolean
   /** Depth index for desaturation: 0 = active, 1 = adjacent, 2+ = distant */
   depthIndex?: number
+  /** Whether the debate is in completed state (all messages visible) */
+  isCompleted?: boolean
 }
 
 /**
@@ -150,6 +152,7 @@ export const MessageBubble = memo(function MessageBubble({
   isFirst = false,
   skipAnimation = false,
   depthIndex = 0,
+  isCompleted = false,
 }: MessageBubbleProps) {
   const config = getSpeakerConfig(message.speaker)
   // Use enhanced gradient when active, standard when inactive
@@ -160,7 +163,6 @@ export const MessageBubble = memo(function MessageBubble({
   const pillStyles = SPEAKER_PILL_STYLES[message.speaker]
   const phaseChipStyles = SPEAKER_PHASE_CHIP_STYLES[message.speaker]
   const surfaceTint = SPEAKER_SURFACE_TINT[message.speaker]
-  const isCenter = config.position === 'center'
 
   // Hover state for enhanced interactions
   const [isHovered, setIsHovered] = useState(false)
@@ -234,23 +236,35 @@ export const MessageBubble = memo(function MessageBubble({
             'backdrop-blur-2xl backdrop-saturate-150',
             // 8px grid system: 48px horizontal, 40px vertical (asymmetric for optical balance)
             'px-12 py-10',
-            // Focus mode opacity with enhanced hover
-            isActive
-              ? 'opacity-100 grayscale-0'
-              : 'opacity-30 grayscale-[0.3] group-hover:opacity-65 group-hover:grayscale-[0.1] group-hover:scale-[1.005]'
+            // Focus mode opacity - context-aware
+            isCompleted
+              ? 'opacity-100 grayscale-0' // Completed: all cards fully visible
+              : isActive
+                ? 'opacity-100 grayscale-0'
+                : 'opacity-30 grayscale-[0.3] group-hover:opacity-65 group-hover:grayscale-[0.1]'
           )}
           style={{
             // TRUE GLASS: Semi-transparent background with role-based surface tint
             backgroundColor: isActive ? 'rgba(18, 18, 22, 0.78)' : 'rgba(15, 15, 18, 0.55)',
             backgroundImage: `linear-gradient(180deg, ${isActive ? surfaceTint.active : surfaceTint.inactive} 0%, transparent 60%)`,
-            // 3D Transform: lift and scale when active, subtle lift on hover
-            transform: isActive
-              ? 'scale(1.02) translateY(-4px)'
-              : isHovered
-                ? 'scale(0.99) translateY(-2px)'
-                : 'scale(0.985) translateY(0)',
-            // Full 3D shadow system
-            boxShadow: isActive ? activeShadow : SPEAKER_INACTIVE_SHADOWS,
+            // 3D Transform: context-aware elevation
+            transform: isCompleted
+              ? isHovered
+                ? 'scale(1.01) translateY(-3px)' // Completed + hover: subtle focus lift
+                : 'scale(1) translateY(0)' // Completed: uniform baseline
+              : isActive
+                ? 'scale(1.02) translateY(-4px)' // Active during streaming: full lift
+                : isHovered
+                  ? 'scale(0.99) translateY(-2px)' // Inactive + hover: subtle lift
+                  : 'scale(0.985) translateY(0)', // Inactive: recessed
+            // Full 3D shadow system - context-aware
+            boxShadow: isCompleted
+              ? isHovered
+                ? activeShadow // Completed + hover: full glow
+                : SPEAKER_INACTIVE_SHADOWS // Completed: baseline shadow
+              : isActive
+                ? activeShadow
+                : SPEAKER_INACTIVE_SHADOWS,
             // Spring transition with all properties
             transition:
               'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease-out, background-color 0.4s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
@@ -271,6 +285,25 @@ export const MessageBubble = memo(function MessageBubble({
             }}
             aria-hidden="true"
           />
+
+          {/* Hover focus rim - visible in completed state on hover */}
+          {isCompleted && (
+            <div
+              className="absolute inset-0 rounded-2xl pointer-events-none"
+              style={{
+                boxShadow: `inset 0 0 0 1px ${
+                  message.speaker === 'for'
+                    ? 'rgba(59, 130, 246, 0.25)'
+                    : message.speaker === 'against'
+                      ? 'rgba(244, 63, 94, 0.25)'
+                      : 'rgba(245, 158, 11, 0.2)'
+                }`,
+                opacity: isHovered ? 1 : 0,
+                transition: 'opacity 0.3s ease-out',
+              }}
+              aria-hidden="true"
+            />
+          )}
 
           {/* Glass surface with directional lighting */}
           <div
@@ -324,22 +357,17 @@ export const MessageBubble = memo(function MessageBubble({
             aria-hidden="true"
           />
 
-          {/* Header Zone - Two-row information architecture */}
-          <div className={cn('relative mb-8', isCenter && 'text-center')}>
-            {/* Row 1: Speaker Identity + Timestamp */}
-            <div
-              className={cn(
-                'flex items-center gap-3 mb-3',
-                isCenter ? 'justify-center' : 'justify-between'
-              )}
-            >
+          {/* Header Zone - Centered information architecture */}
+          <div className="relative mb-8">
+            {/* Row 1: Speaker Identity (always centered) */}
+            <div className="flex items-center justify-center mb-3">
               {/* Speaker Pill Badge - Premium gradient style */}
               <div
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full"
                 style={{
                   background: pillStyles.background,
                   border: `1px solid ${pillStyles.border}`,
-                  boxShadow: isActive ? pillStyles.glow : 'none',
+                  boxShadow: isActive || (isCompleted && isHovered) ? pillStyles.glow : 'none',
                   transition: 'box-shadow 0.3s ease-out',
                 }}
               >
@@ -351,26 +379,33 @@ export const MessageBubble = memo(function MessageBubble({
                   {config.shortLabel}
                 </span>
               </div>
-
-              {/* Timestamp - Right aligned, context-aware visibility */}
-              {showTimestamp && isRevealComplete && (
-                <span
-                  className="text-[11px] font-mono tabular-nums tracking-wide transition-opacity duration-300"
-                  style={{
-                    color: isActive || isHovered ? 'rgb(113, 113, 122)' : 'rgb(63, 63, 70)',
-                    opacity: isActive ? 1 : isHovered ? 0.9 : 0.5,
-                  }}
-                >
-                  {message.timestamp
-                    .toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true,
-                    })
-                    .toLowerCase()}
-                </span>
-              )}
             </div>
+
+            {/* Timestamp - Absolute positioned, top-right */}
+            {showTimestamp && isRevealComplete && (
+              <span
+                className="absolute top-0 right-0 text-[11px] font-mono tabular-nums tracking-wide"
+                style={{
+                  color: 'rgb(113, 113, 122)',
+                  opacity: isCompleted ? (isHovered ? 1 : 0) : 1,
+                  transform: isCompleted
+                    ? isHovered
+                      ? 'translateX(0)'
+                      : 'translateX(4px)'
+                    : 'translateX(0)',
+                  transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+                  pointerEvents: isCompleted && !isHovered ? 'none' : 'auto',
+                }}
+              >
+                {message.timestamp
+                  .toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  })
+                  .toLowerCase()}
+              </span>
+            )}
 
             {/* Row 2: Phase/Turn Type Chip with centered dividers */}
             <div className="flex items-center gap-3">

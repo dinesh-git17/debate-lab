@@ -483,6 +483,7 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
                 isFirst={isFirstMessage}
                 skipAnimation={shouldSkipAnimation}
                 depthIndex={depthIndex}
+                isCompleted={status === 'completed'}
               />
             )
           })}
