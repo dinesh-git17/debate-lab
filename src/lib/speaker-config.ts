@@ -134,6 +134,54 @@ export const SPEAKER_PILL_STYLES: Record<
   },
 }
 
+// Phase/section chip styles - subtle speaker-tinted backgrounds
+export const SPEAKER_PHASE_CHIP_STYLES: Record<
+  TurnSpeaker,
+  {
+    background: string
+    text: string
+    border: string
+  }
+> = {
+  for: {
+    background: 'rgba(59, 130, 246, 0.08)',
+    text: 'rgb(156, 163, 175)', // gray-400
+    border: 'rgba(59, 130, 246, 0.15)',
+  },
+  against: {
+    background: 'rgba(244, 63, 94, 0.08)',
+    text: 'rgb(156, 163, 175)', // gray-400
+    border: 'rgba(244, 63, 94, 0.15)',
+  },
+  moderator: {
+    background: 'rgba(245, 158, 11, 0.06)',
+    text: 'rgb(156, 163, 175)', // gray-400
+    border: 'rgba(245, 158, 11, 0.12)',
+  },
+}
+
+// Card surface tint per speaker for role differentiation
+export const SPEAKER_SURFACE_TINT: Record<
+  TurnSpeaker,
+  {
+    active: string
+    inactive: string
+  }
+> = {
+  for: {
+    active: 'rgba(59, 130, 246, 0.03)',
+    inactive: 'rgba(59, 130, 246, 0.015)',
+  },
+  against: {
+    active: 'rgba(244, 63, 94, 0.03)',
+    inactive: 'rgba(244, 63, 94, 0.015)',
+  },
+  moderator: {
+    active: 'rgba(245, 158, 11, 0.025)',
+    inactive: 'rgba(245, 158, 11, 0.01)',
+  },
+}
+
 // Enhanced gradient for active state - exponential decay for natural light falloff
 export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {
   for: `linear-gradient(90deg,

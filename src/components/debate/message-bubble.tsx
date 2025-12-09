@@ -2,6 +2,7 @@
 
 'use client'
 
+import { motion } from 'framer-motion'
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa'
 import { LuScale } from 'react-icons/lu'
@@ -18,6 +19,8 @@ import {
   SPEAKER_ACTIVE_SHADOWS,
   SPEAKER_INACTIVE_SHADOWS,
   SPEAKER_PILL_STYLES,
+  SPEAKER_PHASE_CHIP_STYLES,
+  SPEAKER_SURFACE_TINT,
 } from '@/lib/speaker-config'
 import { cn } from '@/lib/utils'
 
@@ -155,7 +158,12 @@ export const MessageBubble = memo(function MessageBubble({
     : SPEAKER_GRADIENTS[message.speaker]
   const activeShadow = SPEAKER_ACTIVE_SHADOWS[message.speaker]
   const pillStyles = SPEAKER_PILL_STYLES[message.speaker]
+  const phaseChipStyles = SPEAKER_PHASE_CHIP_STYLES[message.speaker]
+  const surfaceTint = SPEAKER_SURFACE_TINT[message.speaker]
   const isCenter = config.position === 'center'
+
+  // Hover state for enhanced interactions
+  const [isHovered, setIsHovered] = useState(false)
 
   // Track when the client-side reveal animation is complete
   // (separate from message.isComplete which reflects server state)
@@ -172,11 +180,14 @@ export const MessageBubble = memo(function MessageBubble({
   }, [onAnimationComplete])
 
   return (
-    <div
-      className="relative w-full mb-12 group z-10"
+    <motion.div
+      className="relative w-full mb-16 group z-10"
       data-active={isActive}
       role="article"
       aria-label={`${config.label} - ${getTurnTypeShortLabel(message.turnType)}`}
+      initial={skipAnimation ? false : { opacity: 0, y: 24, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 200, damping: 24, mass: 1 }}
     >
       {/* Timeline Connector - line going UP to connect from previous card */}
       {/* Only show for non-first messages (where timeline connects from above) */}
@@ -210,6 +221,8 @@ export const MessageBubble = memo(function MessageBubble({
           // Subtle 3D perspective hint
           transformStyle: 'preserve-3d',
         }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         {/* Content wrapper - 3D frosted glass panel */}
         <div
@@ -227,10 +240,15 @@ export const MessageBubble = memo(function MessageBubble({
               : 'opacity-30 grayscale-[0.3] group-hover:opacity-65 group-hover:grayscale-[0.1] group-hover:scale-[1.005]'
           )}
           style={{
-            // TRUE GLASS: Semi-transparent background
+            // TRUE GLASS: Semi-transparent background with role-based surface tint
             backgroundColor: isActive ? 'rgba(18, 18, 22, 0.78)' : 'rgba(15, 15, 18, 0.55)',
-            // 3D Transform: lift and scale when active
-            transform: isActive ? 'scale(1.02) translateY(-4px)' : 'scale(0.985) translateY(0)',
+            backgroundImage: `linear-gradient(180deg, ${isActive ? surfaceTint.active : surfaceTint.inactive} 0%, transparent 60%)`,
+            // 3D Transform: lift and scale when active, subtle lift on hover
+            transform: isActive
+              ? 'scale(1.02) translateY(-4px)'
+              : isHovered
+                ? 'scale(0.99) translateY(-2px)'
+                : 'scale(0.985) translateY(0)',
             // Full 3D shadow system
             boxShadow: isActive ? activeShadow : SPEAKER_INACTIVE_SHADOWS,
             // Spring transition with all properties
@@ -334,9 +352,15 @@ export const MessageBubble = memo(function MessageBubble({
                 </span>
               </div>
 
-              {/* Timestamp - Right aligned in header (not footer) */}
+              {/* Timestamp - Right aligned, context-aware visibility */}
               {showTimestamp && isRevealComplete && (
-                <span className="text-[11px] text-zinc-500 font-mono tabular-nums tracking-wide">
+                <span
+                  className="text-[11px] font-mono tabular-nums tracking-wide transition-opacity duration-300"
+                  style={{
+                    color: isActive || isHovered ? 'rgb(113, 113, 122)' : 'rgb(63, 63, 70)',
+                    opacity: isActive ? 1 : isHovered ? 0.9 : 0.5,
+                  }}
+                >
                   {message.timestamp
                     .toLocaleTimeString([], {
                       hour: '2-digit',
@@ -348,7 +372,7 @@ export const MessageBubble = memo(function MessageBubble({
               )}
             </div>
 
-            {/* Row 2: Phase/Turn Type Label with centered dividers */}
+            {/* Row 2: Phase/Turn Type Chip with centered dividers */}
             <div className="flex items-center gap-3">
               {/* Left divider */}
               <div
@@ -360,8 +384,15 @@ export const MessageBubble = memo(function MessageBubble({
                 aria-hidden="true"
               />
 
-              {/* Phase label */}
-              <span className="text-[11px] font-medium text-zinc-500 tracking-wide uppercase">
+              {/* Phase chip - speaker-tinted */}
+              <span
+                className="px-2.5 py-1 rounded-md text-[10px] font-medium tracking-wide uppercase"
+                style={{
+                  background: phaseChipStyles.background,
+                  color: phaseChipStyles.text,
+                  border: `1px solid ${phaseChipStyles.border}`,
+                }}
+              >
                 {getTurnTypeShortLabel(message.turnType)}
               </span>
 
@@ -400,6 +431,6 @@ export const MessageBubble = memo(function MessageBubble({
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 })
