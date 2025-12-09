@@ -56,34 +56,50 @@ export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
   moderator: 'text-amber-400 border-amber-400/50 bg-amber-400/10',
 }
 
-// Multi-layered box shadows for active card glow effect
-// Layer 1: tight edge definition | Layer 2: core glow | Layer 3: ambient bleed | Layer 4: rim light
+// 3D floating card shadows - creates depth and elevation
+// Layer 1: Rim light (top edge catch)
+// Layer 2: Left edge highlight (catches light)
+// Layer 3: Inner depth (card thickness)
+// Layer 4: Close contact shadow (tight to card)
+// Layer 5: Speaker-colored glow
+// Layer 6: Mid elevation shadow
+// Layer 7: Far ground shadow (diffuse)
 export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
-  for: `
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 1px rgba(59, 130, 246, 0.3),
-    0 4px 20px rgba(59, 130, 246, 0.2),
-    0 8px 40px rgba(59, 130, 246, 0.1)
-  `
-    .replace(/\s+/g, ' ')
-    .trim(),
-  against: `
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 1px rgba(244, 63, 94, 0.3),
-    0 4px 20px rgba(244, 63, 94, 0.2),
-    0 8px 40px rgba(244, 63, 94, 0.1)
-  `
-    .replace(/\s+/g, ' ')
-    .trim(),
-  moderator: `
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 1px rgba(245, 158, 11, 0.3),
-    0 4px 20px rgba(245, 158, 11, 0.2),
-    0 8px 40px rgba(245, 158, 11, 0.1)
-  `
-    .replace(/\s+/g, ' ')
-    .trim(),
+  for: [
+    'inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
+    'inset 0 -80px 80px -40px rgba(0, 0, 0, 0.4)',
+    '0 1px 2px rgba(0, 0, 0, 0.3)',
+    '0 0 40px rgba(59, 130, 246, 0.15)',
+    '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+    '0 50px 80px -20px rgba(0, 0, 0, 0.4)',
+  ].join(', '),
+  against: [
+    'inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
+    'inset 0 -80px 80px -40px rgba(0, 0, 0, 0.4)',
+    '0 1px 2px rgba(0, 0, 0, 0.3)',
+    '0 0 40px rgba(244, 63, 94, 0.15)',
+    '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+    '0 50px 80px -20px rgba(0, 0, 0, 0.4)',
+  ].join(', '),
+  moderator: [
+    'inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
+    'inset 0 -80px 80px -40px rgba(0, 0, 0, 0.4)',
+    '0 1px 2px rgba(0, 0, 0, 0.3)',
+    '0 0 40px rgba(245, 158, 11, 0.12)',
+    '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+    '0 50px 80px -20px rgba(0, 0, 0, 0.4)',
+  ].join(', '),
 }
+
+// Inactive card shadows - subtle, recessed feel
+export const SPEAKER_INACTIVE_SHADOWS = [
+  'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  'inset 0 -40px 60px -20px rgba(0, 0, 0, 0.3)',
+  '0 10px 30px -5px rgba(0, 0, 0, 0.3)',
+].join(', ')
 
 // Enhanced gradient for active state - exponential decay for natural light falloff
 export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {

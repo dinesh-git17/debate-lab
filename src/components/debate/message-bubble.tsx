@@ -17,6 +17,7 @@ import {
   SPEAKER_ACTIVE_GRADIENTS,
   SPEAKER_BADGE_COLORS,
   SPEAKER_ACTIVE_SHADOWS,
+  SPEAKER_INACTIVE_SHADOWS,
 } from '@/lib/speaker-config'
 import { cn } from '@/lib/utils'
 
@@ -195,58 +196,106 @@ export const MessageBubble = memo(function MessageBubble({
         </>
       )}
 
-      {/* Ghost Glass Card - solid background always at full opacity to mask timeline */}
+      {/* Ghost Glass Card - 3D floating container */}
       <div
         className={cn(
-          'relative mx-auto max-w-3xl overflow-hidden rounded-xl',
-          // Slightly lighter than page bg for separation
-          'bg-[#0f0f11]',
+          'relative mx-auto max-w-3xl overflow-hidden',
+          // Larger radius for premium Apple feel
+          'rounded-2xl',
           // Smooth transition for depth filter
-          'transition-[filter] duration-400 ease-out'
+          'transition-[filter,transform] duration-500 ease-out'
         )}
         style={{
           filter: getDepthFilter(depthIndex),
+          // Subtle 3D perspective hint
+          transformStyle: 'preserve-3d',
         }}
       >
-        {/* Content wrapper with focus mode effects */}
+        {/* Content wrapper - 3D frosted glass panel */}
         <div
           className={cn(
-            'relative rounded-xl overflow-hidden',
-            'border border-white/[0.08]',
-            'backdrop-blur-xl',
-            'p-8',
-            // Focus mode: inactive messages are faded, desaturated, and slightly recessed
+            'relative overflow-hidden',
+            // Larger radius to match outer
+            'rounded-2xl',
+            // Stronger blur for frosted effect
+            'backdrop-blur-2xl backdrop-saturate-150',
+            // More generous padding for premium feel
+            'p-10',
+            // Focus mode opacity
             isActive
               ? 'opacity-100 grayscale-0'
-              : 'opacity-40 grayscale-[0.2] group-hover:opacity-80 group-hover:grayscale-0'
+              : 'opacity-35 grayscale-[0.25] group-hover:opacity-70 group-hover:grayscale-0'
           )}
           style={{
-            // Transform: scale up and lift when active
-            transform: isActive ? 'scale(1.015) translateY(-2px)' : 'scale(1) translateY(0)',
-            // Multi-layered shadows: inner depth + speaker glow (when active) + ground shadow
-            boxShadow: isActive
-              ? `inset 0 -40px 60px rgba(0, 0, 0, 0.25), ${activeShadow}, 0 25px 50px rgba(0, 0, 0, 0.4)`
-              : 'inset 0 -30px 50px rgba(0, 0, 0, 0.2), 0 10px 30px rgba(0, 0, 0, 0.2)',
-            // Spring-like transition for premium feel
+            // TRUE GLASS: Semi-transparent background
+            backgroundColor: isActive ? 'rgba(18, 18, 22, 0.75)' : 'rgba(15, 15, 18, 0.6)',
+            // 3D Transform: lift and scale when active
+            transform: isActive ? 'scale(1.02) translateY(-4px)' : 'scale(0.98) translateY(0)',
+            // Full 3D shadow system
+            boxShadow: isActive ? activeShadow : SPEAKER_INACTIVE_SHADOWS,
+            // Spring transition
             transition:
-              'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
+              'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease-out, background-color 0.4s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
           }}
         >
-          {/* Glass overlay with top-lit gradient for depth */}
+          {/* Gradient border - brighter top edge, fades at bottom */}
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 rounded-2xl pointer-events-none"
             style={{
+              padding: '1px',
               background: isActive
-                ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0.015) 100%)'
-                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 30%, rgba(255, 255, 255, 0.008) 100%)',
+                ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 20%, rgba(255, 255, 255, 0.03) 50%, transparent 80%)'
+                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 30%, transparent 60%)',
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMaskComposite: 'xor',
+              maskComposite: 'exclude',
               transition: 'background 0.4s ease-out',
             }}
             aria-hidden="true"
           />
 
-          {/* Neon Left Border */}
+          {/* Glass surface with directional lighting */}
           <div
-            className={cn('absolute top-0 left-0 bottom-0 w-[2px]', config.borderColor)}
+            className="absolute inset-0 pointer-events-none rounded-2xl"
+            style={{
+              background: isActive
+                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 30%, transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 40%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 40%), linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 30%)',
+              transition: 'background 0.4s ease-out',
+            }}
+            aria-hidden="true"
+          />
+
+          {/* Subtle noise texture for tactile feel */}
+          <div
+            className="absolute inset-0 pointer-events-none rounded-2xl opacity-[0.015]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'repeat',
+              mixBlendMode: 'overlay',
+            }}
+            aria-hidden="true"
+          />
+
+          {/* Speaker accent - soft glow bar instead of hard neon */}
+          <div
+            className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-2xl overflow-hidden"
+            style={{
+              background:
+                message.speaker === 'for'
+                  ? 'linear-gradient(180deg, rgba(59, 130, 246, 0.8) 0%, rgba(59, 130, 246, 0.4) 100%)'
+                  : message.speaker === 'against'
+                    ? 'linear-gradient(180deg, rgba(244, 63, 94, 0.8) 0%, rgba(244, 63, 94, 0.4) 100%)'
+                    : 'linear-gradient(180deg, rgba(245, 158, 11, 0.7) 0%, rgba(245, 158, 11, 0.35) 100%)',
+              boxShadow:
+                message.speaker === 'for'
+                  ? '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.2)'
+                  : message.speaker === 'against'
+                    ? '0 0 20px rgba(244, 63, 94, 0.5), 0 0 40px rgba(244, 63, 94, 0.2)'
+                    : '0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.15)',
+              opacity: isActive ? 1 : 0.4,
+              transition: 'opacity 0.4s ease-out',
+            }}
             aria-hidden="true"
           />
 
