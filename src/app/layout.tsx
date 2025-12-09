@@ -1,5 +1,5 @@
 // src/app/layout.tsx
-import { Geist, Geist_Mono, Newsreader } from 'next/font/google'
+import { Geist, Geist_Mono, Inter, Newsreader } from 'next/font/google'
 
 import { Providers } from '@/components/providers'
 
@@ -29,6 +29,12 @@ const newsreader = Newsreader({
   display: 'swap',
 })
 
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin'],
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: {
     default: 'Debate Lab',
@@ -53,7 +59,7 @@ export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${inter.variable} antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

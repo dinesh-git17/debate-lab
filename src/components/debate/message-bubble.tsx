@@ -105,7 +105,13 @@ function MessageContent({
         // Show thinking indicator when API is streaming but we have no content yet
         <ThinkingIndicator speaker={speaker} />
       ) : (
-        <div className="font-sans text-lg leading-[1.7] font-normal text-zinc-200 antialiased tracking-[-0.01em]">
+        <div
+          className="text-lg leading-[1.7] font-normal text-zinc-100 antialiased tracking-[-0.01em]"
+          style={{
+            fontFamily: 'var(--font-inter), system-ui, sans-serif',
+            textShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+          }}
+        >
           <AnimatedText
             content={displayContent}
             isRevealing={isRevealing}
