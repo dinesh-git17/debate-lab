@@ -205,16 +205,16 @@ describe('MessageBubble', () => {
       expect(screen.getByRole('article')).toBeInTheDocument()
     })
 
-    it('should show timestamp in header when showTimestamp is enabled', () => {
+    it('should show timestamp in footer when showTimestamp is enabled and animation complete', () => {
       const message = createMockMessage({
         isComplete: true,
         timestamp: new Date('2024-01-15T10:30:00Z'),
       })
 
-      const { container } = render(<MessageBubble message={message} showTimestamp />)
+      const { container } = render(<MessageBubble message={message} showTimestamp skipAnimation />)
 
-      // Timestamp is displayed in header with ml-auto class
-      const timestampElement = container.querySelector('.ml-auto')
+      // Timestamp is displayed in footer with tabular-nums class
+      const timestampElement = container.querySelector('.tabular-nums')
       expect(timestampElement).toBeInTheDocument()
     })
   })
