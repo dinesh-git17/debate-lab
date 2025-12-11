@@ -68,8 +68,8 @@ const components: Components = {
     </a>
   ),
 
-  // Strong and emphasis
-  strong: ({ children }) => <strong className="font-medium text-zinc-100">{children}</strong>,
+  // Strong and emphasis - font-bold (700) for clear distinction from body (400)
+  strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
   em: ({ children }) => <em className="italic">{children}</em>,
 
   // Horizontal rule
