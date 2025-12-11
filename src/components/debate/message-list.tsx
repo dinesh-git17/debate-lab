@@ -5,6 +5,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { ANIMATION_CONFIG } from '@/lib/animation-config'
 import { clientLogger } from '@/lib/client-logger'
 import { sanitizeTopic } from '@/lib/sanitize-topic'
 import { cn } from '@/lib/utils'
@@ -13,6 +14,16 @@ import { useDebateViewStore } from '@/store/debate-view-store'
 import { MessageBubble } from './message-bubble'
 
 import type { DebateMessage } from '@/types/debate-ui'
+
+/**
+ * Easing function for smooth scroll animation
+ * Uses Apple-style cubic-bezier curve
+ */
+function easeOutCubic(t: number): number {
+  const [_x1, y1, _x2, y2] = ANIMATION_CONFIG.AUTO_SCROLL.SCROLL_EASING
+  // Simplified cubic bezier approximation
+  return 1 - Math.pow(1 - t, 3) * (1 - y2) + Math.pow(t, 3) * y1
+}
 
 const FORMAT_DISPLAY_NAMES: Record<string, string> = {
   standard: 'Standard',
@@ -432,6 +443,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   const lastScrollTop = useRef(0)
   const scrollLockUntil = useRef(0)
   const scrollEndTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastCompletedMessageId = useRef<string | null>(null)
+  const isPausedForReading = useRef(false)
+  const smoothScrollRafRef = useRef<number | null>(null)
 
   // Track if we have messages to determine when container becomes available
   const hasMessages = messages.length > 0
@@ -439,7 +453,86 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   // Only auto-scroll during active debate, not after completion
   const shouldAutoScroll = autoScroll && hasMessages && status !== 'completed'
 
-  // RAF-based continuous scroll - single source of truth for auto-scrolling
+  // Smooth scroll to a target position with Apple-style easing
+  const smoothScrollTo = useCallback((container: HTMLDivElement, targetScrollTop: number) => {
+    const startScrollTop = container.scrollTop
+    const distance = targetScrollTop - startScrollTop
+    const duration = ANIMATION_CONFIG.AUTO_SCROLL.SCROLL_DURATION_MS
+    const startTime = performance.now()
+
+    // Cancel any existing smooth scroll
+    if (smoothScrollRafRef.current) {
+      cancelAnimationFrame(smoothScrollRafRef.current)
+    }
+
+    const animateScroll = (currentTime: number) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const easedProgress = easeOutCubic(progress)
+
+      const newScrollTop = startScrollTop + distance * easedProgress
+      scrollLockUntil.current = Date.now() + 100
+      container.scrollTop = newScrollTop
+
+      if (progress < 1) {
+        smoothScrollRafRef.current = requestAnimationFrame(animateScroll)
+      } else {
+        smoothScrollRafRef.current = null
+      }
+    }
+
+    smoothScrollRafRef.current = requestAnimationFrame(animateScroll)
+  }, [])
+
+  // Detect when a message completes and trigger cinematic pause + scroll
+  useEffect(() => {
+    if (!shouldAutoScroll) return
+
+    const container = containerRef.current
+    if (!container) return
+
+    // Find the last completed message
+    const completedMessages = messages.filter((m) => m.isComplete)
+    const lastCompleted = completedMessages[completedMessages.length - 1]
+
+    if (lastCompleted && lastCompleted.id !== lastCompletedMessageId.current) {
+      lastCompletedMessageId.current = lastCompleted.id
+
+      // Check if there's a next message being streamed
+      const lastCompletedIndex = messages.findIndex((m) => m.id === lastCompleted.id)
+      const hasNextMessage = lastCompletedIndex < messages.length - 1
+
+      if (hasNextMessage) {
+        // Pause for reading time before scrolling to next
+        isPausedForReading.current = true
+
+        setTimeout(() => {
+          isPausedForReading.current = false
+
+          // Find the next message element and scroll to center it
+          const nextMessageIndex = lastCompletedIndex + 1
+          const messageElements = container.querySelectorAll('[role="article"]')
+          const nextElement = messageElements[nextMessageIndex] as HTMLElement | undefined
+
+          if (nextElement) {
+            const containerRect = container.getBoundingClientRect()
+            const elementTop = nextElement.offsetTop
+
+            // Calculate target scroll to position element at CENTER_OFFSET from top
+            const targetScrollTop =
+              elementTop - containerRect.height * ANIMATION_CONFIG.AUTO_SCROLL.CENTER_OFFSET
+
+            // Only scroll if we need to move down (don't scroll up)
+            if (targetScrollTop > container.scrollTop) {
+              smoothScrollTo(container, targetScrollTop)
+            }
+          }
+        }, ANIMATION_CONFIG.AUTO_SCROLL.PAUSE_AFTER_COMPLETE_MS)
+      }
+    }
+  }, [messages, shouldAutoScroll, smoothScrollTo])
+
+  // RAF-based continuous scroll - gentle follow during streaming
   // Keeps content visible above the safe zone during text reveal
   useEffect(() => {
     if (!shouldAutoScroll) return
@@ -457,10 +550,10 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
       const targetScrollTop = scrollHeight - clientHeight
       const distanceFromBottom = targetScrollTop - scrollTop
 
-      // Skip if user is manually scrolling
-      if (!isUserScrolling.current && distanceFromBottom > 1) {
-        // Smooth lerp towards bottom - lower = smoother, higher = snappier
-        const lerpFactor = 0.08
+      // Skip if user is manually scrolling or paused for reading
+      if (!isUserScrolling.current && !isPausedForReading.current && distanceFromBottom > 1) {
+        // Gentler lerp for streaming follow - smoother than before
+        const lerpFactor = ANIMATION_CONFIG.AUTO_SCROLL.LERP_FACTOR
         const newScrollTop = scrollTop + distanceFromBottom * lerpFactor
 
         // Lock scroll detection briefly to prevent false user-scroll detection
@@ -478,6 +571,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
       isRunning = false
       if (rafId) {
         cancelAnimationFrame(rafId)
+      }
+      if (smoothScrollRafRef.current) {
+        cancelAnimationFrame(smoothScrollRafRef.current)
       }
     }
   }, [shouldAutoScroll])
@@ -578,20 +674,20 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
 
   return (
     <div className={cn('relative h-full', className)}>
-      {/* Bottom gradient mask - fades content into dock area */}
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24"
-        style={{
-          background:
-            'linear-gradient(to top, #0a0a0b 0%, rgba(10, 10, 11, 0.9) 40%, transparent 100%)',
-        }}
-        aria-hidden="true"
-      />
-
       <div
         ref={containerRef}
         className="overflow-y-auto px-4 h-full"
-        style={{ scrollBehavior: 'auto' }}
+        style={{
+          scrollBehavior: 'auto',
+          // Fade content at top (under header) and bottom (above dock)
+          // Content behind header (0-60px): fully hidden
+          // Fade zone (60px-76px): ultra-thin 16px fade
+          // Below 76px: fully visible
+          maskImage:
+            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
+          WebkitMaskImage:
+            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
+        }}
         role="log"
         aria-live="polite"
         aria-label="Debate messages"
@@ -600,7 +696,8 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
           className={cn(
             'relative flex flex-col',
             // Center content when only 1 message, otherwise align to start
-            messages.length === 1 ? 'min-h-full justify-center' : 'py-6'
+            // pt-24 provides breathing room below the fixed header
+            messages.length === 1 ? 'min-h-full justify-center' : 'pt-24 pb-6'
           )}
           style={{
             maxWidth: 'clamp(480px, 55vw, 680px)',

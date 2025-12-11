@@ -56,6 +56,30 @@ export const ANIMATION_CONFIG = {
   // Performance
   ANIMATION_CLEANUP_DELAY_MS: 150, // Remove animation classes after completion
   RAF_THROTTLE_MS: 16, // ~60fps target
+
+  // Card entrance animation - Apple-style blur-in
+  CARD_ENTRANCE: {
+    DURATION_MS: 320,
+    TRANSLATE_Y: 12, // pixels
+    BLUR_START: 8, // pixels
+    STAGGER_MS: 60, // stagger between cards
+    EASING: [0.22, 0.61, 0.36, 1] as const, // Apple decelerate curve
+  },
+
+  // Auto-scroll behavior - cinematic pause + smooth scroll
+  AUTO_SCROLL: {
+    PAUSE_AFTER_COMPLETE_MS: 600, // Reading time before scrolling to next
+    SCROLL_DURATION_MS: 650, // Smooth scroll duration
+    SCROLL_EASING: [0.22, 0.61, 0.36, 1] as const, // Apple decelerate curve
+    LERP_FACTOR: 0.06, // Gentler lerp for streaming follow (was 0.08)
+    CENTER_OFFSET: 0.35, // Position next card at 35% from top (visual center)
+  },
+
+  // Card height expansion
+  HEIGHT_TRANSITION: {
+    DURATION_MS: 200,
+    EASING: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+  },
 } as const
 
 /**
