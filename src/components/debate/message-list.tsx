@@ -2,7 +2,7 @@
 
 'use client'
 
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { clientLogger } from '@/lib/client-logger'
@@ -76,53 +76,90 @@ function EmptyState() {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24">
-      {/* Soft vignette overlay - draws focus to center */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 60% at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.4) 100%)',
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Ultra-subtle noise texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-        aria-hidden="true"
-      />
-
       {/* Title - Apple-style blur-in with refined typography */}
-      <motion.h1
-        className="relative text-center text-5xl font-semibold tracking-tight md:text-7xl"
-        style={{
-          textWrap: 'balance',
-          background:
-            'linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.55) 100%)',
-          WebkitBackgroundClip: 'text',
-          backgroundClip: 'text',
-          color: 'transparent',
-          WebkitFontSmoothing: 'antialiased',
-          textRendering: 'optimizeLegibility',
-          letterSpacing: '0.01em',
-          paddingBottom: '8px', // Visual centering - more space below
-        }}
-        initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 0.61, 0.36, 1] }}
-      >
-        {sanitizeTopic(topic)}
-      </motion.h1>
-
-      {/* Metadata - Apple translucent capsules */}
       <motion.div
-        className="mt-12 flex gap-3"
+        className="relative"
+        style={{
+          marginBottom: '8px',
+          marginTop: '-72px', // Optical centering - shifts content up for visual balance (24px additional lift)
+        }}
+        initial={{ opacity: 0, y: 12, filter: 'blur(8px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 0.61, 0.36, 1] }}
+      >
+        {/* Title spotlight - subtle radial for perceived contrast (700ms → 1100ms) */}
+        <motion.div
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{
+            width: '140%',
+            height: '180%',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1.2, ease: [0.22, 0.61, 0.36, 1] }}
+          aria-hidden="true"
+        >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              background:
+                'radial-gradient(ellipse at center, rgba(255,255,255,0.055) 0%, transparent 55%)',
+            }}
+          />
+        </motion.div>
+        <h1
+          className="relative text-center text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl"
+          style={{
+            textWrap: 'balance',
+            lineHeight: 1.18,
+            maxWidth: '20ch',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            background:
+              'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgb(200,200,205) 45%, rgb(130,130,135) 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            textShadow: '0 -1px 2px rgba(255,255,255,0.22), 0 2px 6px rgba(0,0,0,0.25)',
+            WebkitFontSmoothing: 'antialiased',
+            textRendering: 'optimizeLegibility',
+            letterSpacing: '0.005em',
+            paddingBottom: '8px',
+          }}
+        >
+          {/* Text content with cinematic light sweep overlay */}
+          <span className="relative inline-block">
+            {sanitizeTopic(topic)}
+            {/* Cinematic light sweep - affects TEXT ONLY via mix-blend-mode */}
+            <motion.span
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent 0%, transparent 35%, rgba(255,255,255,0.12) 50%, transparent 65%, transparent 100%)',
+                mixBlendMode: 'soft-light',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+              }}
+              initial={{ x: '-100%' }}
+              animate={{ x: '200%' }}
+              transition={{
+                duration: 1.4,
+                delay: 2.0,
+                ease: [0.22, 0.61, 0.36, 1],
+              }}
+              aria-hidden="true"
+            />
+          </span>
+        </h1>
+      </motion.div>
+
+      {/* Metadata - Apple translucent capsules (staggered entrance) */}
+      <motion.div
+        className="mt-5 flex gap-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.35 }}
+        transition={{ delay: 0.9, ease: [0.22, 0.61, 0.36, 1] }}
       >
         <motion.div
           className={cn(
@@ -138,13 +175,12 @@ function EmptyState() {
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.25)',
             letterSpacing: '0.05em',
           }}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.96, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{
-            delay: 0.4,
-            type: 'spring',
-            stiffness: 120,
-            damping: 18,
+            delay: 0.95,
+            duration: 0.4,
+            ease: [0.22, 0.61, 0.36, 1],
           }}
         >
           {formatDisplayName}
@@ -163,52 +199,146 @@ function EmptyState() {
             boxShadow: '0 2px 12px rgba(0, 0, 0, 0.25)',
             letterSpacing: '0.05em',
           }}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.96, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{
-            delay: 0.5,
-            type: 'spring',
-            stiffness: 120,
-            damping: 18,
+            delay: 1.05,
+            duration: 0.4,
+            ease: [0.22, 0.61, 0.36, 1],
           }}
         >
-          2 Agents
+          Dual Debate
         </motion.div>
       </motion.div>
 
-      {/* CTA - Apple tactile button */}
+      {/* CTA - Apple premium capsule button (landing animation) */}
       <motion.div
-        className="relative mt-9"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        className="relative mt-7 group"
+        initial={{ opacity: 0, scale: 0.94, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{
-          delay: 0.6,
-          type: 'spring',
-          stiffness: 180,
-          damping: 16,
+          delay: 1.2,
+          duration: 0.5,
+          ease: [0.22, 0.61, 0.36, 1],
         }}
       >
+        {/* Soft radial glow under button - intensifies on hover and loading */}
+        <div
+          className={cn(
+            'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
+            'transition-all duration-300 ease-out',
+            isLoading ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 group-hover:scale-110'
+          )}
+          style={{
+            width: '200px',
+            height: '100px',
+            background: isLoading
+              ? 'radial-gradient(ellipse at center, rgba(0,0,0,0.18) 0%, transparent 70%)'
+              : 'radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 70%)',
+          }}
+          aria-hidden="true"
+        />
         <motion.button
           onClick={handleStart}
           disabled={isLoading}
           className={cn(
-            'relative px-8 py-4',
+            'relative px-8 py-4 overflow-hidden',
             'text-sm font-semibold',
-            'disabled:opacity-50 disabled:cursor-not-allowed'
+            'cursor-pointer',
+            'disabled:cursor-not-allowed'
           )}
-          style={{
-            background: 'rgba(255, 255, 255, 0.97)',
-            color: 'rgba(0, 0, 0, 0.88)',
-            borderRadius: '30px',
-            boxShadow: 'inset 0 0 0 0.5px rgba(255, 255, 255, 0.9), 0 4px 24px rgba(0, 0, 0, 0.18)',
-            letterSpacing: '0.02em',
-            WebkitFontSmoothing: 'antialiased',
+          initial={{
+            boxShadow:
+              'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.05)',
           }}
-          whileHover={{ scale: 1.012 }}
-          whileTap={{ scale: 0.985 }}
+          animate={{
+            scale: isLoading ? 0.985 : 1,
+            background: isLoading
+              ? 'linear-gradient(to bottom, rgba(255,255,255,0.94) 0%, rgba(250,250,250,0.90) 100%)'
+              : 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(248,248,250,0.98) 100%)',
+            boxShadow: isLoading
+              ? 'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.02), 0 4px 20px rgba(0,0,0,0.10)'
+              : 'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.03), 0 8px 32px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.08)',
+          }}
+          style={{
+            color: 'rgba(0, 0, 0, 0.80)',
+            borderRadius: '30px',
+            letterSpacing: '-0.01em',
+            WebkitFontSmoothing: 'antialiased',
+            border: '1px solid rgba(255,255,255,0.5)',
+            backdropFilter: isLoading ? 'blur(12px)' : 'none',
+          }}
+          whileHover={
+            !isLoading
+              ? {
+                  scale: 1.012,
+                  y: -1.5,
+                  boxShadow:
+                    'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.03), 0 12px 36px rgba(0,0,0,0.22), 0 4px 14px rgba(0,0,0,0.12), 0 0 24px rgba(255,255,255,0.06)',
+                }
+              : {}
+          }
+          whileTap={!isLoading ? { scale: 0.985, y: 0 } : {}}
           transition={{ type: 'tween', ease: [0.22, 0.61, 0.36, 1], duration: 0.2 }}
         >
-          {isLoading ? 'Starting...' : 'Start Debate'}
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+              <motion.div
+                key="spinner"
+                className="flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.14, ease: [0.22, 0.61, 0.36, 1] }}
+              >
+                {/* Apple-style circular spinner */}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  style={{ opacity: 0.7 }}
+                >
+                  <motion.circle
+                    cx="9"
+                    cy="9"
+                    r="7"
+                    stroke="rgba(0,0,0,0.25)"
+                    strokeWidth="1.5"
+                    fill="none"
+                  />
+                  <motion.circle
+                    cx="9"
+                    cy="9"
+                    r="7"
+                    stroke="rgba(0,0,0,0.82)"
+                    strokeWidth="1.5"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray="44"
+                    strokeDashoffset="33"
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                    style={{ transformOrigin: 'center' }}
+                  />
+                </svg>
+              </motion.div>
+            ) : (
+              <motion.span
+                key="text"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.12, ease: [0.22, 0.61, 0.36, 1] }}
+              >
+                Start Debate
+              </motion.span>
+            )}
+          </AnimatePresence>
         </motion.button>
       </motion.div>
     </div>

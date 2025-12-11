@@ -170,11 +170,11 @@ export function DebatePageClient({
         // Fullscreen fixed container - no navbar to account for
         'fixed inset-0 z-50 flex flex-col overflow-hidden'
       )}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
+      initial={{ opacity: 0, scale: 1.008 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
     >
-      {/* Apple-inspired static background - 3 CSS layers, no animations */}
+      {/* Apple-inspired static background - 3 CSS layers, cinematic entrance */}
       <AppleBackground className="z-0" />
 
       <DebateHeader debateId={debateId} className="relative z-10" />
