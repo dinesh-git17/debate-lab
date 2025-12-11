@@ -32,7 +32,6 @@ const AMBIENT_COLORS = {
 
 // Animation timing tokens
 const AMBIENT_TIMING = {
-  breathe: 8000,
   speakerTransition: 800,
 } as const
 
@@ -144,13 +143,12 @@ export function AmbientLighting({
   const glowColor = getGlowColor(activeSpeaker, isStreaming, phase)
   const atmosphericColor = getAtmosphericColor(activeSpeaker, phase)
 
-  const breatheDuration = AMBIENT_TIMING.breathe / 1000
   const transitionDuration = AMBIENT_TIMING.speakerTransition / 1000
 
   return (
     <div className={cn('pointer-events-none fixed inset-0', className)}>
       {/* Layer 1: Atmospheric Wash - largest, most subtle, gradient-only (no blur) */}
-      <motion.div
+      <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{
           width: 1200,
@@ -162,20 +160,6 @@ export function AmbientLighting({
             { percent: 60, opacityRatio: 0.15 },
             { percent: 100, opacityRatio: 0 },
           ]),
-        }}
-        animate={
-          prefersReducedMotion
-            ? {}
-            : {
-                scale: [1, 1.03, 1],
-              }
-        }
-        transition={{
-          scale: {
-            duration: breatheDuration,
-            repeat: Infinity,
-            ease: EASING.smoothInOut,
-          },
         }}
       />
 
@@ -223,7 +207,7 @@ export function AmbientLighting({
       </AnimatePresence>
 
       {/* Layer 3: Focal Bloom - tight, centered, subtle glow, gradient-only (no blur) */}
-      <motion.div
+      <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{
           width: 500,
@@ -238,21 +222,6 @@ export function AmbientLighting({
               { percent: 100, opacityRatio: 0 },
             ]
           ),
-        }}
-        animate={
-          prefersReducedMotion
-            ? {}
-            : {
-                scale: [1, 1.02, 1],
-              }
-        }
-        transition={{
-          scale: {
-            duration: breatheDuration * 1.2,
-            repeat: Infinity,
-            ease: EASING.smoothInOut,
-            delay: 0.5,
-          },
         }}
       />
 

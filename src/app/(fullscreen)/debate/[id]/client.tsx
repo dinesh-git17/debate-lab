@@ -14,6 +14,7 @@ import { DebateHeader } from '@/components/debate/debate-header'
 import { FilmGrain } from '@/components/debate/film-grain'
 import { FloatingControls } from '@/components/debate/floating-controls'
 import { MessageList } from '@/components/debate/message-list'
+import { PremiumVignette } from '@/components/debate/premium-vignette'
 import { ShortcutsHelp } from '@/components/debate/shortcuts-help'
 import { useDebateRealtime } from '@/hooks/use-debate-realtime'
 import { cn } from '@/lib/utils'
@@ -31,9 +32,6 @@ import type { TurnSpeaker } from '@/types/turn'
 const CANVAS_CONFIG = {
   // Noise overlay for tactile texture
   noiseOpacity: 0.015,
-  // Vignette: soft elliptical falloff
-  vignetteEllipse: '120% 100%',
-  vignetteBreatheDuration: 18,
 } as const
 
 /**
@@ -262,43 +260,11 @@ export function DebatePageClient({
         aria-hidden="true"
       />
 
-      {/* Vignette - soft elliptical falloff with gentle breathing (z-7) */}
-      <motion.div
-        className="pointer-events-none fixed inset-0 z-[7]"
-        style={{
-          background: `radial-gradient(ellipse ${CANVAS_CONFIG.vignetteEllipse} at center,
-            transparent ${status === 'completed' ? '28%' : '30%'},
-            hsl(var(--gradient-void) / 0.06) ${status === 'completed' ? '42%' : '45%'},
-            hsl(var(--gradient-void) / 0.18) ${status === 'completed' ? '55%' : '58%'},
-            hsl(var(--gradient-void) / 0.45) 75%,
-            hsl(var(--gradient-void) / 0.75) 90%,
-            hsl(var(--gradient-void) / 0.9) 100%
-          )`,
-        }}
-        animate={{
-          scale: [1, 1.02, 1],
-        }}
-        transition={{
-          scale: {
-            duration: CANVAS_CONFIG.vignetteBreatheDuration,
-            repeat: Infinity,
-            ease: [0.4, 0, 0.6, 1],
-          },
-        }}
-      />
+      {/* Premium Vignette - super-ellipse with asymmetric intensity and focus response (z-7) */}
+      <PremiumVignette focusTrigger={messages.length} className="z-[7]" />
 
       {/* Film grain - reduced opacity for subtlety */}
       <FilmGrain className="z-[100]" opacity={0.6} />
-
-      {/* Subtle backdrop blur to smooth lighting/grain artifacts */}
-      <div
-        className="pointer-events-none fixed inset-0 z-[110]"
-        style={{
-          backdropFilter: 'blur(0.4px)',
-          WebkitBackdropFilter: 'blur(0.4px)',
-        }}
-        aria-hidden="true"
-      />
 
       <DebateHeader debateId={debateId} className="relative z-[120]" />
 
