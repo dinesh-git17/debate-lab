@@ -25,6 +25,9 @@ import {
   SPEAKER_PILL_STYLES,
   SPEAKER_PHASE_CHIP_STYLES,
   SPEAKER_SURFACE_TINT,
+  SPEAKER_AMBIENT_GLOW,
+  SPEAKER_LUMINOSITY_BACKGROUND,
+  SPEAKER_RIM_LIGHT,
 } from '@/lib/speaker-config'
 import { cn } from '@/lib/utils'
 
@@ -75,6 +78,10 @@ interface MessageBubbleProps {
   depthIndex?: number
   /** Whether the debate is in completed state (all messages visible) */
   isCompleted?: boolean
+  /** Callback when hover state changes - reports to parent for cross-card effects */
+  onHoverChange?: (messageId: string, isHovered: boolean) => void
+  /** Whether the card above this one is hovered (to fade this card's top connector) */
+  isPreviousCardHovered?: boolean
 }
 
 /**
@@ -250,6 +257,8 @@ export const MessageBubble = memo(function MessageBubble({
   skipAnimation = false,
   depthIndex = 0,
   isCompleted = false,
+  onHoverChange,
+  isPreviousCardHovered = false,
 }: MessageBubbleProps) {
   const config = getSpeakerConfig(message.speaker)
   // Use enhanced gradient when active, standard when inactive
@@ -298,16 +307,18 @@ export const MessageBubble = memo(function MessageBubble({
   // Reset tilt on mouse leave with spring animation
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false)
+    onHoverChange?.(message.id, false)
     rotateX.set(0)
     rotateY.set(0)
     scale.set(1)
-  }, [rotateX, rotateY, scale])
+  }, [rotateX, rotateY, scale, onHoverChange, message.id])
 
   // Handle mouse enter
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true)
+    onHoverChange?.(message.id, true)
     scale.set(1.02) // Subtle scale on hover
-  }, [scale])
+  }, [scale, onHoverChange, message.id])
 
   // Track when the client-side reveal animation is complete
   // (separate from message.isComplete which reflects server state)
@@ -369,74 +380,41 @@ export const MessageBubble = memo(function MessageBubble({
         />
       )}
 
-      {/* Continuous Timeline Connector - vertical chain linking all cards */}
-      {/* Line going UP to connect from previous card */}
+      {/* Timeline String - fades out when this card OR previous card is hovered */}
       {!isFirst && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 w-px pointer-events-none"
+          className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-30"
           style={{
-            top: -GLASS_CONFIG.cardGap, // Spans full gap
-            height: GLASS_CONFIG.cardGap - 8, // Leave space for node
+            top: -GLASS_CONFIG.cardGap + 4,
+            height: GLASS_CONFIG.cardGap + 9,
+            width: 1,
             background: `linear-gradient(180deg,
-              ${APPLE_COLORS[message.speaker].rgba(0.06)} 0%,
-              ${APPLE_COLORS[message.speaker].rgba(0.12)} 50%,
-              ${APPLE_COLORS[message.speaker].rgba(0.18)} 100%)`,
+              ${APPLE_COLORS[message.speaker].rgba(0.08)} 0%,
+              ${APPLE_COLORS[message.speaker].rgba(0.2)} 40%,
+              ${APPLE_COLORS[message.speaker].rgba(0.35)} 80%,
+              ${APPLE_COLORS[message.speaker].rgba(0.5)} 100%)`,
+            // Fade out when this card is hovered OR when the card above is hovered
+            opacity: isHovered || isPreviousCardHovered ? 0 : 1,
+            transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           aria-hidden="true"
         />
       )}
 
-      {/* Anchor node - softly glowing connection point */}
-      {!isFirst && (
-        <motion.div
-          className="absolute left-1/2 -top-3 -translate-x-1/2 z-20 pointer-events-none"
-          initial={skipAnimation ? false : { scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{
-            duration: 0.25,
-            delay: skipAnimation ? 0 : 0.15,
-            ease: [0.22, 0.61, 0.36, 1],
-          }}
-          aria-hidden="true"
-        >
-          {/* Outer glow ring */}
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              width: 16,
-              height: 16,
-              marginLeft: -8,
-              marginTop: -8,
-              background: `radial-gradient(circle, ${APPLE_COLORS[message.speaker].rgba(0.15)} 0%, transparent 70%)`,
-              filter: 'blur(4px)',
-            }}
-          />
-          {/* Node circle */}
-          <div
-            className="relative w-2.5 h-2.5 rounded-full"
-            style={{
-              background: `radial-gradient(circle at 30% 30%,
-                ${APPLE_COLORS[message.speaker].rgba(0.5)} 0%,
-                ${APPLE_COLORS[message.speaker].rgba(0.25)} 100%)`,
-              border: `1px solid ${APPLE_COLORS[message.speaker].rgba(0.35)}`,
-              boxShadow: `0 0 10px ${APPLE_COLORS[message.speaker].rgba(0.25)},
-                         inset 0 1px 2px ${APPLE_COLORS[message.speaker].rgba(0.2)}`,
-            }}
-          />
-        </motion.div>
-      )}
-
-      {/* Line going DOWN to connect to next card (only if not the last active card during streaming) */}
+      {/* String going DOWN to connect to next card (only during streaming) */}
       {!message.isComplete && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 w-px pointer-events-none"
+          className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-30"
           style={{
-            bottom: -GLASS_CONFIG.cardGap + 8,
-            height: GLASS_CONFIG.cardGap - 16,
+            bottom: -GLASS_CONFIG.cardGap + 4,
+            height: GLASS_CONFIG.cardGap - 8,
+            width: 1,
             background: `linear-gradient(180deg,
-              ${APPLE_COLORS[message.speaker].rgba(0.18)} 0%,
-              ${APPLE_COLORS[message.speaker].rgba(0.08)} 100%)`,
-            opacity: 0.6,
+              ${APPLE_COLORS[message.speaker].rgba(0.3)} 0%,
+              ${APPLE_COLORS[message.speaker].rgba(0.12)} 100%)`,
+            // Fade out on hover, fade in when not hovered
+            opacity: isHovered ? 0 : 0.6,
+            transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           aria-hidden="true"
         />
@@ -454,10 +432,23 @@ export const MessageBubble = memo(function MessageBubble({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Atmospheric Ambient Glow - small, subtle glow behind the card */}
+        <div
+          className="pointer-events-none absolute -inset-3 z-0"
+          style={{
+            background: SPEAKER_AMBIENT_GLOW[message.speaker],
+            opacity: isActive || (isCompleted && isHovered) ? 0.7 : 0.15,
+            transition: 'opacity 0.5s ease-out',
+            borderRadius: GLASS_CONFIG.borderRadius.css,
+            filter: 'blur(16px)',
+          }}
+          aria-hidden="true"
+        />
+
         {/* Inner tilting card - receives spring-physics rotation */}
         <motion.div
           className={cn(
-            'relative overflow-hidden',
+            'relative z-10 overflow-hidden',
             // Smooth transition for depth filter
             'transition-[filter] duration-500 ease-out',
             // Enable 3D transforms on this element
@@ -492,22 +483,26 @@ export const MessageBubble = memo(function MessageBubble({
               padding: `${GLASS_CONFIG.padding.y}px ${GLASS_CONFIG.padding.x}px`,
               // GRAPHITE GLASS: Subtle white base with vertical gradient tint
               backgroundColor: isActive ? GLASS_CONFIG.tint.base : 'rgba(255, 255, 255, 0.025)',
-              backgroundImage: `linear-gradient(180deg,
-              ${isActive ? GLASS_CONFIG.tint.gradientTop : 'rgba(255, 255, 255, 0.04)'} 0%,
-              ${isActive ? GLASS_CONFIG.tint.gradientBottom : 'rgba(255, 255, 255, 0.015)'} 100%),
-              linear-gradient(180deg, ${isActive ? surfaceTint.active : surfaceTint.inactive} 0%, transparent 50%)`,
+              backgroundImage: isActive
+                ? `${SPEAKER_LUMINOSITY_BACKGROUND[message.speaker]}, linear-gradient(180deg,
+                  ${GLASS_CONFIG.tint.gradientTop} 0%,
+                  ${GLASS_CONFIG.tint.gradientBottom} 100%)`
+                : `linear-gradient(180deg,
+                  rgba(255, 255, 255, 0.04) 0%,
+                  rgba(255, 255, 255, 0.015) 100%),
+                  linear-gradient(180deg, ${surfaceTint.inactive} 0%, transparent 50%)`,
               // 3D Transform: subtle elevation for active state only (no hover scale - tilt handles interaction)
               transform:
                 isActive && !isCompleted
                   ? 'scale(1.005) translateY(-2px)' // Active during streaming: subtle lift
                   : 'scale(1) translateY(0)', // All other states: baseline (tilt effect on outer container)
-              // Dual shadow system - ambient + highlight
+              // Dual shadow system - ambient + highlight + rim light
               boxShadow: isCompleted
                 ? isHovered
-                  ? `${GLASS_CONFIG.shadow.highlight}, ${activeShadow}` // Completed + hover: full glow
+                  ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${GLASS_CONFIG.shadow.highlight}, ${activeShadow}` // Completed + hover: full glow with rim
                   : `${GLASS_CONFIG.shadow.highlight}, ${SPEAKER_INACTIVE_SHADOWS}` // Completed: baseline
                 : isActive
-                  ? `${GLASS_CONFIG.shadow.highlight}, ${activeShadow}`
+                  ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${GLASS_CONFIG.shadow.highlight}, ${activeShadow}` // Active: rim light + glow
                   : `${GLASS_CONFIG.shadow.highlight}, ${SPEAKER_INACTIVE_SHADOWS}`,
               // Smooth state transitions
               transition:
@@ -530,6 +525,60 @@ export const MessageBubble = memo(function MessageBubble({
               }}
               aria-hidden="true"
             />
+
+            {/* Hanging Tab - entrance via framer-motion, hover fade via CSS */}
+            {!isFirst && (
+              <motion.div
+                className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-20"
+                style={{ top: 8 }}
+                initial={skipAnimation ? false : { scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  duration: 0.25,
+                  delay: skipAnimation ? 0 : 0.15,
+                  ease: [0.22, 0.61, 0.36, 1],
+                }}
+                aria-hidden="true"
+              >
+                {/* Wrapper for hover fade - separate from entrance animation */}
+                <div
+                  style={{
+                    // Fade when this card OR previous card is hovered
+                    opacity: isHovered || isPreviousCardHovered ? 0 : 1,
+                    transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {/* The tab/clip where string attaches - small rounded rectangle */}
+                  <div
+                    className="relative flex items-center justify-center"
+                    style={{
+                      width: 20,
+                      height: 10,
+                      borderRadius: 5,
+                      background: `linear-gradient(180deg,
+                        ${APPLE_COLORS[message.speaker].rgba(0.35)} 0%,
+                        ${APPLE_COLORS[message.speaker].rgba(0.2)} 100%)`,
+                      border: `1px solid ${APPLE_COLORS[message.speaker].rgba(0.3)}`,
+                      boxShadow: `
+                        inset 0 1px 2px rgba(255, 255, 255, 0.15),
+                        0 1px 3px rgba(0, 0, 0, 0.2)
+                      `,
+                    }}
+                  >
+                    {/* Small hole in the tab where string threads through */}
+                    <div
+                      style={{
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        boxShadow: `inset 0 1px 2px rgba(0, 0, 0, 0.5)`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Hover focus rim - visible in completed state on hover */}
             {isCompleted && (
@@ -595,19 +644,26 @@ export const MessageBubble = memo(function MessageBubble({
             <div className="relative mb-8">
               {/* Row 1: Speaker Identity (always centered) */}
               <div className="flex items-center justify-center mb-3">
-                {/* Speaker Pill Badge - Frosted glass with SF Pro Rounded */}
+                {/* Speaker Pill Badge - Luminous frosted glass with SF Pro Rounded */}
                 <motion.div
                   className="inline-flex items-center gap-2 rounded-full"
                   style={{
                     height: 30,
                     paddingLeft: 14,
                     paddingRight: 14,
-                    // Frosted glass background
-                    background: 'rgba(255, 255, 255, 0.06)',
+                    // Luminous gradient background (instead of flat frosted)
+                    background:
+                      isActive || (isCompleted && isHovered)
+                        ? pillStyles.background
+                        : 'rgba(255, 255, 255, 0.06)',
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
                     border: `1px solid ${pillStyles.border}`,
-                    boxShadow: isActive || (isCompleted && isHovered) ? pillStyles.glow : 'none',
+                    // Combined inner glow + outer glow for luminous effect
+                    boxShadow:
+                      isActive || (isCompleted && isHovered)
+                        ? `${pillStyles.innerGlow}, ${pillStyles.glow}`
+                        : 'none',
                   }}
                   whileHover={{ scale: 1.02 }}
                   transition={{

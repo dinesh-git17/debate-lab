@@ -447,6 +447,14 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   const isPausedForReading = useRef(false)
   const smoothScrollRafRef = useRef<number | null>(null)
 
+  // Track which message is currently hovered (for connector fade effect)
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
+
+  // Callback for MessageBubble to report hover state changes
+  const handleMessageHover = useCallback((messageId: string, isHovered: boolean) => {
+    setHoveredMessageId(isHovered ? messageId : null)
+  }, [])
+
   // Track if we have messages to determine when container becomes available
   const hasMessages = messages.length > 0
 
@@ -713,6 +721,11 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             // Calculate depth index: 0 = active (last), 1 = adjacent, 2+ = distant
             // In completed state, all cards should be fully focused (depthIndex = 0)
             const depthIndex = status === 'completed' ? 0 : messages.length - 1 - index
+            // Check if the card ABOVE this one is hovered (to fade this card's top connector)
+            const previousMessage = index > 0 ? messages[index - 1] : null
+            const isPreviousCardHovered = previousMessage
+              ? hoveredMessageId === previousMessage.id
+              : false
             return (
               <MessageBubble
                 key={message.id}
@@ -724,6 +737,8 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
                 skipAnimation={shouldSkipAnimation}
                 depthIndex={depthIndex}
                 isCompleted={status === 'completed'}
+                onHoverChange={handleMessageHover}
+                isPreviousCardHovered={isPreviousCardHovered}
               />
             )
           })}

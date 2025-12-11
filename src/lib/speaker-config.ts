@@ -1,33 +1,53 @@
 /**
  * src/lib/speaker-config.ts
- * Apple-inspired color palette and shadow system for speaker differentiation
+ * Apple Thematic Luminosity Color System for speaker differentiation
+ * Inspired by VisionOS panels, Apple TV+ atmospheric glow, and Siri waveforms
  */
 
 import type { SpeakerConfig } from '@/types/debate-ui'
 import type { TurnSpeaker } from '@/types/turn'
 
 /**
- * Apple-inspired color tokens (HSL format for consistency)
- * Desaturated, sophisticated palette that feels premium
+ * Apple Thematic Luminosity Colors
+ * These are NOT flat colors - they represent "light" emanating from the interface
+ *
+ * FOR: Aqua/Cyan - Siri-inspired, calm affirmation
+ * AGAINST: Lavender/Violet - Apple Music gradient, passionate opposition
+ * MODERATOR: Silver/Indigo - neutral authority, cool professionalism
  */
 export const APPLE_COLORS = {
-  // Desaturated teal - calm, authoritative
+  // Aqua/Cyan - inspired by Siri waveforms and macOS accent colors
   for: {
-    hsl: 'hsl(185, 45%, 55%)',
-    rgb: 'rgb(77, 175, 182)',
-    rgba: (alpha: number) => `rgba(77, 175, 182, ${alpha})`,
+    primary: 'hsl(187, 72%, 58%)', // Core aqua
+    secondary: 'hsl(195, 85%, 48%)', // Deeper cyan
+    highlight: 'hsl(180, 65%, 72%)', // Bright highlight
+    hsl: 'hsl(187, 72%, 58%)',
+    rgb: 'rgb(64, 196, 210)',
+    rgba: (alpha: number) => `rgba(64, 196, 210, ${alpha})`,
+    // Secondary color for gradients
+    rgba2: (alpha: number) => `rgba(32, 164, 210, ${alpha})`,
   },
-  // Soft rose - warm, passionate
+  // Lavender/Violet - inspired by Apple Music and VisionOS purples
   against: {
-    hsl: 'hsl(350, 55%, 62%)',
-    rgb: 'rgb(204, 107, 122)',
-    rgba: (alpha: number) => `rgba(204, 107, 122, ${alpha})`,
+    primary: 'hsl(270, 60%, 65%)', // Core lavender
+    secondary: 'hsl(285, 70%, 55%)', // Electric violet
+    highlight: 'hsl(260, 55%, 78%)', // Soft highlight
+    hsl: 'hsl(270, 60%, 65%)',
+    rgb: 'rgb(168, 128, 212)',
+    rgba: (alpha: number) => `rgba(168, 128, 212, ${alpha})`,
+    // Secondary color for gradients
+    rgba2: (alpha: number) => `rgba(190, 100, 210, ${alpha})`,
   },
-  // Neutral slate - balanced, impartial
+  // Silver/Indigo - neutral authority
   moderator: {
-    hsl: 'hsl(220, 15%, 58%)',
-    rgb: 'rgb(132, 140, 158)',
-    rgba: (alpha: number) => `rgba(132, 140, 158, ${alpha})`,
+    primary: 'hsl(225, 25%, 62%)', // Cool silver-blue
+    secondary: 'hsl(230, 30%, 52%)', // Deeper indigo
+    highlight: 'hsl(220, 20%, 75%)', // Soft silver highlight
+    hsl: 'hsl(225, 25%, 62%)',
+    rgb: 'rgb(128, 138, 172)',
+    rgba: (alpha: number) => `rgba(128, 138, 172, ${alpha})`,
+    // Secondary color for gradients
+    rgba2: (alpha: number) => `rgba(108, 118, 162, ${alpha})`,
   },
 } as const
 
@@ -35,106 +55,212 @@ export const SPEAKER_CONFIGS: Record<TurnSpeaker, SpeakerConfig> = {
   for: {
     label: 'FOR (Affirmative)',
     shortLabel: 'FOR',
-    color: 'text-[hsl(185,45%,65%)]',
+    color: 'text-[hsl(187,72%,68%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(185,45%,55%)]',
+    borderColor: 'bg-[hsl(187,72%,58%)]',
     icon: 'thumbs-up',
     position: 'left',
-    chipBorder: 'border-[hsl(185,45%,55%)]/20',
-    chipBg: 'bg-[hsl(185,45%,55%)]/5',
-    glowColor: 'shadow-[hsl(185,45%,55%)]/10',
+    chipBorder: 'border-[hsl(187,72%,58%)]/20',
+    chipBg: 'bg-[hsl(187,72%,58%)]/5',
+    glowColor: 'shadow-[hsl(187,72%,58%)]/10',
   },
   against: {
     label: 'AGAINST (Negative)',
     shortLabel: 'AGAINST',
-    color: 'text-[hsl(350,55%,72%)]',
+    color: 'text-[hsl(270,60%,75%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(350,55%,62%)]',
+    borderColor: 'bg-[hsl(270,60%,65%)]',
     icon: 'thumbs-down',
     position: 'right',
-    chipBorder: 'border-[hsl(350,55%,62%)]/20',
-    chipBg: 'bg-[hsl(350,55%,62%)]/5',
-    glowColor: 'shadow-[hsl(350,55%,62%)]/10',
+    chipBorder: 'border-[hsl(270,60%,65%)]/20',
+    chipBg: 'bg-[hsl(270,60%,65%)]/5',
+    glowColor: 'shadow-[hsl(270,60%,65%)]/10',
   },
   moderator: {
     label: 'Moderator',
     shortLabel: 'MOD',
-    color: 'text-[hsl(220,15%,68%)]',
+    color: 'text-[hsl(225,25%,72%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(220,15%,58%)]',
+    borderColor: 'bg-[hsl(225,25%,62%)]',
     icon: 'scale',
     position: 'center',
-    chipBorder: 'border-[hsl(220,15%,58%)]/20',
-    chipBg: 'bg-[hsl(220,15%,58%)]/5',
-    glowColor: 'shadow-[hsl(220,15%,58%)]/10',
+    chipBorder: 'border-[hsl(225,25%,62%)]/20',
+    chipBg: 'bg-[hsl(225,25%,62%)]/5',
+    glowColor: 'shadow-[hsl(225,25%,62%)]/10',
   },
 }
 
-// Gradient colors for glow bleed effect (light bleeding from accent border)
-export const SPEAKER_GRADIENTS: Record<TurnSpeaker, string> = {
-  for: `linear-gradient(90deg, ${APPLE_COLORS.for.rgba(0.06)} 0%, transparent 120px)`,
-  against: `linear-gradient(90deg, ${APPLE_COLORS.against.rgba(0.06)} 0%, transparent 120px)`,
-  moderator: `linear-gradient(90deg, ${APPLE_COLORS.moderator.rgba(0.05)} 0%, transparent 120px)`,
-}
-
-// Border colors for role badges (used with border-current pattern)
-export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
-  for: `text-[hsl(185,45%,65%)] border-[hsl(185,45%,55%)]/40 bg-[hsl(185,45%,55%)]/8`,
-  against: `text-[hsl(350,55%,72%)] border-[hsl(350,55%,62%)]/40 bg-[hsl(350,55%,62%)]/8`,
-  moderator: `text-[hsl(220,15%,68%)] border-[hsl(220,15%,58%)]/40 bg-[hsl(220,15%,58%)]/8`,
+/**
+ * Atmospheric Ambient Glow - large radial gradient behind the card
+ * Creates the "luminous environment" effect from VisionOS
+ * Centered behind card, extends beyond edges for soft atmospheric effect
+ */
+export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
+  for: `radial-gradient(ellipse 100% 100% at 50% 40%,
+    ${APPLE_COLORS.for.rgba(0.12)} 0%,
+    ${APPLE_COLORS.for.rgba(0.06)} 40%,
+    ${APPLE_COLORS.for.rgba2(0.02)} 70%,
+    transparent 100%
+  )`.replace(/\s+/g, ' '),
+  against: `radial-gradient(ellipse 100% 100% at 50% 40%,
+    ${APPLE_COLORS.against.rgba(0.12)} 0%,
+    ${APPLE_COLORS.against.rgba(0.06)} 40%,
+    ${APPLE_COLORS.against.rgba2(0.02)} 70%,
+    transparent 100%
+  )`.replace(/\s+/g, ' '),
+  moderator: `radial-gradient(ellipse 100% 100% at 50% 40%,
+    ${APPLE_COLORS.moderator.rgba(0.08)} 0%,
+    ${APPLE_COLORS.moderator.rgba(0.04)} 40%,
+    ${APPLE_COLORS.moderator.rgba2(0.015)} 70%,
+    transparent 100%
+  )`.replace(/\s+/g, ' '),
 }
 
 /**
- * 3D floating card shadows - creates depth and elevation
- * Softened for Apple aesthetic: reduced glow intensity by 40%, blur radii adjusted
- * Layer 1: Rim light (top edge catch)
- * Layer 2: Left edge highlight (catches light)
- * Layer 3: Inner depth (card thickness)
- * Layer 4: Close contact shadow (tight to card)
- * Layer 5: Speaker-colored glow (softened)
- * Layer 6: Mid elevation shadow
- * Layer 7: Far ground shadow (diffuse)
+ * Thematic Luminosity Background - multi-layer gradient system
+ * Layer 1: Top highlight (luminous rim)
+ * Layer 2: Vertical atmospheric gradient
+ * Layer 3: Role-colored tint wash
+ */
+export const SPEAKER_LUMINOSITY_BACKGROUND: Record<TurnSpeaker, string> = {
+  for: `
+    linear-gradient(180deg,
+      ${APPLE_COLORS.for.rgba(0.06)} 0%,
+      ${APPLE_COLORS.for.rgba(0.02)} 15%,
+      transparent 40%
+    ),
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.01) 50%,
+      ${APPLE_COLORS.for.rgba(0.015)} 100%
+    ),
+    radial-gradient(ellipse 120% 80% at 50% -20%,
+      ${APPLE_COLORS.for.rgba(0.08)} 0%,
+      transparent 60%
+    )
+  `.replace(/\s+/g, ' '),
+  against: `
+    linear-gradient(180deg,
+      ${APPLE_COLORS.against.rgba(0.06)} 0%,
+      ${APPLE_COLORS.against.rgba(0.02)} 15%,
+      transparent 40%
+    ),
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.01) 50%,
+      ${APPLE_COLORS.against.rgba(0.015)} 100%
+    ),
+    radial-gradient(ellipse 120% 80% at 50% -20%,
+      ${APPLE_COLORS.against.rgba(0.08)} 0%,
+      transparent 60%
+    )
+  `.replace(/\s+/g, ' '),
+  moderator: `
+    linear-gradient(180deg,
+      ${APPLE_COLORS.moderator.rgba(0.04)} 0%,
+      ${APPLE_COLORS.moderator.rgba(0.015)} 15%,
+      transparent 40%
+    ),
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.025) 0%,
+      rgba(255, 255, 255, 0.008) 50%,
+      ${APPLE_COLORS.moderator.rgba(0.01)} 100%
+    ),
+    radial-gradient(ellipse 120% 80% at 50% -20%,
+      ${APPLE_COLORS.moderator.rgba(0.06)} 0%,
+      transparent 60%
+    )
+  `.replace(/\s+/g, ' '),
+}
+
+/**
+ * Specular Edge Rim Light - inner inset shadow creating "device bezel" effect
+ * 0.5-1px inset with role color at 25-35% opacity
+ */
+export const SPEAKER_RIM_LIGHT: Record<TurnSpeaker, string> = {
+  for: `
+    inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.25)},
+    inset 0 0 0 0.5px ${APPLE_COLORS.for.rgba(0.15)},
+    inset 0 -1px 0 ${APPLE_COLORS.for.rgba(0.08)}
+  `.replace(/\s+/g, ' '),
+  against: `
+    inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.25)},
+    inset 0 0 0 0.5px ${APPLE_COLORS.against.rgba(0.15)},
+    inset 0 -1px 0 ${APPLE_COLORS.against.rgba(0.08)}
+  `.replace(/\s+/g, ' '),
+  moderator: `
+    inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.2)},
+    inset 0 0 0 0.5px ${APPLE_COLORS.moderator.rgba(0.12)},
+    inset 0 -1px 0 ${APPLE_COLORS.moderator.rgba(0.06)}
+  `.replace(/\s+/g, ' '),
+}
+
+// Legacy gradient for side glow bleed effect
+export const SPEAKER_GRADIENTS: Record<TurnSpeaker, string> = {
+  for: `linear-gradient(90deg, ${APPLE_COLORS.for.rgba(0.08)} 0%, transparent 150px)`,
+  against: `linear-gradient(90deg, ${APPLE_COLORS.against.rgba(0.08)} 0%, transparent 150px)`,
+  moderator: `linear-gradient(90deg, ${APPLE_COLORS.moderator.rgba(0.06)} 0%, transparent 150px)`,
+}
+
+// Border colors for role badges
+export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
+  for: `text-[hsl(187,72%,68%)] border-[hsl(187,72%,58%)]/35 bg-[hsl(187,72%,58%)]/10`,
+  against: `text-[hsl(270,60%,75%)] border-[hsl(270,60%,65%)]/35 bg-[hsl(270,60%,65%)]/10`,
+  moderator: `text-[hsl(225,25%,72%)] border-[hsl(225,25%,62%)]/35 bg-[hsl(225,25%,62%)]/10`,
+}
+
+/**
+ * 3D floating card shadows with role-colored atmospheric glow
+ * Enhanced with thematic luminosity
  */
 export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
   for: [
-    'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-    'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
-    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.28)',
-    '0 1px 2px rgba(0, 0, 0, 0.2)',
-    `0 0 32px ${APPLE_COLORS.for.rgba(0.09)}`,
-    '0 16px 32px -8px rgba(0, 0, 0, 0.35)',
-    '0 40px 48px -16px rgba(0, 0, 0, 0.28)',
+    // Specular rim light
+    `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.3)}`,
+    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
+    // Inner depth
+    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
+    // Contact shadow
+    '0 1px 2px rgba(0, 0, 0, 0.18)',
+    // Role-colored atmospheric glow (enhanced)
+    `0 0 48px ${APPLE_COLORS.for.rgba(0.12)}`,
+    `0 0 96px ${APPLE_COLORS.for.rgba(0.06)}`,
+    // Elevation shadows
+    '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
+    '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
   ].join(', '),
   against: [
-    'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-    'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
-    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.28)',
-    '0 1px 2px rgba(0, 0, 0, 0.2)',
-    `0 0 32px ${APPLE_COLORS.against.rgba(0.09)}`,
-    '0 16px 32px -8px rgba(0, 0, 0, 0.35)',
-    '0 40px 48px -16px rgba(0, 0, 0, 0.28)',
+    `inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.3)}`,
+    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
+    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
+    '0 1px 2px rgba(0, 0, 0, 0.18)',
+    `0 0 48px ${APPLE_COLORS.against.rgba(0.12)}`,
+    `0 0 96px ${APPLE_COLORS.against.rgba(0.06)}`,
+    '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
+    '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
   ].join(', '),
   moderator: [
-    'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    `inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.25)}`,
     'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
-    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.28)',
-    '0 1px 2px rgba(0, 0, 0, 0.2)',
-    `0 0 32px ${APPLE_COLORS.moderator.rgba(0.07)}`,
-    '0 16px 32px -8px rgba(0, 0, 0, 0.35)',
-    '0 40px 48px -16px rgba(0, 0, 0, 0.28)',
+    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
+    '0 1px 2px rgba(0, 0, 0, 0.18)',
+    `0 0 40px ${APPLE_COLORS.moderator.rgba(0.08)}`,
+    `0 0 80px ${APPLE_COLORS.moderator.rgba(0.04)}`,
+    '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
+    '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
   ].join(', '),
 }
 
-// Inactive card shadows - subtle, recessed feel (softened)
+// Inactive card shadows
 export const SPEAKER_INACTIVE_SHADOWS = [
   'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
-  'inset 0 -32px 48px -16px rgba(0, 0, 0, 0.22)',
-  '0 8px 24px -4px rgba(0, 0, 0, 0.22)',
+  'inset 0 -32px 48px -16px rgba(0, 0, 0, 0.2)',
+  '0 8px 24px -4px rgba(0, 0, 0, 0.2)',
 ].join(', ')
 
 /**
- * Gradient pill badge styles for premium speaker identification
- * Uses subtle gradient with Apple-inspired desaturated colors
+ * Luminous pill badge styles - Vision Pro floating label aesthetic
+ * Inner glow + translucent luminous background
  */
 export const SPEAKER_PILL_STYLES: Record<
   TurnSpeaker,
@@ -143,29 +269,45 @@ export const SPEAKER_PILL_STYLES: Record<
     text: string
     border: string
     glow: string
+    innerGlow: string
   }
 > = {
   for: {
-    background: `linear-gradient(135deg, ${APPLE_COLORS.for.rgba(0.14)} 0%, ${APPLE_COLORS.for.rgba(0.04)} 100%)`,
-    text: 'hsl(185, 45%, 72%)',
-    border: APPLE_COLORS.for.rgba(0.2),
-    glow: `0 0 16px ${APPLE_COLORS.for.rgba(0.09)}`,
+    background: `linear-gradient(135deg,
+      ${APPLE_COLORS.for.rgba(0.18)} 0%,
+      ${APPLE_COLORS.for.rgba(0.08)} 50%,
+      ${APPLE_COLORS.for.rgba(0.12)} 100%
+    )`.replace(/\s+/g, ' '),
+    text: APPLE_COLORS.for.highlight,
+    border: APPLE_COLORS.for.rgba(0.25),
+    glow: `0 0 20px ${APPLE_COLORS.for.rgba(0.15)}, 0 0 40px ${APPLE_COLORS.for.rgba(0.08)}`,
+    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.35)}, inset 0 0 8px ${APPLE_COLORS.for.rgba(0.1)}`,
   },
   against: {
-    background: `linear-gradient(135deg, ${APPLE_COLORS.against.rgba(0.14)} 0%, ${APPLE_COLORS.against.rgba(0.04)} 100%)`,
-    text: 'hsl(350, 55%, 78%)',
-    border: APPLE_COLORS.against.rgba(0.2),
-    glow: `0 0 16px ${APPLE_COLORS.against.rgba(0.09)}`,
+    background: `linear-gradient(135deg,
+      ${APPLE_COLORS.against.rgba(0.18)} 0%,
+      ${APPLE_COLORS.against.rgba(0.08)} 50%,
+      ${APPLE_COLORS.against.rgba(0.12)} 100%
+    )`.replace(/\s+/g, ' '),
+    text: APPLE_COLORS.against.highlight,
+    border: APPLE_COLORS.against.rgba(0.25),
+    glow: `0 0 20px ${APPLE_COLORS.against.rgba(0.15)}, 0 0 40px ${APPLE_COLORS.against.rgba(0.08)}`,
+    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.35)}, inset 0 0 8px ${APPLE_COLORS.against.rgba(0.1)}`,
   },
   moderator: {
-    background: `linear-gradient(135deg, ${APPLE_COLORS.moderator.rgba(0.12)} 0%, ${APPLE_COLORS.moderator.rgba(0.03)} 100%)`,
-    text: 'hsl(220, 15%, 75%)',
-    border: APPLE_COLORS.moderator.rgba(0.16),
-    glow: `0 0 16px ${APPLE_COLORS.moderator.rgba(0.07)}`,
+    background: `linear-gradient(135deg,
+      ${APPLE_COLORS.moderator.rgba(0.15)} 0%,
+      ${APPLE_COLORS.moderator.rgba(0.06)} 50%,
+      ${APPLE_COLORS.moderator.rgba(0.1)} 100%
+    )`.replace(/\s+/g, ' '),
+    text: APPLE_COLORS.moderator.highlight,
+    border: APPLE_COLORS.moderator.rgba(0.2),
+    glow: `0 0 16px ${APPLE_COLORS.moderator.rgba(0.1)}, 0 0 32px ${APPLE_COLORS.moderator.rgba(0.05)}`,
+    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.3)}, inset 0 0 8px ${APPLE_COLORS.moderator.rgba(0.08)}`,
   },
 }
 
-// Phase/section chip styles - subtle speaker-tinted backgrounds
+// Phase/section chip styles with luminous tint
 export const SPEAKER_PHASE_CHIP_STYLES: Record<
   TurnSpeaker,
   {
@@ -175,23 +317,23 @@ export const SPEAKER_PHASE_CHIP_STYLES: Record<
   }
 > = {
   for: {
-    background: APPLE_COLORS.for.rgba(0.06),
-    text: 'rgb(156, 163, 175)', // gray-400
-    border: APPLE_COLORS.for.rgba(0.12),
+    background: APPLE_COLORS.for.rgba(0.08),
+    text: APPLE_COLORS.for.highlight,
+    border: APPLE_COLORS.for.rgba(0.15),
   },
   against: {
-    background: APPLE_COLORS.against.rgba(0.06),
-    text: 'rgb(156, 163, 175)', // gray-400
-    border: APPLE_COLORS.against.rgba(0.12),
+    background: APPLE_COLORS.against.rgba(0.08),
+    text: APPLE_COLORS.against.highlight,
+    border: APPLE_COLORS.against.rgba(0.15),
   },
   moderator: {
-    background: APPLE_COLORS.moderator.rgba(0.05),
-    text: 'rgb(156, 163, 175)', // gray-400
-    border: APPLE_COLORS.moderator.rgba(0.1),
+    background: APPLE_COLORS.moderator.rgba(0.06),
+    text: APPLE_COLORS.moderator.highlight,
+    border: APPLE_COLORS.moderator.rgba(0.12),
   },
 }
 
-// Card surface tint per speaker for role differentiation
+// Card surface tint - luminous wash over the frosted glass
 export const SPEAKER_SURFACE_TINT: Record<
   TurnSpeaker,
   {
@@ -200,44 +342,44 @@ export const SPEAKER_SURFACE_TINT: Record<
   }
 > = {
   for: {
-    active: APPLE_COLORS.for.rgba(0.025),
-    inactive: APPLE_COLORS.for.rgba(0.012),
+    active: APPLE_COLORS.for.rgba(0.04),
+    inactive: APPLE_COLORS.for.rgba(0.015),
   },
   against: {
-    active: APPLE_COLORS.against.rgba(0.025),
-    inactive: APPLE_COLORS.against.rgba(0.012),
+    active: APPLE_COLORS.against.rgba(0.04),
+    inactive: APPLE_COLORS.against.rgba(0.015),
   },
   moderator: {
-    active: APPLE_COLORS.moderator.rgba(0.02),
-    inactive: APPLE_COLORS.moderator.rgba(0.008),
+    active: APPLE_COLORS.moderator.rgba(0.03),
+    inactive: APPLE_COLORS.moderator.rgba(0.01),
   },
 }
 
-// Enhanced gradient for active state - exponential decay for natural light falloff
+// Enhanced gradient for active state with exponential luminosity decay
 export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {
   for: `linear-gradient(90deg,
-    ${APPLE_COLORS.for.rgba(0.1)} 0%,
-    ${APPLE_COLORS.for.rgba(0.07)} 25px,
-    ${APPLE_COLORS.for.rgba(0.04)} 70px,
-    ${APPLE_COLORS.for.rgba(0.018)} 130px,
-    ${APPLE_COLORS.for.rgba(0.006)} 190px,
-    ${APPLE_COLORS.for.rgba(0)} 260px
+    ${APPLE_COLORS.for.rgba(0.14)} 0%,
+    ${APPLE_COLORS.for.rgba(0.09)} 25px,
+    ${APPLE_COLORS.for.rgba(0.05)} 70px,
+    ${APPLE_COLORS.for.rgba(0.025)} 130px,
+    ${APPLE_COLORS.for.rgba(0.01)} 200px,
+    ${APPLE_COLORS.for.rgba(0)} 280px
   )`.replace(/\s+/g, ' '),
   against: `linear-gradient(90deg,
-    ${APPLE_COLORS.against.rgba(0.1)} 0%,
-    ${APPLE_COLORS.against.rgba(0.07)} 25px,
-    ${APPLE_COLORS.against.rgba(0.04)} 70px,
-    ${APPLE_COLORS.against.rgba(0.018)} 130px,
-    ${APPLE_COLORS.against.rgba(0.006)} 190px,
-    ${APPLE_COLORS.against.rgba(0)} 260px
+    ${APPLE_COLORS.against.rgba(0.14)} 0%,
+    ${APPLE_COLORS.against.rgba(0.09)} 25px,
+    ${APPLE_COLORS.against.rgba(0.05)} 70px,
+    ${APPLE_COLORS.against.rgba(0.025)} 130px,
+    ${APPLE_COLORS.against.rgba(0.01)} 200px,
+    ${APPLE_COLORS.against.rgba(0)} 280px
   )`.replace(/\s+/g, ' '),
   moderator: `linear-gradient(90deg,
-    ${APPLE_COLORS.moderator.rgba(0.08)} 0%,
-    ${APPLE_COLORS.moderator.rgba(0.055)} 25px,
-    ${APPLE_COLORS.moderator.rgba(0.03)} 70px,
-    ${APPLE_COLORS.moderator.rgba(0.014)} 130px,
-    ${APPLE_COLORS.moderator.rgba(0.004)} 190px,
-    ${APPLE_COLORS.moderator.rgba(0)} 260px
+    ${APPLE_COLORS.moderator.rgba(0.1)} 0%,
+    ${APPLE_COLORS.moderator.rgba(0.065)} 25px,
+    ${APPLE_COLORS.moderator.rgba(0.035)} 70px,
+    ${APPLE_COLORS.moderator.rgba(0.018)} 130px,
+    ${APPLE_COLORS.moderator.rgba(0.006)} 200px,
+    ${APPLE_COLORS.moderator.rgba(0)} 280px
   )`.replace(/\s+/g, ' '),
 }
 
