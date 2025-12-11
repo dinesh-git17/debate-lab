@@ -420,6 +420,11 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   const status = storeStatus === 'ready' && initialStatus ? initialStatus : storeStatus
   const markMessageDisplayed = useDebateViewStore((s) => s.markMessageDisplayed)
 
+  // Track initial mount for cascading entrance animation
+  // Only applies when page loads with hydrated messages (e.g., completed debate refresh)
+  const isInitialMountRef = useRef(true)
+  const [isInitialCascade, setIsInitialCascade] = useState(true)
+
   // Get visible messages: all displayed + the first non-displayed (currently animating)
   // Memoize to prevent unnecessary re-renders and useEffect triggers
   const messages = useMemo(() => {
@@ -454,6 +459,38 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   const handleMessageHover = useCallback((messageId: string, isHovered: boolean) => {
     setHoveredMessageId(isHovered ? messageId : null)
   }, [])
+
+  // Initial mount: scroll to top and trigger cascade animation for completed debates
+  useEffect(() => {
+    // Don't do anything until we have messages (wait for hydration)
+    if (allMessages.length === 0) return
+
+    // Only run cascade logic once when messages first arrive
+    if (!isInitialMountRef.current) return
+    isInitialMountRef.current = false
+
+    const container = containerRef.current
+
+    // For completed debates with hydrated messages, scroll to top and cascade
+    if (status === 'completed' && container) {
+      // Scroll to top immediately (before paint)
+      container.scrollTop = 0
+
+      // Clear cascade state after all cards have animated in
+      // Total time = (numCards * stagger) + entranceDuration + buffer
+      const totalCascadeTime =
+        allMessages.length * ANIMATION_CONFIG.CARD_ENTRANCE.STAGGER_MS +
+        ANIMATION_CONFIG.CARD_ENTRANCE.DURATION_MS +
+        100 // buffer
+
+      setTimeout(() => {
+        setIsInitialCascade(false)
+      }, totalCascadeTime)
+    } else {
+      // Not a completed debate, disable cascade immediately
+      setIsInitialCascade(false)
+    }
+  }, [status, allMessages.length])
 
   // Track if we have messages to determine when container becomes available
   const hasMessages = messages.length > 0
@@ -726,6 +763,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             const isPreviousCardHovered = previousMessage
               ? hoveredMessageId === previousMessage.id
               : false
+            // Pass cascadeIndex only during initial cascade animation (page load with hydrated messages)
+            const shouldCascade = isInitialCascade && status === 'completed' && shouldSkipAnimation
+
             return (
               <MessageBubble
                 key={message.id}
@@ -739,6 +779,7 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
                 isCompleted={status === 'completed'}
                 onHoverChange={handleMessageHover}
                 isPreviousCardHovered={isPreviousCardHovered}
+                {...(shouldCascade ? { cascadeIndex: index } : {})}
               />
             )
           })}

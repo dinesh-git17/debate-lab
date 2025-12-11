@@ -29,13 +29,16 @@ export function FloatingControls({ debateId }: FloatingControlsProps) {
   return (
     <motion.div
       className={cn(
-        // Fixed positioning - centered at bottom
-        'fixed bottom-8 left-1/2 z-50 -translate-x-1/2',
+        // Fixed positioning - visually centered to match card alignment
+        'fixed bottom-8 z-50',
         // Responsive adjustments
         'max-w-[calc(100vw-2rem)]'
       )}
-      initial={{ opacity: 0, y: 16, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      style={{
+        left: '48.5%',
+      }}
+      initial={{ opacity: 0, y: 16, scale: 0.96, x: '-50%' }}
+      animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
       transition={{
         type: 'spring',
         stiffness: 180,

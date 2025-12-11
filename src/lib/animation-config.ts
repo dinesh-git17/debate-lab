@@ -57,21 +57,21 @@ export const ANIMATION_CONFIG = {
   ANIMATION_CLEANUP_DELAY_MS: 150, // Remove animation classes after completion
   RAF_THROTTLE_MS: 16, // ~60fps target
 
-  // Card entrance animation - Apple-style blur-in
+  // Card entrance animation - Apple-style smooth fade-in
   CARD_ENTRANCE: {
-    DURATION_MS: 320,
-    TRANSLATE_Y: 12, // pixels
-    BLUR_START: 8, // pixels
-    STAGGER_MS: 60, // stagger between cards
-    EASING: [0.22, 0.61, 0.36, 1] as const, // Apple decelerate curve
+    DURATION_MS: 350, // Snappy for real-time streaming
+    TRANSLATE_Y: 8, // pixels - subtle lift
+    BLUR_START: 4, // pixels - light blur (less GPU intensive)
+    STAGGER_MS: 80, // stagger between cards - for page load cascade
+    EASING: [0.16, 1, 0.3, 1] as const, // Apple expo-out (fast start, smooth end)
   },
 
   // Auto-scroll behavior - cinematic pause + smooth scroll
   AUTO_SCROLL: {
-    PAUSE_AFTER_COMPLETE_MS: 600, // Reading time before scrolling to next
-    SCROLL_DURATION_MS: 650, // Smooth scroll duration
-    SCROLL_EASING: [0.22, 0.61, 0.36, 1] as const, // Apple decelerate curve
-    LERP_FACTOR: 0.06, // Gentler lerp for streaming follow (was 0.08)
+    PAUSE_AFTER_COMPLETE_MS: 400, // Reading time before scrolling to next
+    SCROLL_DURATION_MS: 500, // Smooth scroll duration (snappier)
+    SCROLL_EASING: [0.25, 0.1, 0.25, 1] as const, // Apple ease-out curve
+    LERP_FACTOR: 0.1, // Responsive lerp for streaming follow
     CENTER_OFFSET: 0.35, // Position next card at 35% from top (visual center)
   },
 
