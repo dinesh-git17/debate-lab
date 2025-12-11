@@ -69,24 +69,30 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Mock ResizeObserver
+// Mock ResizeObserver with proper constructor
+class MockResizeObserver {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+}
 Object.defineProperty(window, 'ResizeObserver', {
   writable: true,
-  value: vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  })),
+  value: MockResizeObserver,
 })
 
-// Mock IntersectionObserver
+// Mock IntersectionObserver with proper constructor
+class MockIntersectionObserver {
+  readonly root: Element | null = null
+  readonly rootMargin: string = ''
+  readonly thresholds: ReadonlyArray<number> = []
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+  takeRecords = vi.fn(() => [])
+}
 Object.defineProperty(window, 'IntersectionObserver', {
   writable: true,
-  value: vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  })),
+  value: MockIntersectionObserver,
 })
 
 // Mock scrollTo
