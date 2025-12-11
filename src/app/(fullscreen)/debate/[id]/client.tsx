@@ -268,11 +268,11 @@ export function DebatePageClient({
         style={{
           background: `radial-gradient(ellipse ${CANVAS_CONFIG.vignetteEllipse} at center,
             transparent ${status === 'completed' ? '28%' : '30%'},
-            rgba(0, 0, 0, 0.06) ${status === 'completed' ? '42%' : '45%'},
-            rgba(0, 0, 0, 0.18) ${status === 'completed' ? '55%' : '58%'},
-            rgba(0, 0, 0, 0.45) 75%,
-            rgba(0, 0, 0, 0.75) 90%,
-            rgba(0, 0, 0, 0.9) 100%
+            hsl(var(--gradient-void) / 0.06) ${status === 'completed' ? '42%' : '45%'},
+            hsl(var(--gradient-void) / 0.18) ${status === 'completed' ? '55%' : '58%'},
+            hsl(var(--gradient-void) / 0.45) 75%,
+            hsl(var(--gradient-void) / 0.75) 90%,
+            hsl(var(--gradient-void) / 0.9) 100%
           )`,
         }}
         animate={{
