@@ -1,6 +1,8 @@
 // src/lib/security/sanitizer.ts
 // Input sanitization utilities for XSS prevention and text cleaning
 
+import sanitizeHtml from 'sanitize-html'
+
 import type { SanitizationOptions, SanitizationResult } from '@/types/security'
 
 const DEFAULT_MAX_LENGTHS = {
@@ -103,32 +105,60 @@ function escapeHtml(str: string): string {
   return str.replace(/[&<>"'`=/]/g, (char) => HTML_ESCAPE_MAP[char] ?? char)
 }
 
+/**
+ * Strips all HTML tags from a string using sanitize-html library.
+ * Does NOT unescape HTML entities to prevent reintroducing dangerous characters.
+ * Security: Fixes CVE for double escaping/unescaping vulnerability.
+ */
 function stripHtml(str: string): string {
-  // Server-safe HTML stripping without jsdom dependency
-  return str
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags and content
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '') // Remove style tags and content
-    .replace(/<[^>]*>/g, '') // Remove all HTML tags
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#x27;/gi, "'")
-    .replace(/&#x2F;/gi, '/')
-    .trim()
+  // Use sanitize-html with no allowed tags to strip all HTML safely
+  const stripped = sanitizeHtml(str, {
+    allowedTags: [],
+    allowedAttributes: {},
+    disallowedTagsMode: 'discard',
+  })
+
+  // Only decode safe whitespace entities, NOT angle brackets or other dangerous chars
+  return stripped.replace(/&nbsp;/gi, ' ').trim()
+}
+
+/**
+ * Applies a pattern replacement repeatedly until no more matches are found.
+ * Security: Fixes incomplete multi-character sanitization vulnerability.
+ */
+function replaceUntilStable(str: string, pattern: RegExp, replacement: string): string {
+  let result = str
+  let prev: string
+
+  // Limit iterations to prevent infinite loops on pathological input
+  const maxIterations = 100
+  let iterations = 0
+
+  do {
+    prev = result
+    // Reset lastIndex for global regexes
+    pattern.lastIndex = 0
+    result = result.replace(pattern, replacement)
+    iterations++
+  } while (result !== prev && iterations < maxIterations)
+
+  return result
 }
 
 function sanitizeForLlm(str: string): string {
   let result = str
+
   for (const pattern of LLM_DANGEROUS_PATTERNS) {
-    result = result.replace(pattern, '')
+    // Use stable replacement to handle nested/recursive patterns
+    result = replaceUntilStable(result, pattern, '')
   }
+
   result = result
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     .replace(/\u0000/g, '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
+
   return result.trim()
 }
 
@@ -140,22 +170,22 @@ function sanitizeForStorage(str: string): string {
     .trim()
 }
 
+/**
+ * Sanitizes HTML for display using sanitize-html library.
+ * Security: Fixes bad HTML filtering regexp vulnerability by using a proper parser.
+ */
 function sanitizeForDisplay(str: string, allowHtml: boolean): string {
   if (allowHtml) {
-    // Server-safe HTML sanitization - allow only specific safe tags
-    const allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li']
-    const tagPattern = allowedTags.join('|')
-    // Remove script/style tags completely
-    let result = str
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    // Remove attributes from allowed tags
-    const allowedTagRegex = new RegExp(`<(${tagPattern})(\\s[^>]*)?>`, 'gi')
-    result = result.replace(allowedTagRegex, '<$1>')
-    // Remove all non-allowed tags
-    const disallowedTagRegex = new RegExp(`<(?!\\/?(${tagPattern})\\s*\\/?>)[^>]*>`, 'gi')
-    result = result.replace(disallowedTagRegex, '')
-    return result.trim()
+    // Use sanitize-html with a whitelist of safe tags
+    return sanitizeHtml(str, {
+      allowedTags: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
+      allowedAttributes: {}, // No attributes allowed
+      disallowedTagsMode: 'discard',
+      // Explicitly disallow dangerous tags and their contents
+      exclusiveFilter: (frame) => {
+        return frame.tag === 'script' || frame.tag === 'style'
+      },
+    }).trim()
   }
   return escapeHtml(stripHtml(str))
 }
