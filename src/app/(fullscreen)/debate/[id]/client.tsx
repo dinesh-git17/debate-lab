@@ -9,6 +9,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useRef, useCallback, useMemo } from 'react'
 
 import { AmbientLighting } from '@/components/debate/ambient-lighting'
+import { AtmosphericBackground } from '@/components/debate/atmospheric-background'
 import { DebateHeader } from '@/components/debate/debate-header'
 import { FilmGrain } from '@/components/debate/film-grain'
 import { FloatingControls } from '@/components/debate/floating-controls'
@@ -25,11 +26,9 @@ import type { TurnSpeaker } from '@/types/turn'
 
 /**
  * Apple-inspired canvas configuration
- * Vertical gradient creates depth without harsh contrast
+ * Background uses AtmosphericBackground component with CSS variables
  */
 const CANVAS_CONFIG = {
-  // Background gradient: deep charcoal to subtle graphite
-  backgroundGradient: 'linear-gradient(180deg, hsl(220, 10%, 8%) 0%, hsl(210, 5%, 14%) 100%)',
   // Noise overlay for tactile texture
   noiseOpacity: 0.015,
   // Vignette: soft elliptical falloff
@@ -227,15 +226,14 @@ export function DebatePageClient({
         // Fullscreen fixed container - no navbar to account for
         'fixed inset-0 z-50 flex flex-col overflow-hidden'
       )}
-      style={{
-        // Apple-inspired vertical gradient background
-        background: CANVAS_CONFIG.backgroundGradient,
-      }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Ambient lighting */}
+      {/* Atmospheric background - 5-layer gradient system (z-0 to z-4) */}
+      <AtmosphericBackground />
+
+      {/* Ambient lighting (z-5) */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -244,7 +242,7 @@ export function DebatePageClient({
           delay: 0.4,
           ease: [0.25, 0.95, 0.35, 1],
         }}
-        className="z-0"
+        className="z-[5]"
       >
         <AmbientLighting
           activeSpeaker={activeSpeaker}
@@ -253,9 +251,9 @@ export function DebatePageClient({
         />
       </motion.div>
 
-      {/* Global noise texture overlay */}
+      {/* Global noise texture overlay (z-6) */}
       <div
-        className="pointer-events-none fixed inset-0 z-[2]"
+        className="pointer-events-none fixed inset-0 z-[6]"
         style={{
           backgroundImage: NOISE_SVG,
           opacity: CANVAS_CONFIG.noiseOpacity,
@@ -264,9 +262,9 @@ export function DebatePageClient({
         aria-hidden="true"
       />
 
-      {/* Vignette - soft elliptical falloff with gentle breathing */}
+      {/* Vignette - soft elliptical falloff with gentle breathing (z-7) */}
       <motion.div
-        className="pointer-events-none fixed inset-0 z-[5]"
+        className="pointer-events-none fixed inset-0 z-[7]"
         style={{
           background: `radial-gradient(ellipse ${CANVAS_CONFIG.vignetteEllipse} at center,
             transparent ${status === 'completed' ? '28%' : '30%'},

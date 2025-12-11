@@ -26,6 +26,13 @@ html {
   --border: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.5rem;
+
+  /* Atmospheric gradient palette - Light mode (warm off-white paper) */
+  --gradient-void: 40 15% 98%;
+  --gradient-deep: 35 12% 96%;
+  --gradient-atmospheric: 35 10% 94%;
+  --gradient-undertone: 220 10% 95%;
+  --gradient-glow: 40 8% 99%;
 }
 
 .dark {
@@ -51,6 +58,13 @@ html {
   /* Borders - very subtle, almost invisible */
   --border: 0 0% 15%;
   --ring: 0 0% 80%;
+
+  /* Atmospheric gradient palette - Dark mode (deep with indigo undertone) */
+  --gradient-void: 225 12% 6%;
+  --gradient-deep: 220 8% 10%;
+  --gradient-atmospheric: 215 6% 15%;
+  --gradient-undertone: 240 25% 18%;
+  --gradient-glow: 230 15% 22%;
 }
 
 @theme inline {
