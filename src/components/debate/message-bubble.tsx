@@ -376,14 +376,24 @@ export const MessageBubble = memo(function MessageBubble({
   // cascadeIndex !== undefined means this is initial page load with hydrated messages
   const shouldAnimate = cascadeIndex !== undefined || !skipAnimation
 
+  // Speaker-based micro-delay for visual rhythm (moderator → for → against)
+  // Creates a subtle temporal cadence that feels intentional
+  const speakerDelayOffset: Record<TurnSpeaker, number> = {
+    moderator: 0,
+    for: 0.02,
+    against: 0.04,
+  }
+
   // Calculate stagger delay for cascade effect
   // Uses CARD_ENTRANCE.STAGGER_MS from config, with cascadeIndex for page load
+  // Adds speaker-based micro-offset for rhythmic entrance
   const staggerDelay =
     cascadeIndex !== undefined
-      ? (cascadeIndex * ANIMATION_CONFIG.CARD_ENTRANCE.STAGGER_MS) / 1000
+      ? (cascadeIndex * ANIMATION_CONFIG.CARD_ENTRANCE.STAGGER_MS) / 1000 +
+        speakerDelayOffset[message.speaker]
       : isModeratorTransition && !skipAnimation
         ? 0.08
-        : 0
+        : speakerDelayOffset[message.speaker]
 
   return (
     <motion.div
@@ -465,13 +475,13 @@ export const MessageBubble = memo(function MessageBubble({
       >
         {/* Atmospheric Fog - smooth vertical gradient, no visible edges */}
         <div
-          className="pointer-events-none absolute -inset-12 z-0"
+          className="pointer-events-none absolute -inset-16 z-0"
           style={{
             background: SPEAKER_AMBIENT_GLOW[message.speaker],
             opacity: isActive || (isCompleted && isHovered) ? 1 : 0.4,
             transition: 'opacity 0.5s ease-out',
-            // No border radius - let it bleed softly into surroundings
-            filter: 'blur(40px)',
+            // Heavy blur eliminates gradient banding/graininess
+            filter: 'blur(60px)',
           }}
           aria-hidden="true"
         />
@@ -747,7 +757,7 @@ export const MessageBubble = memo(function MessageBubble({
               className="absolute inset-0 pointer-events-none"
               style={{
                 borderRadius: GLASS_CONFIG.borderRadius.css,
-                border: `2px solid ${APPLE_COLORS[message.speaker].rgba(isActive ? 0.5 : 0.2)}`,
+                border: `1px solid ${APPLE_COLORS[message.speaker].rgba(isActive ? 0.25 : 0.1)}`,
                 opacity: isHovered ? 0 : 1,
                 transition: 'opacity 0.3s ease-out, border-color 0.4s ease-out',
               }}
@@ -758,6 +768,17 @@ export const MessageBubble = memo(function MessageBubble({
             <div
               className="pointer-events-none absolute inset-0"
               style={{ background: gradient }}
+              aria-hidden="true"
+            />
+
+            {/* Bottom Edge Light Plane - subtle gradient fade for shared surface feel */}
+            <div
+              className="pointer-events-none absolute bottom-0 left-0 right-0 z-10"
+              style={{
+                height: 2,
+                background: 'linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.15))',
+                borderRadius: `0 0 ${GLASS_CONFIG.borderRadius.bottom}px ${GLASS_CONFIG.borderRadius.bottom}px`,
+              }}
               aria-hidden="true"
             />
 

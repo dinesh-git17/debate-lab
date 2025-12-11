@@ -96,31 +96,45 @@ export const SPEAKER_CONFIGS: Record<TurnSpeaker, SpeakerConfig> = {
  * - FOR: Deep charcoal → midnight blue (analytical, logical)
  * - AGAINST: Deep charcoal → subtle plum/rose (passionate, challenging)
  * - MODERATOR: Deep charcoal → warm amber (balanced, wise)
- * Apple-style: emotionally connected but sophisticated
+ *
+ * Anti-banding: Uses many intermediate stops for smooth transitions.
+ * Combined with blur(60px) in message-bubble.tsx for soft edges.
  */
 export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
-  // FOR: Midnight blue undertone - analytical, logical intelligence (subtle)
+  // FOR: Midnight blue undertone - smooth multi-stop gradient
   for: `radial-gradient(
-    ellipse 120% 100% at 50% 0%,
-    rgba(100, 130, 180, 0.10) 0%,
-    rgba(60, 80, 120, 0.06) 40%,
-    rgba(20, 20, 30, 0.03) 70%,
+    ellipse 140% 120% at 50% 0%,
+    rgba(80, 110, 160, 0.08) 0%,
+    rgba(70, 100, 150, 0.07) 15%,
+    rgba(60, 90, 140, 0.06) 30%,
+    rgba(50, 75, 120, 0.04) 45%,
+    rgba(40, 60, 100, 0.03) 60%,
+    rgba(30, 45, 80, 0.02) 75%,
+    rgba(20, 30, 50, 0.01) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
-  // AGAINST: Plum/rose undertone - passionate, challenging perspective (subtle)
+  // AGAINST: Plum/rose undertone - smooth multi-stop gradient
   against: `radial-gradient(
-    ellipse 120% 100% at 50% 0%,
-    rgba(160, 100, 130, 0.10) 0%,
-    rgba(100, 60, 80, 0.06) 40%,
-    rgba(30, 20, 25, 0.03) 70%,
+    ellipse 140% 120% at 50% 0%,
+    rgba(140, 90, 115, 0.08) 0%,
+    rgba(130, 85, 108, 0.07) 15%,
+    rgba(115, 75, 95, 0.06) 30%,
+    rgba(100, 65, 85, 0.04) 45%,
+    rgba(80, 55, 70, 0.03) 60%,
+    rgba(60, 40, 55, 0.02) 75%,
+    rgba(40, 28, 38, 0.01) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
-  // MODERATOR: Warm amber undertone - balanced, wise oversight (subtle)
+  // MODERATOR: Warm amber undertone - smooth multi-stop gradient
   moderator: `radial-gradient(
-    ellipse 120% 100% at 50% 0%,
-    rgba(160, 140, 100, 0.08) 0%,
-    rgba(100, 85, 60, 0.04) 40%,
-    rgba(30, 25, 20, 0.02) 70%,
+    ellipse 140% 120% at 50% 0%,
+    rgba(140, 125, 90, 0.07) 0%,
+    rgba(130, 115, 85, 0.06) 15%,
+    rgba(115, 100, 75, 0.05) 30%,
+    rgba(95, 85, 65, 0.04) 45%,
+    rgba(75, 68, 52, 0.03) 60%,
+    rgba(55, 50, 40, 0.02) 75%,
+    rgba(38, 34, 28, 0.01) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
 }

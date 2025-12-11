@@ -67,26 +67,28 @@ function PillButton({
 }: PillButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  const textColor = variant === 'danger' ? 'rgb(251, 113, 133)' : 'rgba(255, 255, 255, 0.85)'
+  // Text color: brighter on hover for subtle feedback
+  const baseColor = variant === 'danger' ? 'rgb(251, 113, 133)' : 'rgba(255, 255, 255, 0.6)'
+  const hoverColor = variant === 'danger' ? 'rgb(255, 140, 160)' : 'rgba(255, 255, 255, 1)'
 
   return (
     <motion.button
       onClick={onClick}
       disabled={disabled || isLoading}
       className={cn(
-        'flex items-center justify-center rounded-full overflow-hidden',
+        'flex items-center justify-center rounded-full overflow-hidden cursor-pointer',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
-        'disabled:opacity-40 disabled:pointer-events-none'
+        'disabled:opacity-40 disabled:cursor-not-allowed'
       )}
       style={{
         height: BUTTON_CONFIG.height,
         paddingLeft: BUTTON_CONFIG.paddingX,
         paddingRight: BUTTON_CONFIG.paddingX,
-        color: textColor,
+        color: isHovered ? hoverColor : baseColor,
+        transition: 'color 0.15s ease-out',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
       whileTap={{ scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
@@ -131,23 +133,27 @@ interface PillLinkProps {
 function PillLink({ href, icon, label }: PillLinkProps) {
   const [isHovered, setIsHovered] = useState(false)
 
+  // Text color: brighter on hover for subtle feedback
+  const baseColor = 'rgba(255, 255, 255, 0.6)'
+  const hoverColor = 'rgba(255, 255, 255, 1)'
+
   return (
     <motion.div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
       whileTap={{ scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className="rounded-full"
     >
       <Link
         href={href}
-        className="flex items-center justify-center rounded-full"
+        className="flex items-center justify-center rounded-full cursor-pointer"
         style={{
           height: BUTTON_CONFIG.height,
           paddingLeft: BUTTON_CONFIG.paddingX,
           paddingRight: BUTTON_CONFIG.paddingX,
-          color: 'rgba(255, 255, 255, 0.85)',
+          color: isHovered ? hoverColor : baseColor,
+          transition: 'color 0.15s ease-out',
         }}
       >
         {icon}
