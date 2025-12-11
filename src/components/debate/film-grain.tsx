@@ -1,4 +1,7 @@
-// src/components/debate/film-grain.tsx
+/**
+ * src/components/debate/film-grain.tsx
+ * Cinematic film grain overlay with configurable opacity
+ */
 
 'use client'
 
@@ -17,11 +20,17 @@ const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='h
 
 interface FilmGrainProps {
   className?: string
+  /** Opacity multiplier for the grain effect (0-1, default 1) */
+  opacity?: number
 }
 
-export function FilmGrain({ className }: FilmGrainProps) {
+export function FilmGrain({ className, opacity = 1 }: FilmGrainProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
+
+  // Base opacity values scaled by the opacity prop
+  const coarseOpacity = 0.025 * opacity
+  const fineOpacity = 0.02 * opacity
   const [coarseOffset, setCoarseOffset] = useState({ x: 0, y: 0 })
   const [fineOffset, setFineOffset] = useState({ x: 0, y: 0 })
 
@@ -83,7 +92,7 @@ export function FilmGrain({ className }: FilmGrainProps) {
           backgroundPosition: prefersReducedMotion
             ? '0 0'
             : `${coarseOffset.x}px ${coarseOffset.y}px`,
-          opacity: 0.025,
+          opacity: coarseOpacity,
           mixBlendMode: 'soft-light',
           willChange: prefersReducedMotion ? 'auto' : 'background-position',
         }}
@@ -98,7 +107,7 @@ export function FilmGrain({ className }: FilmGrainProps) {
           backgroundPosition: prefersReducedMotion
             ? '50px 50px'
             : `${fineOffset.x}px ${fineOffset.y}px`,
-          opacity: 0.02,
+          opacity: fineOpacity,
           mixBlendMode: 'soft-light',
           backgroundSize: '200px 200px',
           willChange: prefersReducedMotion ? 'auto' : 'background-position',

@@ -1,8 +1,12 @@
-// src/components/debate/command-dock.tsx
+/**
+ * src/components/debate/command-dock.tsx
+ * Apple-inspired roundel button dock with icon + label layout
+ */
 
 'use client'
 
-import { Download, Pause, Play, Plus } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Download, Pause, Play, Plus, FileText, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useCallback } from 'react'
@@ -19,15 +23,161 @@ import { ExportModal } from './export-modal'
 
 import type { ExportConfig } from '@/types/export'
 
+/**
+ * Compact pill button configuration - Safari-inspired
+ */
+const BUTTON_CONFIG = {
+  height: 36, // px - button height
+  iconSize: 18, // px - icon size
+  paddingX: 14, // px - horizontal padding
+  gap: 6, // px - gap between icon and label
+  fontSize: 12, // px - label font size
+} as const
+
 interface CommandDockProps {
   debateId: string
 }
 
 /**
- * Divider component for button groups
+ * Divider component for button groups - subtle vertical line
  */
 function Divider() {
-  return <div className="w-px h-4 bg-white/[0.1] mx-1" aria-hidden="true" />
+  return <div className="w-px h-5 bg-white/[0.1] mx-1" aria-hidden="true" />
+}
+
+/**
+ * Compact pill button with hover-expand label
+ */
+interface PillButtonProps {
+  icon: React.ReactNode
+  label?: string
+  onClick?: () => void
+  disabled?: boolean
+  variant?: 'default' | 'primary' | 'danger'
+  isLoading?: boolean
+}
+
+function PillButton({
+  icon,
+  label,
+  onClick,
+  disabled = false,
+  variant = 'default',
+  isLoading = false,
+}: PillButtonProps) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  const textColor = variant === 'danger' ? 'rgb(251, 113, 133)' : 'rgba(255, 255, 255, 0.85)'
+
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      className={cn(
+        'flex items-center justify-center rounded-full overflow-hidden',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+        'disabled:opacity-40 disabled:pointer-events-none'
+      )}
+      style={{
+        height: BUTTON_CONFIG.height,
+        paddingLeft: BUTTON_CONFIG.paddingX,
+        paddingRight: BUTTON_CONFIG.paddingX,
+        color: textColor,
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    >
+      {icon}
+      <motion.span
+        initial={false}
+        animate={{
+          width: isHovered && label ? 'auto' : 0,
+          marginLeft: isHovered && label ? BUTTON_CONFIG.gap : 0,
+          opacity: isHovered && label ? 1 : 0,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 400,
+          damping: 30,
+          mass: 0.8,
+          opacity: { duration: 0.15, ease: 'easeOut' },
+        }}
+        style={{
+          fontSize: BUTTON_CONFIG.fontSize,
+          fontWeight: 500,
+          letterSpacing: '0.01em',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+        }}
+      >
+        {isLoading ? '...' : label}
+      </motion.span>
+    </motion.button>
+  )
+}
+
+/**
+ * Compact pill link with hover-expand label
+ */
+interface PillLinkProps {
+  href: string
+  icon: React.ReactNode
+  label?: string
+}
+
+function PillLink({ href, icon, label }: PillLinkProps) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <motion.div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      className="rounded-full"
+    >
+      <Link
+        href={href}
+        className="flex items-center justify-center rounded-full"
+        style={{
+          height: BUTTON_CONFIG.height,
+          paddingLeft: BUTTON_CONFIG.paddingX,
+          paddingRight: BUTTON_CONFIG.paddingX,
+          color: 'rgba(255, 255, 255, 0.85)',
+        }}
+      >
+        {icon}
+        <motion.span
+          initial={false}
+          animate={{
+            width: isHovered && label ? 'auto' : 0,
+            marginLeft: isHovered && label ? BUTTON_CONFIG.gap : 0,
+            opacity: isHovered && label ? 1 : 0,
+          }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 30,
+            mass: 0.8,
+            opacity: { duration: 0.15, ease: 'easeOut' },
+          }}
+          style={{
+            fontSize: BUTTON_CONFIG.fontSize,
+            fontWeight: 500,
+            letterSpacing: '0.01em',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+          }}
+        >
+          {label}
+        </motion.span>
+      </Link>
+    </motion.div>
+  )
 }
 
 export function CommandDock({ debateId }: CommandDockProps) {
@@ -208,191 +358,125 @@ export function CommandDock({ debateId }: CommandDockProps) {
     enabled: true,
   })
 
-  // ===== BUTTON STYLES =====
-
-  // Ghost button - default state
-  const ghostButtonStyles = cn(
-    'group flex items-center gap-2 px-4 py-2 rounded-full',
-    'text-sm font-medium text-zinc-100',
-    'transition-all duration-150',
-    'hover:bg-white/10',
-    'active:scale-95',
-    'disabled:opacity-50 disabled:pointer-events-none'
-  )
-
-  // Danger button - for End
-  const dangerButtonStyles = cn(
-    'group flex items-center gap-2 px-4 py-2 rounded-full',
-    'text-sm font-medium text-zinc-400',
-    'transition-all duration-150',
-    'hover:text-rose-400 hover:bg-rose-500/10',
-    'active:scale-95',
-    'disabled:opacity-50 disabled:pointer-events-none'
-  )
-
-  // Inverted button - for New (primary action) - tight hover
-  const invertedButtonStyles = cn(
-    'group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
-    'text-sm font-medium text-zinc-100',
-    'transition-all duration-150',
-    'hover:bg-white hover:text-black',
-    'active:scale-95'
-  )
-
   // ===== RENDER =====
+
+  const iconSize = BUTTON_CONFIG.iconSize
 
   return (
     <>
       {/* ===== READY STATE: Start + New ===== */}
       {status === 'ready' && (
-        <>
-          <button onClick={handleStart} disabled={isLoading} className={ghostButtonStyles}>
-            <Play
-              size={16}
-              strokeWidth={2}
-              className="text-zinc-400 group-hover:text-white transition-colors"
-            />
-            <span>{isLoading ? 'Starting...' : 'Start'}</span>
-          </button>
-
+        <div className="flex items-center gap-1">
+          <PillButton
+            icon={<Play size={iconSize} strokeWidth={2} />}
+            label="Start"
+            onClick={handleStart}
+            disabled={isLoading}
+            isLoading={isLoading}
+          />
           <Divider />
-
-          <button onClick={handleNewDebate} className={invertedButtonStyles}>
-            <Plus size={16} strokeWidth={2.5} />
-            <span>New</span>
-          </button>
-        </>
+          <PillButton
+            icon={<Plus size={iconSize} strokeWidth={2} />}
+            label="New"
+            onClick={handleNewDebate}
+          />
+        </div>
       )}
 
       {/* ===== ACTIVE STATE: Pause + End + New ===== */}
       {status === 'active' && (
-        <>
-          <button onClick={handlePause} disabled={isLoading} className={ghostButtonStyles}>
-            <Pause
-              size={16}
-              strokeWidth={2}
-              className="text-zinc-400 group-hover:text-white transition-colors"
-            />
-            <span>{isLoading ? 'Pausing...' : 'Pause'}</span>
-          </button>
-
+        <div className="flex items-center gap-1">
+          <PillButton
+            icon={<Pause size={iconSize} strokeWidth={2} />}
+            label="Pause"
+            onClick={handlePause}
+            disabled={isLoading}
+            isLoading={isLoading}
+          />
           <Divider />
-
-          <button
+          <PillButton
+            icon={<FaStop size={iconSize - 4} />}
+            label="End"
             onClick={() => setShowEndModal(true)}
             disabled={isLoading}
-            className={dangerButtonStyles}
-          >
-            <FaStop className="h-3.5 w-3.5" />
-            <span>End</span>
-          </button>
-
+            variant="danger"
+          />
           <Divider />
-
-          <button onClick={handleNewDebate} className={invertedButtonStyles}>
-            <Plus size={16} strokeWidth={2.5} />
-            <span>New</span>
-          </button>
-        </>
+          <PillButton
+            icon={<Plus size={iconSize} strokeWidth={2} />}
+            label="New"
+            onClick={handleNewDebate}
+          />
+        </div>
       )}
 
       {/* ===== PAUSED STATE: Resume + End + New ===== */}
       {status === 'paused' && (
-        <>
-          <button onClick={handleResume} disabled={isLoading} className={ghostButtonStyles}>
-            <Play
-              size={16}
-              strokeWidth={2}
-              className="text-zinc-400 group-hover:text-white transition-colors"
-            />
-            <span>{isLoading ? 'Resuming...' : 'Resume'}</span>
-          </button>
-
+        <div className="flex items-center gap-1">
+          <PillButton
+            icon={<Play size={iconSize} strokeWidth={2} />}
+            label="Resume"
+            onClick={handleResume}
+            disabled={isLoading}
+            isLoading={isLoading}
+          />
           <Divider />
-
-          <button
+          <PillButton
+            icon={<FaStop size={iconSize - 4} />}
+            label="End"
             onClick={() => setShowEndModal(true)}
             disabled={isLoading}
-            className={dangerButtonStyles}
-          >
-            <FaStop className="h-3.5 w-3.5" />
-            <span>End</span>
-          </button>
-
+            variant="danger"
+          />
           <Divider />
-
-          <button onClick={handleNewDebate} className={invertedButtonStyles}>
-            <Plus size={16} strokeWidth={2.5} />
-            <span>New</span>
-          </button>
-        </>
+          <PillButton
+            icon={<Plus size={iconSize} strokeWidth={2} />}
+            label="New"
+            onClick={handleNewDebate}
+          />
+        </div>
       )}
 
       {/* ===== COMPLETED STATE: Summary + Export + New ===== */}
       {status === 'completed' && (
-        <>
-          <Link href={`/debate/${debateId}/summary`} className={ghostButtonStyles}>
-            <svg
-              className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"
-              />
-            </svg>
-            <span>Summary</span>
-          </Link>
-
+        <div className="flex items-center gap-1">
+          <PillLink
+            href={`/debate/${debateId}/summary`}
+            icon={<FileText size={iconSize} strokeWidth={1.5} />}
+            label="Summary"
+          />
           <Divider />
-
-          <button onClick={openExportModal} className={ghostButtonStyles}>
-            <Download
-              size={16}
-              strokeWidth={2}
-              className="text-zinc-400 group-hover:text-white transition-colors"
-            />
-            <span>Export</span>
-          </button>
-
+          <PillButton
+            icon={<Download size={iconSize} strokeWidth={2} />}
+            label="Export"
+            onClick={openExportModal}
+          />
           <Divider />
-
-          <button onClick={handleNewDebate} className={invertedButtonStyles}>
-            <Plus size={16} strokeWidth={2.5} />
-            <span>New</span>
-          </button>
-        </>
+          <PillButton
+            icon={<Plus size={iconSize} strokeWidth={2} />}
+            label="New"
+            onClick={handleNewDebate}
+          />
+        </div>
       )}
 
       {/* ===== ERROR STATE: Retry + New ===== */}
       {status === 'error' && (
-        <>
-          <button onClick={handleStart} disabled={isLoading} className={ghostButtonStyles}>
-            <svg
-              className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span>{isLoading ? 'Retrying...' : 'Retry'}</span>
-          </button>
-
+        <div className="flex items-center gap-1">
+          <PillButton
+            icon={<RotateCcw size={iconSize} strokeWidth={2} />}
+            label="Retry"
+            onClick={handleStart}
+            disabled={isLoading}
+            isLoading={isLoading}
+          />
           <Divider />
-
-          <button onClick={handleNewDebate} className={invertedButtonStyles}>
-            <Plus size={16} strokeWidth={2.5} />
-            <span>New</span>
-          </button>
-        </>
+          <PillButton
+            icon={<Plus size={iconSize} strokeWidth={2} />}
+            label="New"
+            onClick={handleNewDebate}
+          />
+        </div>
       )}
 
       {/* ===== MODALS ===== */}

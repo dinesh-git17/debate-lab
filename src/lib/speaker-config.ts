@@ -1,108 +1,141 @@
-// src/lib/speaker-config.ts
+/**
+ * src/lib/speaker-config.ts
+ * Apple-inspired color palette and shadow system for speaker differentiation
+ */
 
 import type { SpeakerConfig } from '@/types/debate-ui'
 import type { TurnSpeaker } from '@/types/turn'
+
+/**
+ * Apple-inspired color tokens (HSL format for consistency)
+ * Desaturated, sophisticated palette that feels premium
+ */
+export const APPLE_COLORS = {
+  // Desaturated teal - calm, authoritative
+  for: {
+    hsl: 'hsl(185, 45%, 55%)',
+    rgb: 'rgb(77, 175, 182)',
+    rgba: (alpha: number) => `rgba(77, 175, 182, ${alpha})`,
+  },
+  // Soft rose - warm, passionate
+  against: {
+    hsl: 'hsl(350, 55%, 62%)',
+    rgb: 'rgb(204, 107, 122)',
+    rgba: (alpha: number) => `rgba(204, 107, 122, ${alpha})`,
+  },
+  // Neutral slate - balanced, impartial
+  moderator: {
+    hsl: 'hsl(220, 15%, 58%)',
+    rgb: 'rgb(132, 140, 158)',
+    rgba: (alpha: number) => `rgba(132, 140, 158, ${alpha})`,
+  },
+} as const
 
 export const SPEAKER_CONFIGS: Record<TurnSpeaker, SpeakerConfig> = {
   for: {
     label: 'FOR (Affirmative)',
     shortLabel: 'FOR',
-    color: 'text-blue-400',
+    color: 'text-[hsl(185,45%,65%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-blue-500',
+    borderColor: 'bg-[hsl(185,45%,55%)]',
     icon: 'thumbs-up',
     position: 'left',
-    chipBorder: 'border-blue-500/20',
-    chipBg: 'bg-blue-500/5',
-    glowColor: 'shadow-blue-500/10',
+    chipBorder: 'border-[hsl(185,45%,55%)]/20',
+    chipBg: 'bg-[hsl(185,45%,55%)]/5',
+    glowColor: 'shadow-[hsl(185,45%,55%)]/10',
   },
   against: {
     label: 'AGAINST (Negative)',
     shortLabel: 'AGAINST',
-    color: 'text-rose-400',
+    color: 'text-[hsl(350,55%,72%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-rose-500',
+    borderColor: 'bg-[hsl(350,55%,62%)]',
     icon: 'thumbs-down',
     position: 'right',
-    chipBorder: 'border-rose-500/20',
-    chipBg: 'bg-rose-500/5',
-    glowColor: 'shadow-rose-500/10',
+    chipBorder: 'border-[hsl(350,55%,62%)]/20',
+    chipBg: 'bg-[hsl(350,55%,62%)]/5',
+    glowColor: 'shadow-[hsl(350,55%,62%)]/10',
   },
   moderator: {
     label: 'Moderator',
     shortLabel: 'MOD',
-    color: 'text-amber-400',
+    color: 'text-[hsl(220,15%,68%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-amber-500',
+    borderColor: 'bg-[hsl(220,15%,58%)]',
     icon: 'scale',
     position: 'center',
-    chipBorder: 'border-amber-500/20',
-    chipBg: 'bg-amber-500/5',
-    glowColor: 'shadow-amber-500/10',
+    chipBorder: 'border-[hsl(220,15%,58%)]/20',
+    chipBg: 'bg-[hsl(220,15%,58%)]/5',
+    glowColor: 'shadow-[hsl(220,15%,58%)]/10',
   },
 }
 
-// Gradient colors for glow bleed effect (light bleeding from neon border)
+// Gradient colors for glow bleed effect (light bleeding from accent border)
 export const SPEAKER_GRADIENTS: Record<TurnSpeaker, string> = {
-  for: 'linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, transparent 120px)',
-  against: 'linear-gradient(90deg, rgba(244, 63, 94, 0.08) 0%, transparent 120px)',
-  moderator: 'linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, transparent 120px)',
+  for: `linear-gradient(90deg, ${APPLE_COLORS.for.rgba(0.06)} 0%, transparent 120px)`,
+  against: `linear-gradient(90deg, ${APPLE_COLORS.against.rgba(0.06)} 0%, transparent 120px)`,
+  moderator: `linear-gradient(90deg, ${APPLE_COLORS.moderator.rgba(0.05)} 0%, transparent 120px)`,
 }
 
 // Border colors for role badges (used with border-current pattern)
 export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
-  for: 'text-blue-400 border-blue-400/50 bg-blue-400/10',
-  against: 'text-rose-400 border-rose-400/50 bg-rose-400/10',
-  moderator: 'text-amber-400 border-amber-400/50 bg-amber-400/10',
+  for: `text-[hsl(185,45%,65%)] border-[hsl(185,45%,55%)]/40 bg-[hsl(185,45%,55%)]/8`,
+  against: `text-[hsl(350,55%,72%)] border-[hsl(350,55%,62%)]/40 bg-[hsl(350,55%,62%)]/8`,
+  moderator: `text-[hsl(220,15%,68%)] border-[hsl(220,15%,58%)]/40 bg-[hsl(220,15%,58%)]/8`,
 }
 
-// 3D floating card shadows - creates depth and elevation
-// Layer 1: Rim light (top edge catch)
-// Layer 2: Left edge highlight (catches light)
-// Layer 3: Inner depth (card thickness)
-// Layer 4: Close contact shadow (tight to card)
-// Layer 5: Speaker-colored glow
-// Layer 6: Mid elevation shadow
-// Layer 7: Far ground shadow (diffuse)
+/**
+ * 3D floating card shadows - creates depth and elevation
+ * Softened for Apple aesthetic: reduced glow intensity by 40%, blur radii adjusted
+ * Layer 1: Rim light (top edge catch)
+ * Layer 2: Left edge highlight (catches light)
+ * Layer 3: Inner depth (card thickness)
+ * Layer 4: Close contact shadow (tight to card)
+ * Layer 5: Speaker-colored glow (softened)
+ * Layer 6: Mid elevation shadow
+ * Layer 7: Far ground shadow (diffuse)
+ */
 export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
   for: [
-    'inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
-    'inset 0 -80px 80px -40px rgba(0, 0, 0, 0.4)',
-    '0 1px 2px rgba(0, 0, 0, 0.3)',
-    '0 0 40px rgba(59, 130, 246, 0.15)',
-    '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
-    '0 50px 80px -20px rgba(0, 0, 0, 0.4)',
+    'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
+    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.28)',
+    '0 1px 2px rgba(0, 0, 0, 0.2)',
+    `0 0 32px ${APPLE_COLORS.for.rgba(0.09)}`,
+    '0 16px 32px -8px rgba(0, 0, 0, 0.35)',
+    '0 40px 48px -16px rgba(0, 0, 0, 0.28)',
   ].join(', '),
   against: [
-    'inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
-    'inset 0 -80px 80px -40px rgba(0, 0, 0, 0.4)',
-    '0 1px 2px rgba(0, 0, 0, 0.3)',
-    '0 0 40px rgba(244, 63, 94, 0.15)',
-    '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
-    '0 50px 80px -20px rgba(0, 0, 0, 0.4)',
+    'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
+    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.28)',
+    '0 1px 2px rgba(0, 0, 0, 0.2)',
+    `0 0 32px ${APPLE_COLORS.against.rgba(0.09)}`,
+    '0 16px 32px -8px rgba(0, 0, 0, 0.35)',
+    '0 40px 48px -16px rgba(0, 0, 0, 0.28)',
   ].join(', '),
   moderator: [
-    'inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-    'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
-    'inset 0 -80px 80px -40px rgba(0, 0, 0, 0.4)',
-    '0 1px 2px rgba(0, 0, 0, 0.3)',
-    '0 0 40px rgba(245, 158, 11, 0.12)',
-    '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
-    '0 50px 80px -20px rgba(0, 0, 0, 0.4)',
+    'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
+    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.28)',
+    '0 1px 2px rgba(0, 0, 0, 0.2)',
+    `0 0 32px ${APPLE_COLORS.moderator.rgba(0.07)}`,
+    '0 16px 32px -8px rgba(0, 0, 0, 0.35)',
+    '0 40px 48px -16px rgba(0, 0, 0, 0.28)',
   ].join(', '),
 }
 
-// Inactive card shadows - subtle, recessed feel
+// Inactive card shadows - subtle, recessed feel (softened)
 export const SPEAKER_INACTIVE_SHADOWS = [
-  'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-  'inset 0 -40px 60px -20px rgba(0, 0, 0, 0.3)',
-  '0 10px 30px -5px rgba(0, 0, 0, 0.3)',
+  'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+  'inset 0 -32px 48px -16px rgba(0, 0, 0, 0.22)',
+  '0 8px 24px -4px rgba(0, 0, 0, 0.22)',
 ].join(', ')
 
-// Gradient pill badge styles for premium speaker identification
-// Uses subtle gradient from 15% to 5% opacity for depth
+/**
+ * Gradient pill badge styles for premium speaker identification
+ * Uses subtle gradient with Apple-inspired desaturated colors
+ */
 export const SPEAKER_PILL_STYLES: Record<
   TurnSpeaker,
   {
@@ -113,24 +146,22 @@ export const SPEAKER_PILL_STYLES: Record<
   }
 > = {
   for: {
-    background:
-      'linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0.06) 100%)',
-    text: 'rgb(147, 197, 253)', // blue-300
-    border: 'rgba(59, 130, 246, 0.25)',
-    glow: '0 0 20px rgba(59, 130, 246, 0.15)',
+    background: `linear-gradient(135deg, ${APPLE_COLORS.for.rgba(0.14)} 0%, ${APPLE_COLORS.for.rgba(0.04)} 100%)`,
+    text: 'hsl(185, 45%, 72%)',
+    border: APPLE_COLORS.for.rgba(0.2),
+    glow: `0 0 16px ${APPLE_COLORS.for.rgba(0.09)}`,
   },
   against: {
-    background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.18) 0%, rgba(244, 63, 94, 0.06) 100%)',
-    text: 'rgb(253, 164, 175)', // rose-300
-    border: 'rgba(244, 63, 94, 0.25)',
-    glow: '0 0 20px rgba(244, 63, 94, 0.15)',
+    background: `linear-gradient(135deg, ${APPLE_COLORS.against.rgba(0.14)} 0%, ${APPLE_COLORS.against.rgba(0.04)} 100%)`,
+    text: 'hsl(350, 55%, 78%)',
+    border: APPLE_COLORS.against.rgba(0.2),
+    glow: `0 0 16px ${APPLE_COLORS.against.rgba(0.09)}`,
   },
   moderator: {
-    background:
-      'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)',
-    text: 'rgb(252, 211, 77)', // amber-300
-    border: 'rgba(245, 158, 11, 0.2)',
-    glow: '0 0 20px rgba(245, 158, 11, 0.12)',
+    background: `linear-gradient(135deg, ${APPLE_COLORS.moderator.rgba(0.12)} 0%, ${APPLE_COLORS.moderator.rgba(0.03)} 100%)`,
+    text: 'hsl(220, 15%, 75%)',
+    border: APPLE_COLORS.moderator.rgba(0.16),
+    glow: `0 0 16px ${APPLE_COLORS.moderator.rgba(0.07)}`,
   },
 }
 
@@ -144,19 +175,19 @@ export const SPEAKER_PHASE_CHIP_STYLES: Record<
   }
 > = {
   for: {
-    background: 'rgba(59, 130, 246, 0.08)',
+    background: APPLE_COLORS.for.rgba(0.06),
     text: 'rgb(156, 163, 175)', // gray-400
-    border: 'rgba(59, 130, 246, 0.15)',
+    border: APPLE_COLORS.for.rgba(0.12),
   },
   against: {
-    background: 'rgba(244, 63, 94, 0.08)',
+    background: APPLE_COLORS.against.rgba(0.06),
     text: 'rgb(156, 163, 175)', // gray-400
-    border: 'rgba(244, 63, 94, 0.15)',
+    border: APPLE_COLORS.against.rgba(0.12),
   },
   moderator: {
-    background: 'rgba(245, 158, 11, 0.06)',
+    background: APPLE_COLORS.moderator.rgba(0.05),
     text: 'rgb(156, 163, 175)', // gray-400
-    border: 'rgba(245, 158, 11, 0.12)',
+    border: APPLE_COLORS.moderator.rgba(0.1),
   },
 }
 
@@ -169,44 +200,44 @@ export const SPEAKER_SURFACE_TINT: Record<
   }
 > = {
   for: {
-    active: 'rgba(59, 130, 246, 0.03)',
-    inactive: 'rgba(59, 130, 246, 0.015)',
+    active: APPLE_COLORS.for.rgba(0.025),
+    inactive: APPLE_COLORS.for.rgba(0.012),
   },
   against: {
-    active: 'rgba(244, 63, 94, 0.03)',
-    inactive: 'rgba(244, 63, 94, 0.015)',
+    active: APPLE_COLORS.against.rgba(0.025),
+    inactive: APPLE_COLORS.against.rgba(0.012),
   },
   moderator: {
-    active: 'rgba(245, 158, 11, 0.025)',
-    inactive: 'rgba(245, 158, 11, 0.01)',
+    active: APPLE_COLORS.moderator.rgba(0.02),
+    inactive: APPLE_COLORS.moderator.rgba(0.008),
   },
 }
 
 // Enhanced gradient for active state - exponential decay for natural light falloff
 export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {
   for: `linear-gradient(90deg,
-    rgba(59, 130, 246, 0.14) 0%,
-    rgba(59, 130, 246, 0.10) 25px,
-    rgba(59, 130, 246, 0.055) 70px,
-    rgba(59, 130, 246, 0.025) 130px,
-    rgba(59, 130, 246, 0.008) 190px,
-    rgba(59, 130, 246, 0) 260px
+    ${APPLE_COLORS.for.rgba(0.1)} 0%,
+    ${APPLE_COLORS.for.rgba(0.07)} 25px,
+    ${APPLE_COLORS.for.rgba(0.04)} 70px,
+    ${APPLE_COLORS.for.rgba(0.018)} 130px,
+    ${APPLE_COLORS.for.rgba(0.006)} 190px,
+    ${APPLE_COLORS.for.rgba(0)} 260px
   )`.replace(/\s+/g, ' '),
   against: `linear-gradient(90deg,
-    rgba(244, 63, 94, 0.14) 0%,
-    rgba(244, 63, 94, 0.10) 25px,
-    rgba(244, 63, 94, 0.055) 70px,
-    rgba(244, 63, 94, 0.025) 130px,
-    rgba(244, 63, 94, 0.008) 190px,
-    rgba(244, 63, 94, 0) 260px
+    ${APPLE_COLORS.against.rgba(0.1)} 0%,
+    ${APPLE_COLORS.against.rgba(0.07)} 25px,
+    ${APPLE_COLORS.against.rgba(0.04)} 70px,
+    ${APPLE_COLORS.against.rgba(0.018)} 130px,
+    ${APPLE_COLORS.against.rgba(0.006)} 190px,
+    ${APPLE_COLORS.against.rgba(0)} 260px
   )`.replace(/\s+/g, ' '),
   moderator: `linear-gradient(90deg,
-    rgba(245, 158, 11, 0.12) 0%,
-    rgba(245, 158, 11, 0.085) 25px,
-    rgba(245, 158, 11, 0.045) 70px,
-    rgba(245, 158, 11, 0.02) 130px,
-    rgba(245, 158, 11, 0.006) 190px,
-    rgba(245, 158, 11, 0) 260px
+    ${APPLE_COLORS.moderator.rgba(0.08)} 0%,
+    ${APPLE_COLORS.moderator.rgba(0.055)} 25px,
+    ${APPLE_COLORS.moderator.rgba(0.03)} 70px,
+    ${APPLE_COLORS.moderator.rgba(0.014)} 130px,
+    ${APPLE_COLORS.moderator.rgba(0.004)} 190px,
+    ${APPLE_COLORS.moderator.rgba(0)} 260px
   )`.replace(/\s+/g, ' '),
 }
 

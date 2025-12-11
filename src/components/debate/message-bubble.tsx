@@ -1,4 +1,7 @@
-// src/components/debate/message-bubble.tsx
+/**
+ * src/components/debate/message-bubble.tsx
+ * Apple-inspired glass morphism message cards with 3D floating effect
+ */
 
 'use client'
 
@@ -12,6 +15,7 @@ import { ThinkingIndicator } from '@/components/debate/thinking-indicator'
 import { useSmoothReveal } from '@/hooks/use-smooth-reveal'
 import { ANIMATION_CONFIG } from '@/lib/animation-config'
 import {
+  APPLE_COLORS,
   getSpeakerConfig,
   getTurnTypeShortLabel,
   SPEAKER_GRADIENTS,
@@ -26,6 +30,16 @@ import { cn } from '@/lib/utils'
 
 import type { DebateMessage } from '@/types/debate-ui'
 import type { TurnSpeaker } from '@/types/turn'
+
+/**
+ * Glass morphism configuration - Apple-inspired values
+ */
+const GLASS_CONFIG = {
+  borderRadius: 24, // px - premium Apple radius
+  backdropBlur: 60, // px - stronger frosted effect
+  padding: { x: 32, y: 40 }, // px - refined spacing
+  cardGap: 48, // px - 44px section rhythm
+} as const
 
 interface MessageBubbleProps {
   message: DebateMessage
@@ -114,10 +128,15 @@ function MessageContent({
         <ThinkingIndicator speaker={speaker} />
       ) : (
         <div
-          className="text-[17px] leading-[1.75] font-normal text-zinc-100 antialiased tracking-[-0.01em]"
+          className="font-normal text-zinc-100 antialiased"
           style={{
-            fontFamily: 'var(--font-inter), system-ui, sans-serif',
-            textShadow: '0 0 30px rgba(255, 255, 255, 0.08)',
+            // SF Pro Text system stack for Apple-native rendering
+            fontFamily:
+              '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+            fontSize: 17,
+            lineHeight: 1.55, // Tighter than 1.75 for Apple aesthetic
+            letterSpacing: '-0.01em',
+            textShadow: '0 0 24px rgba(255, 255, 255, 0.06)',
           }}
         >
           <AnimatedText
@@ -164,8 +183,38 @@ export const MessageBubble = memo(function MessageBubble({
   const phaseChipStyles = SPEAKER_PHASE_CHIP_STYLES[message.speaker]
   const surfaceTint = SPEAKER_SURFACE_TINT[message.speaker]
 
+  // Detect moderator transition for special styling
+  const isModeratorTransition = message.turnType === 'moderator_transition'
+
   // Hover state for enhanced interactions
   const [isHovered, setIsHovered] = useState(false)
+
+  // Mouse position for tilt effect
+  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 })
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // Handle mouse move for tilt effect
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return
+    const rect = cardRef.current.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+    setMousePosition({ x, y })
+  }, [])
+
+  // Reset mouse position on leave
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false)
+    setMousePosition({ x: 0.5, y: 0.5 })
+  }, [])
+
+  // Calculate tilt transform based on mouse position
+  const getTiltTransform = () => {
+    if (!isHovered || isCompleted) return ''
+    const tiltX = (mousePosition.y - 0.5) * -2 // Tilt on X axis based on Y position
+    const tiltY = (mousePosition.x - 0.5) * 2 // Tilt on Y axis based on X position
+    return `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
+  }
 
   // Track when the client-side reveal animation is complete
   // (separate from message.isComplete which reflects server state)
@@ -183,59 +232,100 @@ export const MessageBubble = memo(function MessageBubble({
 
   return (
     <motion.div
-      className="relative w-full mb-16 group z-10"
+      className="relative w-full mb-12 group z-10"
       data-active={isActive}
       role="article"
       aria-label={`${config.label} - ${getTurnTypeShortLabel(message.turnType)}`}
-      initial={skipAnimation ? false : { opacity: 0, y: 24, scale: 0.98 }}
+      initial={skipAnimation ? false : { opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: 'spring', stiffness: 200, damping: 24, mass: 1 }}
+      transition={{
+        type: 'spring',
+        stiffness: 180,
+        damping: 28,
+        mass: 1,
+        // Stagger animation for transition cards
+        delay: isModeratorTransition && !skipAnimation ? 0.08 : 0,
+      }}
     >
+      {/* Moderator transition section divider - horizontal gradient line */}
+      {isModeratorTransition && !isFirst && (
+        <motion.div
+          className="absolute left-1/2 -top-6 -translate-x-1/2 w-full max-w-md h-px"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(132, 140, 158, 0.3) 30%, rgba(132, 140, 158, 0.4) 50%, rgba(132, 140, 158, 0.3) 70%, transparent 100%)',
+          }}
+          initial={skipAnimation ? false : { scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{
+            duration: 0.6,
+            ease: [0.25, 0.95, 0.35, 1],
+            delay: skipAnimation ? 0 : 0.1,
+          }}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Timeline Connector - line going UP to connect from previous card */}
       {/* Only show for non-first messages (where timeline connects from above) */}
-      {!isFirst && (
+      {!isFirst && !isModeratorTransition && (
         <>
           {/* Vertical line from previous card to this anchor */}
           <div
-            className="absolute left-1/2 -top-12 h-10 w-px -translate-x-1/2 bg-white/[0.08]"
+            className="absolute left-1/2 -translate-x-1/2 w-px"
+            style={{
+              top: -48, // Spans full gap (mb-12 = 48px)
+              height: 40, // From top of gap to anchor
+              background: `linear-gradient(180deg, ${APPLE_COLORS[message.speaker].rgba(0.08)} 0%, ${APPLE_COLORS[message.speaker].rgba(0.15)} 100%)`,
+            }}
             aria-hidden="true"
           />
           {/* Anchor node at top edge of card */}
           <div className="absolute left-1/2 -top-2 -translate-x-1/2 z-20" aria-hidden="true">
-            <div className="w-4 h-4 rounded-full border-2 border-zinc-600 bg-[#0a0a0b] grid place-items-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+            <div
+              className="w-3 h-3 rounded-full grid place-items-center"
+              style={{
+                border: `1.5px solid ${APPLE_COLORS[message.speaker].rgba(0.35)}`,
+                background: 'hsl(220, 10%, 10%)',
+                boxShadow: `0 0 8px ${APPLE_COLORS[message.speaker].rgba(0.15)}`,
+              }}
+            >
+              <div
+                className="w-1 h-1 rounded-full"
+                style={{ background: APPLE_COLORS[message.speaker].rgba(0.6) }}
+              />
             </div>
           </div>
         </>
       )}
 
-      {/* Ghost Glass Card - 3D floating container */}
+      {/* Ghost Glass Card - 3D floating container with tilt effect */}
       <div
+        ref={cardRef}
         className={cn(
           'relative mx-auto max-w-3xl overflow-hidden',
-          // Larger radius for premium Apple feel
-          'rounded-2xl',
-          // Smooth transition for depth filter
-          'transition-[filter,transform] duration-500 ease-out'
+          // Smooth transition for depth filter and transform
+          'transition-[filter] duration-500 ease-out'
         )}
         style={{
+          borderRadius: GLASS_CONFIG.borderRadius,
           filter: getDepthFilter(depthIndex),
-          // Subtle 3D perspective hint
+          // 3D perspective for tilt effect
           transformStyle: 'preserve-3d',
+          perspective: '1000px',
+          // Apply tilt transform
+          transform: getTiltTransform(),
+          // Smooth tilt transition
+          transition: 'transform 0.12s ease-out, filter 0.5s ease-out',
         }}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Content wrapper - 3D frosted glass panel */}
         <div
           className={cn(
-            'relative overflow-hidden',
-            // Larger radius to match outer
-            'rounded-2xl',
-            // Stronger blur for frosted effect
-            'backdrop-blur-2xl backdrop-saturate-150',
-            // 8px grid system: 48px horizontal, 40px vertical (asymmetric for optical balance)
-            'px-12 py-10',
+            'relative overflow-hidden backdrop-saturate-150',
             // Focus mode opacity - context-aware
             isCompleted
               ? 'opacity-100 grayscale-0' // Completed: all cards fully visible
@@ -244,19 +334,25 @@ export const MessageBubble = memo(function MessageBubble({
                 : 'opacity-30 grayscale-[0.3] group-hover:opacity-65 group-hover:grayscale-[0.1]'
           )}
           style={{
-            // TRUE GLASS: Semi-transparent background with role-based surface tint
-            backgroundColor: isActive ? 'rgba(18, 18, 22, 0.78)' : 'rgba(15, 15, 18, 0.55)',
+            borderRadius: GLASS_CONFIG.borderRadius,
+            // Apple-level frosted glass blur
+            backdropFilter: `blur(${GLASS_CONFIG.backdropBlur}px)`,
+            WebkitBackdropFilter: `blur(${GLASS_CONFIG.backdropBlur}px)`,
+            // Refined padding
+            padding: `${GLASS_CONFIG.padding.y}px ${GLASS_CONFIG.padding.x}px`,
+            // TRUE GLASS: Very subtle white base with role-based surface tint
+            backgroundColor: isActive ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.015)',
             backgroundImage: `linear-gradient(180deg, ${isActive ? surfaceTint.active : surfaceTint.inactive} 0%, transparent 60%)`,
-            // 3D Transform: context-aware elevation
+            // 3D Transform: context-aware elevation with micro-interaction lifts
             transform: isCompleted
               ? isHovered
-                ? 'scale(1.01) translateY(-3px)' // Completed + hover: subtle focus lift
+                ? 'scale(1.005) translateY(-2px)' // Completed + hover: Apple-spec lift
                 : 'scale(1) translateY(0)' // Completed: uniform baseline
               : isActive
-                ? 'scale(1.02) translateY(-4px)' // Active during streaming: full lift
+                ? 'scale(1.01) translateY(-2px)' // Active during streaming: refined lift
                 : isHovered
-                  ? 'scale(0.99) translateY(-2px)' // Inactive + hover: subtle lift
-                  : 'scale(0.985) translateY(0)', // Inactive: recessed
+                  ? 'scale(1.005) translateY(-2px)' // Inactive + hover: Apple-spec lift
+                  : 'scale(0.995) translateY(0)', // Inactive: very slight recess
             // Full 3D shadow system - context-aware
             boxShadow: isCompleted
               ? isHovered
@@ -265,19 +361,20 @@ export const MessageBubble = memo(function MessageBubble({
               : isActive
                 ? activeShadow
                 : SPEAKER_INACTIVE_SHADOWS,
-            // Spring transition with all properties
+            // 120ms state crossfade for micro-interactions
             transition:
-              'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease-out, background-color 0.4s ease-out, opacity 0.5s ease-out, filter 0.5s ease-out',
+              'transform 0.12s cubic-bezier(0.25, 0.95, 0.35, 1), box-shadow 0.12s ease-out, background-color 0.12s ease-out, opacity 0.12s ease-out',
           }}
         >
-          {/* Gradient border - brighter top edge, fades at bottom */}
+          {/* Gradient border - softened (0.12 at top, fades to 70%) */}
           <div
-            className="absolute inset-0 rounded-2xl pointer-events-none"
+            className="absolute inset-0 pointer-events-none"
             style={{
+              borderRadius: GLASS_CONFIG.borderRadius,
               padding: '1px',
               background: isActive
-                ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 20%, rgba(255, 255, 255, 0.03) 50%, transparent 80%)'
-                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 30%, transparent 60%)',
+                ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 25%, rgba(255, 255, 255, 0.02) 50%, transparent 70%)'
+                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 35%, transparent 65%)',
               WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               WebkitMaskComposite: 'xor',
               maskComposite: 'exclude',
@@ -289,15 +386,10 @@ export const MessageBubble = memo(function MessageBubble({
           {/* Hover focus rim - visible in completed state on hover */}
           {isCompleted && (
             <div
-              className="absolute inset-0 rounded-2xl pointer-events-none"
+              className="absolute inset-0 pointer-events-none"
               style={{
-                boxShadow: `inset 0 0 0 1px ${
-                  message.speaker === 'for'
-                    ? 'rgba(59, 130, 246, 0.25)'
-                    : message.speaker === 'against'
-                      ? 'rgba(244, 63, 94, 0.25)'
-                      : 'rgba(245, 158, 11, 0.2)'
-                }`,
+                borderRadius: GLASS_CONFIG.borderRadius,
+                boxShadow: `inset 0 0 0 1px ${APPLE_COLORS[message.speaker].rgba(0.2)}`,
                 opacity: isHovered ? 1 : 0,
                 transition: 'opacity 0.3s ease-out',
               }}
@@ -307,11 +399,12 @@ export const MessageBubble = memo(function MessageBubble({
 
           {/* Glass surface with directional lighting */}
           <div
-            className="absolute inset-0 pointer-events-none rounded-2xl"
+            className="absolute inset-0 pointer-events-none"
             style={{
+              borderRadius: GLASS_CONFIG.borderRadius,
               background: isActive
-                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 30%, transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 40%)'
-                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 40%), linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 30%)',
+                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 30%, transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 40%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%), linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0%, transparent 30%)',
               transition: 'background 0.4s ease-out',
             }}
             aria-hidden="true"
@@ -319,8 +412,9 @@ export const MessageBubble = memo(function MessageBubble({
 
           {/* Subtle noise texture for tactile feel */}
           <div
-            className="absolute inset-0 pointer-events-none rounded-2xl opacity-[0.015]"
+            className="absolute inset-0 pointer-events-none opacity-[0.012]"
             style={{
+              borderRadius: GLASS_CONFIG.borderRadius,
               backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'repeat',
               mixBlendMode: 'overlay',
@@ -328,22 +422,14 @@ export const MessageBubble = memo(function MessageBubble({
             aria-hidden="true"
           />
 
-          {/* Speaker accent - soft glow bar instead of hard neon */}
+          {/* Speaker accent - soft glow bar with Apple colors */}
           <div
-            className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-2xl overflow-hidden"
+            className="absolute top-0 left-0 bottom-0 w-[3px] overflow-hidden"
             style={{
-              background:
-                message.speaker === 'for'
-                  ? 'linear-gradient(180deg, rgba(59, 130, 246, 0.8) 0%, rgba(59, 130, 246, 0.4) 100%)'
-                  : message.speaker === 'against'
-                    ? 'linear-gradient(180deg, rgba(244, 63, 94, 0.8) 0%, rgba(244, 63, 94, 0.4) 100%)'
-                    : 'linear-gradient(180deg, rgba(245, 158, 11, 0.7) 0%, rgba(245, 158, 11, 0.35) 100%)',
-              boxShadow:
-                message.speaker === 'for'
-                  ? '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.2)'
-                  : message.speaker === 'against'
-                    ? '0 0 20px rgba(244, 63, 94, 0.5), 0 0 40px rgba(244, 63, 94, 0.2)'
-                    : '0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.15)',
+              borderTopLeftRadius: GLASS_CONFIG.borderRadius,
+              borderBottomLeftRadius: GLASS_CONFIG.borderRadius,
+              background: `linear-gradient(180deg, ${APPLE_COLORS[message.speaker].rgba(0.7)} 0%, ${APPLE_COLORS[message.speaker].rgba(0.35)} 100%)`,
+              boxShadow: `0 0 16px ${APPLE_COLORS[message.speaker].rgba(0.35)}, 0 0 32px ${APPLE_COLORS[message.speaker].rgba(0.15)}`,
               opacity: isActive ? 1 : 0.4,
               transition: 'opacity 0.4s ease-out',
             }}
@@ -361,32 +447,51 @@ export const MessageBubble = memo(function MessageBubble({
           <div className="relative mb-8">
             {/* Row 1: Speaker Identity (always centered) */}
             <div className="flex items-center justify-center mb-3">
-              {/* Speaker Pill Badge - Premium gradient style */}
-              <div
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full"
+              {/* Speaker Pill Badge - Frosted glass with SF Pro Rounded */}
+              <motion.div
+                className="inline-flex items-center gap-2 rounded-full"
                 style={{
-                  background: pillStyles.background,
+                  height: 30,
+                  paddingLeft: 14,
+                  paddingRight: 14,
+                  // Frosted glass background
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
                   border: `1px solid ${pillStyles.border}`,
                   boxShadow: isActive || (isCompleted && isHovered) ? pillStyles.glow : 'none',
-                  transition: 'box-shadow 0.3s ease-out',
+                }}
+                whileHover={{ scale: 1.02 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 400,
+                  damping: 25,
                 }}
               >
-                <SpeakerIcon type={config.icon} className="w-3.5 h-3.5" />
+                <SpeakerIcon type={config.icon} className="w-3 h-3" />
                 <span
-                  className="text-[11px] font-semibold tracking-[0.15em] uppercase"
-                  style={{ color: pillStyles.text }}
+                  className="uppercase"
+                  style={{
+                    color: pillStyles.text,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    fontFamily:
+                      'ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif',
+                  }}
                 >
                   {config.shortLabel}
                 </span>
-              </div>
+              </motion.div>
             </div>
 
             {/* Timestamp - Absolute positioned, top-right */}
             {showTimestamp && isRevealComplete && (
               <span
-                className="absolute top-0 right-0 text-[11px] font-mono tabular-nums tracking-wide"
+                className="absolute top-0 right-0 font-mono tabular-nums"
                 style={{
-                  color: 'rgb(113, 113, 122)',
+                  fontSize: 13,
+                  color: 'rgba(161, 161, 170, 0.35)', // 35% opacity graphite
                   opacity: isCompleted ? (isHovered ? 1 : 0) : 1,
                   transform: isCompleted
                     ? isHovered
@@ -414,15 +519,19 @@ export const MessageBubble = memo(function MessageBubble({
                 className="flex-1 h-px"
                 style={{
                   background:
-                    'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 100%)',
+                    'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 100%)',
                 }}
                 aria-hidden="true"
               />
 
-              {/* Phase chip - speaker-tinted */}
+              {/* Phase chip - speaker-tinted with variable font weight */}
               <span
-                className="px-2.5 py-1 rounded-md text-[10px] font-medium tracking-wide uppercase"
+                className="px-2.5 py-1 rounded-md uppercase"
                 style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: '0.06em',
+                  fontVariationSettings: "'wght' 500",
                   background: phaseChipStyles.background,
                   color: phaseChipStyles.text,
                   border: `1px solid ${phaseChipStyles.border}`,
@@ -436,7 +545,7 @@ export const MessageBubble = memo(function MessageBubble({
                 className="flex-1 h-px"
                 style={{
                   background:
-                    'linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%)',
+                    'linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, transparent 100%)',
                 }}
                 aria-hidden="true"
               />

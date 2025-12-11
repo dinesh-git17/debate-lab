@@ -1,4 +1,7 @@
-// src/app/(fullscreen)/debate/[id]/client.tsx
+/**
+ * src/app/(fullscreen)/debate/[id]/client.tsx
+ * Fullscreen debate viewer with Apple-inspired atmospheric design
+ */
 
 'use client'
 
@@ -12,7 +15,6 @@ import { FloatingControls } from '@/components/debate/floating-controls'
 import { MessageList } from '@/components/debate/message-list'
 import { ShortcutsHelp } from '@/components/debate/shortcuts-help'
 import { useDebateRealtime } from '@/hooks/use-debate-realtime'
-// import { clientLogger } from '@/lib/client-logger' // TODO: Re-enable with auto-start
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
@@ -20,6 +22,25 @@ import type { DebateHistoryResponse } from '@/app/api/debate/[id]/history/route'
 import type { DebatePhase } from '@/types/debate'
 import type { DebateMessage, DebateViewStatus } from '@/types/debate-ui'
 import type { TurnSpeaker } from '@/types/turn'
+
+/**
+ * Apple-inspired canvas configuration
+ * Vertical gradient creates depth without harsh contrast
+ */
+const CANVAS_CONFIG = {
+  // Background gradient: deep charcoal to subtle graphite
+  backgroundGradient: 'linear-gradient(180deg, hsl(220, 10%, 8%) 0%, hsl(210, 5%, 14%) 100%)',
+  // Noise overlay for tactile texture
+  noiseOpacity: 0.015,
+  // Vignette: soft elliptical falloff
+  vignetteEllipse: '120% 100%',
+  vignetteBreatheDuration: 18,
+} as const
+
+/**
+ * SVG noise pattern for subtle texture overlay
+ */
+const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
 
 // TurnSpeaker and AmbientSpeaker use the same values
 type AmbientSpeaker = TurnSpeaker
@@ -204,10 +225,12 @@ export function DebatePageClient({
     <motion.div
       className={cn(
         // Fullscreen fixed container - no navbar to account for
-        'fixed inset-0 z-50 flex flex-col overflow-hidden',
-        // Slightly off-black background for depth
-        'bg-[#0a0a0b]'
+        'fixed inset-0 z-50 flex flex-col overflow-hidden'
       )}
+      style={{
+        // Apple-inspired vertical gradient background
+        background: CANVAS_CONFIG.backgroundGradient,
+      }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
@@ -219,7 +242,7 @@ export function DebatePageClient({
         transition={{
           duration: 1.5,
           delay: 0.4,
-          ease: [0.4, 0, 0.2, 1],
+          ease: [0.25, 0.95, 0.35, 1],
         }}
         className="z-0"
       >
@@ -230,39 +253,51 @@ export function DebatePageClient({
         />
       </motion.div>
 
-      {/* Vignette */}
+      {/* Global noise texture overlay */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[2]"
+        style={{
+          backgroundImage: NOISE_SVG,
+          opacity: CANVAS_CONFIG.noiseOpacity,
+          mixBlendMode: 'overlay',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Vignette - soft elliptical falloff with gentle breathing */}
       <motion.div
         className="pointer-events-none fixed inset-0 z-[5]"
         style={{
-          background: `radial-gradient(circle at center,
-            transparent ${status === 'completed' ? '30%' : '32%'},
-            rgba(0, 0, 0, 0.1) ${status === 'completed' ? '45%' : '48%'},
-            rgba(0, 0, 0, 0.35) ${status === 'completed' ? '60%' : '65%'},
-            rgba(0, 0, 0, 0.7) 82%,
-            #000 100%
+          background: `radial-gradient(ellipse ${CANVAS_CONFIG.vignetteEllipse} at center,
+            transparent ${status === 'completed' ? '28%' : '30%'},
+            rgba(0, 0, 0, 0.06) ${status === 'completed' ? '42%' : '45%'},
+            rgba(0, 0, 0, 0.18) ${status === 'completed' ? '55%' : '58%'},
+            rgba(0, 0, 0, 0.45) 75%,
+            rgba(0, 0, 0, 0.75) 90%,
+            rgba(0, 0, 0, 0.9) 100%
           )`,
         }}
         animate={{
-          scale: [1, 1.03, 1],
+          scale: [1, 1.02, 1],
         }}
         transition={{
           scale: {
-            duration: 14,
+            duration: CANVAS_CONFIG.vignetteBreatheDuration,
             repeat: Infinity,
-            ease: [0.4, 0, 0.2, 1],
+            ease: [0.4, 0, 0.6, 1],
           },
         }}
       />
 
-      {/* Film grain */}
-      <FilmGrain className="z-[100]" />
+      {/* Film grain - reduced opacity for subtlety */}
+      <FilmGrain className="z-[100]" opacity={0.6} />
 
       {/* Subtle backdrop blur to smooth lighting/grain artifacts */}
       <div
         className="pointer-events-none fixed inset-0 z-[110]"
         style={{
-          backdropFilter: 'blur(0.5px)',
-          WebkitBackdropFilter: 'blur(0.5px)',
+          backdropFilter: 'blur(0.4px)',
+          WebkitBackdropFilter: 'blur(0.4px)',
         }}
         aria-hidden="true"
       />

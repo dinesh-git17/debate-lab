@@ -1,10 +1,12 @@
-// src/lib/animation-config.ts
+/**
+ * src/lib/animation-config.ts
+ * Apple-inspired animation configuration for smooth, natural motion
+ */
 
 /**
  * Shared animation configuration constants for the streaming text animation system.
  * Provides consistent timing across all reveal and thinking animations.
  */
-
 export const ANIMATION_CONFIG = {
   // Speed governor - character reveal velocity
   // Target: ~250 WPM - fast reading speed
@@ -47,13 +49,62 @@ export const ANIMATION_CONFIG = {
   WORD_ROTATE_INTERVAL_MS: 2000,
   WORD_CROSSFADE_MS: 300,
 
-  // Easing functions
+  // Easing functions - Apple-inspired curves
   REVEAL_EASING: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
-  WORD_EASING: 'cubic-bezier(0.16, 1, 0.3, 1)', // Apple-style ease-out
+  WORD_EASING: 'cubic-bezier(0.25, 0.95, 0.35, 1)', // Apple-style overshoot ease-out
 
   // Performance
   ANIMATION_CLEANUP_DELAY_MS: 150, // Remove animation classes after completion
   RAF_THROTTLE_MS: 16, // ~60fps target
+} as const
+
+/**
+ * Apple-inspired spring physics configuration
+ * Used for card entry, floating effects, and interactive transitions
+ */
+export const SPRING_CONFIG = {
+  // Card entry animation - natural, weighty feel
+  card: {
+    stiffness: 180,
+    damping: 28,
+    mass: 1,
+  },
+  // Quick interactive responses (buttons, pills)
+  interactive: {
+    stiffness: 400,
+    damping: 25,
+    mass: 0.8,
+  },
+  // Gentle floating/breathing effects
+  ambient: {
+    stiffness: 100,
+    damping: 20,
+    mass: 1.2,
+  },
+} as const
+
+/**
+ * Entry animation values - capped at 140ms max
+ */
+export const ENTRY_CONFIG = {
+  maxDuration: 140, // ms
+  floatDistance: 8, // px - reduced from 24px
+  initialScale: 0.98,
+  stagger: 80, // ms between sequential elements
+} as const
+
+/**
+ * Apple-inspired easing curves as numeric arrays for Framer Motion
+ */
+export const EASING = {
+  // Standard Apple ease-out with subtle overshoot
+  appleEaseOut: [0.25, 0.95, 0.35, 1] as const,
+  // Smooth deceleration
+  decelerate: [0.0, 0.0, 0.2, 1] as const,
+  // Natural spring-like ease
+  spring: [0.34, 1.56, 0.64, 1] as const,
+  // Gentle breathing
+  breathe: [0.4, 0, 0.6, 1] as const,
 } as const
 
 export type ThinkingWord = (typeof ANIMATION_CONFIG.THINKING_WORDS)[number]
