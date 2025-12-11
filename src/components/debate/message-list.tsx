@@ -76,124 +76,137 @@ function EmptyState() {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24">
-      {/* God Ray - gradient-only approach (no blur filter) */}
-      <motion.div
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2"
+      {/* Soft vignette overlay - draws focus to center */}
+      <div
+        className="pointer-events-none absolute inset-0"
         style={{
-          width: 800,
-          height: 800,
           background:
-            'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.025) 0%, transparent 70%)',
+            'radial-gradient(ellipse 80% 60% at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.4) 100%)',
         }}
-        initial={{ opacity: 0, scale: 1 }}
-        animate={{
-          opacity: 1,
-          scale: [1, 1.05, 1],
-        }}
-        transition={{
-          opacity: { duration: 1.2, ease: 'easeOut' },
-          scale: {
-            duration: 8,
-            repeat: Infinity,
-            ease: [0.4, 0, 0.6, 1],
-            delay: 1.2,
-          },
-        }}
+        aria-hidden="true"
       />
 
-      {/* Title - blur-in effect */}
+      {/* Ultra-subtle noise texture */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.015]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Title - Apple-style blur-in with refined typography */}
       <motion.h1
-        className="text-center text-5xl font-semibold tracking-tighter md:text-7xl bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent"
-        style={{ textWrap: 'balance' }}
-        initial={{ opacity: 0, y: 20, filter: 'blur(12px)' }}
+        className="relative text-center text-5xl font-semibold tracking-tight md:text-7xl"
+        style={{
+          textWrap: 'balance',
+          background:
+            'linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.55) 100%)',
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          color: 'transparent',
+          WebkitFontSmoothing: 'antialiased',
+          textRendering: 'optimizeLegibility',
+          letterSpacing: '0.01em',
+          paddingBottom: '8px', // Visual centering - more space below
+        }}
+        initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+        transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 0.61, 0.36, 1] }}
       >
         {sanitizeTopic(topic)}
       </motion.h1>
 
-      {/* Metadata - spring waterfall pills */}
+      {/* Metadata - Apple translucent capsules */}
       <motion.div
-        className="mt-6 flex gap-3"
+        className="mt-12 flex gap-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
+        transition={{ delay: 0.35 }}
       >
         <motion.div
           className={cn(
-            'flex h-8 items-center justify-center rounded-full px-4',
-            'bg-white/[0.03]',
-            'backdrop-blur-md',
-            'text-xs font-medium uppercase tracking-wide text-zinc-400'
+            'flex h-8 items-center justify-center px-5',
+            'text-[11px] font-medium uppercase text-white/80'
           )}
           style={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.18)',
+            borderRadius: '20px',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.25)',
+            letterSpacing: '0.05em',
           }}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
             delay: 0.4,
             type: 'spring',
-            stiffness: 100,
-            damping: 20,
+            stiffness: 120,
+            damping: 18,
           }}
         >
           {formatDisplayName}
         </motion.div>
         <motion.div
           className={cn(
-            'flex h-8 items-center justify-center rounded-full px-4',
-            'bg-white/[0.03]',
-            'backdrop-blur-md',
-            'text-xs font-medium uppercase tracking-wide text-zinc-400'
+            'flex h-8 items-center justify-center px-5',
+            'text-[11px] font-medium uppercase text-white/80'
           )}
           style={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.18)',
+            borderRadius: '20px',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.25)',
+            letterSpacing: '0.05em',
           }}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
             delay: 0.5,
             type: 'spring',
-            stiffness: 100,
-            damping: 20,
+            stiffness: 120,
+            damping: 18,
           }}
         >
           2 Agents
         </motion.div>
       </motion.div>
 
-      {/* CTA - spring scale entrance */}
+      {/* CTA - Apple tactile button */}
       <motion.div
-        className="relative mt-10"
-        initial={{ opacity: 0, scale: 0.9 }}
+        className="relative mt-9"
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{
           delay: 0.6,
           type: 'spring',
-          stiffness: 200,
-          damping: 15,
+          stiffness: 180,
+          damping: 16,
         }}
       >
         <motion.button
           onClick={handleStart}
           disabled={isLoading}
           className={cn(
-            'relative rounded-full bg-white px-8 py-4',
-            'text-sm font-semibold text-black',
+            'relative px-8 py-4',
+            'text-sm font-semibold',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
           style={{
-            filter: 'drop-shadow(0 0 25px rgba(255, 255, 255, 0.15))',
+            background: 'rgba(255, 255, 255, 0.97)',
+            color: 'rgba(0, 0, 0, 0.88)',
+            borderRadius: '30px',
+            boxShadow: 'inset 0 0 0 0.5px rgba(255, 255, 255, 0.9), 0 4px 24px rgba(0, 0, 0, 0.18)',
+            letterSpacing: '0.02em',
+            WebkitFontSmoothing: 'antialiased',
           }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.012 }}
+          whileTap={{ scale: 0.985 }}
+          transition={{ type: 'tween', ease: [0.22, 0.61, 0.36, 1], duration: 0.2 }}
         >
           {isLoading ? 'Starting...' : 'Start Debate'}
         </motion.button>
