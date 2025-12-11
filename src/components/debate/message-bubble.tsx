@@ -83,27 +83,14 @@ const GLASS_CONFIG = {
   },
   // Dual shadow system for depth
   shadow: {
-    ambient: '0 6px 18px rgba(0, 0, 0, 0.32)', // Soft ambient shadow
-    highlight: '0 2px 4px rgba(255, 255, 255, 0.08)', // Top highlight
+    ambient: '0 30px 60px rgba(0, 0, 0, 0.25)', // Soft wide ambient shadow
+    highlight: 'inset 0 3px 8px rgba(255, 255, 255, 0.08)', // Inner light
   },
-  // Apple-style floating plane shadow - long, diffused, not dark
+  // Apple-style floating plane shadow - luxurious, wide diffusion
   floatingShadow: {
-    // Multi-layer shadow for realistic floating effect
-    active: `
-      0 4px 8px rgba(0, 0, 0, 0.08),
-      0 12px 24px rgba(0, 0, 0, 0.12),
-      0 24px 48px rgba(0, 0, 0, 0.16),
-      0 48px 96px rgba(0, 0, 0, 0.12)
-    `
-      .replace(/\s+/g, ' ')
-      .trim(),
-    inactive: `
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      0 8px 16px rgba(0, 0, 0, 0.06),
-      0 16px 32px rgba(0, 0, 0, 0.08)
-    `
-      .replace(/\s+/g, ' ')
-      .trim(),
+    // Single wide shadow for weightless floating effect
+    active: '0 30px 60px rgba(0, 0, 0, 0.32), inset 0 3px 8px rgba(255, 255, 255, 0.08)',
+    inactive: '0 20px 40px rgba(0, 0, 0, 0.18), inset 0 2px 6px rgba(255, 255, 255, 0.05)',
   },
   // Side inner-glow for glass thickness simulation
   innerGlow: {
@@ -476,15 +463,15 @@ export const MessageBubble = memo(function MessageBubble({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Atmospheric Ambient Glow - small, subtle glow behind the card */}
+        {/* Atmospheric Fog - smooth vertical gradient, no visible edges */}
         <div
-          className="pointer-events-none absolute -inset-3 z-0"
+          className="pointer-events-none absolute -inset-12 z-0"
           style={{
             background: SPEAKER_AMBIENT_GLOW[message.speaker],
-            opacity: isActive || (isCompleted && isHovered) ? 0.7 : 0.15,
+            opacity: isActive || (isCompleted && isHovered) ? 1 : 0.4,
             transition: 'opacity 0.5s ease-out',
-            borderRadius: GLASS_CONFIG.borderRadius.css,
-            filter: 'blur(16px)',
+            // No border radius - let it bleed softly into surroundings
+            filter: 'blur(40px)',
           }}
           aria-hidden="true"
         />

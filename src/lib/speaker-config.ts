@@ -91,27 +91,36 @@ export const SPEAKER_CONFIGS: Record<TurnSpeaker, SpeakerConfig> = {
 }
 
 /**
- * Atmospheric Ambient Glow - large radial gradient behind the card
- * Creates the "luminous environment" effect from VisionOS
- * Centered behind card, extends beyond edges for soft atmospheric effect
+ * Atmospheric Ambient Glow - thematic radial gradient behind the card
+ * Each speaker has a subtle identity gradient that tells their story:
+ * - FOR: Deep charcoal → midnight blue (analytical, logical)
+ * - AGAINST: Deep charcoal → subtle plum/rose (passionate, challenging)
+ * - MODERATOR: Deep charcoal → warm amber (balanced, wise)
+ * Apple-style: emotionally connected but sophisticated
  */
 export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
-  for: `radial-gradient(ellipse 100% 100% at 50% 40%,
-    ${APPLE_COLORS.for.rgba(0.12)} 0%,
-    ${APPLE_COLORS.for.rgba(0.06)} 40%,
-    ${APPLE_COLORS.for.rgba2(0.02)} 70%,
+  // FOR: Midnight blue undertone - analytical, logical intelligence (subtle)
+  for: `radial-gradient(
+    ellipse 120% 100% at 50% 0%,
+    rgba(100, 130, 180, 0.10) 0%,
+    rgba(60, 80, 120, 0.06) 40%,
+    rgba(20, 20, 30, 0.03) 70%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
-  against: `radial-gradient(ellipse 100% 100% at 50% 40%,
-    ${APPLE_COLORS.against.rgba(0.12)} 0%,
-    ${APPLE_COLORS.against.rgba(0.06)} 40%,
-    ${APPLE_COLORS.against.rgba2(0.02)} 70%,
+  // AGAINST: Plum/rose undertone - passionate, challenging perspective (subtle)
+  against: `radial-gradient(
+    ellipse 120% 100% at 50% 0%,
+    rgba(160, 100, 130, 0.10) 0%,
+    rgba(100, 60, 80, 0.06) 40%,
+    rgba(30, 20, 25, 0.03) 70%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
-  moderator: `radial-gradient(ellipse 100% 100% at 50% 40%,
-    ${APPLE_COLORS.moderator.rgba(0.08)} 0%,
-    ${APPLE_COLORS.moderator.rgba(0.04)} 40%,
-    ${APPLE_COLORS.moderator.rgba2(0.015)} 70%,
+  // MODERATOR: Warm amber undertone - balanced, wise oversight (subtle)
+  moderator: `radial-gradient(
+    ellipse 120% 100% at 50% 0%,
+    rgba(160, 140, 100, 0.08) 0%,
+    rgba(100, 85, 60, 0.04) 40%,
+    rgba(30, 25, 20, 0.02) 70%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
 }
