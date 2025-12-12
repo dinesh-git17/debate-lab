@@ -1,7 +1,7 @@
 // src/lib/logging/__tests__/request-context.test.ts
 // Unit tests for request context management
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 
 import {
   generateRequestId,
@@ -16,9 +16,14 @@ import {
   withSpanAsync,
   getRequestTrace,
   getElapsedTime,
+  _resetStorage,
 } from '../request-context'
 
 describe('request-context', () => {
+  // Reset storage before each test for proper isolation
+  beforeEach(() => {
+    _resetStorage()
+  })
   describe('generateRequestId', () => {
     it('should generate a nanoid', () => {
       const id = generateRequestId()
