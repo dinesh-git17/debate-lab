@@ -65,6 +65,7 @@ function deserializeSession(json: string): DebateSession {
     createdAt: string
     updatedAt: string
     expiresAt: string
+    backgroundCategory?: string
   }
   return {
     ...parsed,
@@ -235,6 +236,7 @@ export function toPublicSession(session: DebateSession): DebateSessionPublic {
     customRules: session.customRules,
     status: session.status,
     createdAt: session.createdAt,
+    backgroundCategory: session.backgroundCategory,
   }
 }
 

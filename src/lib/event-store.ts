@@ -52,6 +52,21 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
     return []
   }
 
+  // Handle empty array (common case - no events)
+  if (Array.isArray(entries) && entries.length === 0) {
+    return []
+  }
+
+  // Handle empty object (Upstash may return {} for empty streams)
+  if (
+    typeof entries === 'object' &&
+    entries !== null &&
+    !Array.isArray(entries) &&
+    Object.keys(entries as object).length === 0
+  ) {
+    return []
+  }
+
   logger.debug('parseStreamEntries input', {
     type: typeof entries,
     isArray: Array.isArray(entries),

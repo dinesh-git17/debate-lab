@@ -250,12 +250,46 @@ async function initializeReferenceEmbeddings(apiKey: string): Promise<boolean> {
 // 0.70+ = very similar (likely harmful)
 // 0.60-0.70 = moderately similar (review)
 // Below 0.60 = probably safe
-const SIMILARITY_THRESHOLD = 0.68
+const SIMILARITY_THRESHOLD = 0.72
+
+// Humor patterns that should bypass strict filtering
+// IMPORTANT: These must be SPECIFIC known-safe topics, NOT generic formats
+// DO NOT add broad patterns like "would you rather" - they can be abused
+const HUMOR_PATTERNS = [
+  /horse[- ]?sized\s+duck/i,
+  /duck[- ]?sized\s+horse/i,
+  /is\s+a?\s*hot\s?dog\s+a\s+sandwich/i,
+  /is\s+cereal\s+a?\s*soup/i,
+  /pineapple\s+(on|belongs?\s+on)\s+pizza/i,
+  /is\s+water\s+wet/i,
+  /milk\s+(before|first|or)\s+cereal/i,
+  /toilet\s+seat\s+(up|down)/i,
+  /gif\s+(pronounced|pronunciation)/i,
+  /tabs?\s+(vs?|or|versus)\s+spaces?/i,
+]
+
+function isHumorousTopic(content: string): boolean {
+  return HUMOR_PATTERNS.some((pattern) => pattern.test(content))
+}
 
 // Main semantic filter function
 export async function semanticFilter(content: string): Promise<SemanticFilterResult> {
   const apiKey = process.env.OPENAI_API_KEY
   const startTime = Date.now()
+
+  // Bypass for clearly humorous/absurdist topics
+  if (isHumorousTopic(content)) {
+    logger.info('Semantic filter: Humorous topic detected, bypassing', {
+      provider: 'openai',
+      endpoint: 'embeddings',
+      contentPreview: content.slice(0, 50),
+    })
+    return {
+      flagged: false,
+      matchedConcepts: [],
+      maxSimilarity: 0,
+    }
+  }
 
   if (!apiKey) {
     logger.warn('Semantic filter: No API key configured, skipping', {

@@ -26,6 +26,7 @@ interface DebatePageClientProps {
   initialTopic: string
   initialFormat: string
   initialStatus: DebatePhase
+  initialBackgroundCategory?: string | undefined
 }
 
 function mapPhaseToViewStatus(phase: DebatePhase): DebateViewStatus {
@@ -53,6 +54,7 @@ export function DebatePageClient({
   initialTopic,
   initialFormat,
   initialStatus,
+  initialBackgroundCategory,
 }: DebatePageClientProps) {
   const { setDebateInfo, setStatus, setProgress, hydrateMessages, reset } = useDebateViewStore()
   const status = useDebateViewStore((s) => s.status)
@@ -133,6 +135,7 @@ export function DebatePageClient({
       debateId,
       topic: initialTopic,
       format: initialFormat,
+      backgroundCategory: initialBackgroundCategory,
     })
     setStatus(mapPhaseToViewStatus(initialStatus))
 

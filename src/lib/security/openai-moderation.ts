@@ -90,16 +90,18 @@ function mapCategoryToBlockReason(categories: ModerationCategory): BlockReason |
   return undefined
 }
 
-// Threshold for category scores - lower than OpenAI's default for stricter filtering
+// Threshold for category scores - tuned for debate platform
+// Note: "violence" threshold raised to allow hypothetical/humorous debates
+// (e.g., "Would you rather fight one horse-sized duck?" should pass)
 const SCORE_THRESHOLDS: Partial<Record<keyof ModerationCategoryScores, number>> = {
   'sexual/minors': 0.1, // Very low threshold for child safety
   'self-harm/instructions': 0.2,
   'self-harm/intent': 0.2,
   'hate/threatening': 0.3,
   'harassment/threatening': 0.3,
-  'violence/graphic': 0.4,
+  'violence/graphic': 0.5, // Graphic violence still blocked
   hate: 0.5,
-  violence: 0.5,
+  violence: 0.75, // Raised: allow hypothetical/humorous "fight" scenarios
   'self-harm': 0.5,
   harassment: 0.6,
   sexual: 0.7,
@@ -132,9 +134,42 @@ function checkScoreThresholds(
   }
 }
 
+// Humor patterns that should bypass strict filtering
+// IMPORTANT: These must be SPECIFIC known-safe topics, NOT generic formats
+const HUMOR_PATTERNS = [
+  /horse[- ]?sized\s+duck/i,
+  /duck[- ]?sized\s+horse/i,
+  /is\s+a?\s*hot\s?dog\s+a\s+sandwich/i,
+  /is\s+cereal\s+a?\s*soup/i,
+  /pineapple\s+(on|belongs?\s+on)\s+pizza/i,
+  /is\s+water\s+wet/i,
+  /milk\s+(before|first|or)\s+cereal/i,
+  /toilet\s+seat\s+(up|down)/i,
+  /gif\s+(pronounced|pronunciation)/i,
+  /tabs?\s+(vs?|or|versus)\s+spaces?/i,
+]
+
+function isHumorousTopic(content: string): boolean {
+  return HUMOR_PATTERNS.some((pattern) => pattern.test(content))
+}
+
 export async function moderateWithOpenAI(content: string): Promise<OpenAIModerationResult> {
   const apiKey = process.env.OPENAI_API_KEY
   const startTime = Date.now()
+
+  // Bypass for clearly humorous/absurdist topics
+  if (isHumorousTopic(content)) {
+    logger.info('OpenAI Moderation: Humorous topic detected, bypassing', {
+      provider: 'openai',
+      endpoint: 'moderation',
+      contentPreview: content.slice(0, 50),
+    })
+    return {
+      flagged: false,
+      categories: [],
+      scores: {},
+    }
+  }
 
   if (!apiKey) {
     logger.warn('OpenAI Moderation API: No API key configured, skipping', {

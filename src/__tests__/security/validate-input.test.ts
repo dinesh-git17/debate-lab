@@ -1,5 +1,31 @@
 // src/__tests__/security/validate-input.test.ts
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+
+// Create hoisted mock function that can be used in vi.mock factory
+const { mockModerateContent } = vi.hoisted(() => ({
+  mockModerateContent: vi.fn(),
+}))
+
+// Mock the logger first to avoid async_hooks issues
+vi.mock('@/lib/logging', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}))
+
+// Mock the abuse-logger to prevent actual logging
+vi.mock('@/lib/security/abuse-logger', () => ({
+  logContentFilterViolation: vi.fn(),
+  logInjectionAttempt: vi.fn(),
+}))
+
+// Mock the 4-layer moderation stack with dynamic responses
+vi.mock('@/lib/security/moderation-stack', () => ({
+  moderateContent: mockModerateContent,
+}))
 
 import {
   validateDebateTopic,
@@ -7,7 +33,38 @@ import {
   validateAndSanitizeDebateConfig,
 } from '@/lib/security/validate-input'
 
+// Helper to set default mock response (safe content)
+function mockSafeContent() {
+  mockModerateContent.mockResolvedValue({
+    allowed: true,
+    category: 'safe',
+    severity: 'none',
+    target: 'none',
+    riskScore: 0,
+    layer: 'semantic',
+  })
+}
+
+// Helper to set mock response for blocked content
+function mockBlockedContent(category = 'harmful_content') {
+  mockModerateContent.mockResolvedValue({
+    allowed: false,
+    category,
+    severity: 'high',
+    target: 'human',
+    riskScore: 0.9,
+    layer: 'business_rules',
+    blockReason: 'Content violates platform policies',
+  })
+}
+
 describe('validate-input', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Default to safe content - individual tests override as needed
+    mockSafeContent()
+  })
+
   describe('validateDebateTopic', () => {
     it('should pass valid topics', async () => {
       const result = await validateDebateTopic(
@@ -41,6 +98,8 @@ describe('validate-input', () => {
     })
 
     it('should reject topic with harmful content', async () => {
+      // Mock the moderation stack to return blocked for harmful content
+      mockBlockedContent('violent')
       const result = await validateDebateTopic('how to make a bomb for research')
       expect(result.valid).toBe(false)
       expect(result.blocked).toBe(true)
@@ -207,6 +266,8 @@ describe('validate-input', () => {
     })
 
     it('should reject config with harmful content in topic', async () => {
+      // Mock the moderation stack to return blocked for harmful content
+      mockBlockedContent('violent')
       const result = await validateAndSanitizeDebateConfig({
         ...validConfig,
         topic: 'How to make a bomb for research purposes today',

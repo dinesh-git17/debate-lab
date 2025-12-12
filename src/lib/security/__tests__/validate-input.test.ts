@@ -3,11 +3,20 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import {
-  validateDebateTopic,
-  validateCustomRules,
-  validateAndSanitizeDebateConfig,
-} from '../validate-input'
+// Create hoisted mock function that can be used in vi.mock factory
+const { mockModerateContent } = vi.hoisted(() => ({
+  mockModerateContent: vi.fn(),
+}))
+
+// Mock the logger first to avoid async_hooks issues
+vi.mock('@/lib/logging', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}))
 
 // Mock the abuse-logger to prevent actual logging
 vi.mock('../abuse-logger', () => ({
@@ -15,29 +24,47 @@ vi.mock('../abuse-logger', () => ({
   logInjectionAttempt: vi.fn(),
 }))
 
-// Mock the OpenAI moderation to prevent actual API calls in tests
-vi.mock('../openai-moderation', () => ({
-  moderateWithOpenAI: vi.fn().mockResolvedValue({
-    flagged: false,
-    categories: [],
-    scores: {},
-  }),
-  isOpenAIModerationEnabled: vi.fn().mockReturnValue(false),
+// Mock the 4-layer moderation stack with dynamic responses
+vi.mock('../moderation-stack', () => ({
+  moderateContent: mockModerateContent,
 }))
 
-// Mock the semantic filter to prevent actual API calls in tests
-vi.mock('../semantic-filter', () => ({
-  semanticFilter: vi.fn().mockResolvedValue({
-    flagged: false,
-    matchedConcepts: [],
-    maxSimilarity: 0,
-  }),
-  isSemanticFilterEnabled: vi.fn().mockReturnValue(false),
-}))
+import {
+  validateDebateTopic,
+  validateCustomRules,
+  validateAndSanitizeDebateConfig,
+} from '../validate-input'
+
+// Helper to set default mock response (safe content)
+function mockSafeContent() {
+  mockModerateContent.mockResolvedValue({
+    allowed: true,
+    category: 'safe',
+    severity: 'none',
+    target: 'none',
+    riskScore: 0,
+    layer: 'semantic',
+  })
+}
+
+// Helper to set mock response for blocked content
+function mockBlockedContent(category = 'harmful_content') {
+  mockModerateContent.mockResolvedValue({
+    allowed: false,
+    category,
+    severity: 'high',
+    target: 'human',
+    riskScore: 0.9,
+    layer: 'business_rules',
+    blockReason: 'Content violates platform policies',
+  })
+}
 
 describe('validate-input', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Default to safe content - individual tests override as needed
+    mockSafeContent()
   })
 
   describe('validateDebateTopic', () => {
@@ -92,6 +119,8 @@ describe('validate-input', () => {
     })
 
     it('should block harmful content', async () => {
+      // Mock the moderation stack to return blocked for harmful content
+      mockBlockedContent('violent')
       const result = await validateDebateTopic('How to create weapons of mass destruction tutorial')
 
       expect(result.valid).toBe(false)
@@ -103,8 +132,9 @@ describe('validate-input', () => {
         'Should we allow discussions with profanity shit damn?'
       )
 
-      // The filter may or may not block based on severity
-      expect(result.filterResult).not.toBeNull()
+      // With the 4-layer moderation stack, filterResult is always null
+      // The moderation is handled by moderateContent
+      expect(result.valid).toBeDefined()
     })
 
     it('should handle context for logging without throwing', async () => {

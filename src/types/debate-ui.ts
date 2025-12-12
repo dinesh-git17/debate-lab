@@ -46,6 +46,8 @@ export interface DebateViewState {
   progress: ViewProgress
   connection: ViewConnectionStatus
   error: string | null
+  /** Background category for ambient gradient - computed at debate creation */
+  backgroundCategory?: string | undefined
 }
 
 /**

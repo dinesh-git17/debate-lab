@@ -25,7 +25,6 @@ import {
   SPEAKER_PILL_STYLES,
   SPEAKER_PHASE_CHIP_STYLES,
   SPEAKER_SURFACE_TINT,
-  SPEAKER_AMBIENT_GLOW,
   SPEAKER_LUMINOSITY_BACKGROUND,
   SPEAKER_RIM_LIGHT,
 } from '@/lib/speaker-config'
@@ -473,55 +472,6 @@ export const MessageBubble = memo(function MessageBubble({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Atmospheric Fog - smooth vertical gradient, no visible edges */}
-        <div
-          className="pointer-events-none absolute -inset-16 z-0"
-          style={{
-            background: SPEAKER_AMBIENT_GLOW[message.speaker],
-            opacity: isActive || (isCompleted && isHovered) ? 1 : 0.4,
-            transition: 'opacity 0.5s ease-out',
-            // Heavy blur eliminates gradient banding/graininess
-            filter: 'blur(60px)',
-          }}
-          aria-hidden="true"
-        />
-
-        {/* LAYER 1: Underlay Glass - diffused blur that barely glows outward, fades on hover */}
-        <div
-          className="pointer-events-none absolute inset-0 z-[1]"
-          style={{
-            borderRadius: `${GLASS_CONFIG.borderRadius.top + 4}px ${GLASS_CONFIG.borderRadius.top + 4}px ${GLASS_CONFIG.borderRadius.bottom + 4}px ${GLASS_CONFIG.borderRadius.bottom + 4}px`,
-            // Slightly larger and more diffused
-            transform: 'scale(1.008)',
-            background: `linear-gradient(180deg,
-              rgba(255, 255, 255, 0.02) 0%,
-              rgba(255, 255, 255, 0.01) 50%,
-              transparent 100%)`,
-            backdropFilter: 'blur(40px)',
-            WebkitBackdropFilter: 'blur(40px)',
-            // Fade out on hover
-            opacity: isHovered ? 0 : isActive || isCompleted ? 0.8 : 0.3,
-            transition: 'opacity 0.3s ease-out',
-          }}
-          aria-hidden="true"
-        />
-
-        {/* LAYER 2: Floating Plane Shadow - Apple-style long diffused shadow, fades on hover */}
-        <div
-          className="pointer-events-none absolute inset-0 z-[2]"
-          style={{
-            borderRadius: GLASS_CONFIG.borderRadius.css,
-            boxShadow:
-              isActive || (isCompleted && isHovered)
-                ? GLASS_CONFIG.floatingShadow.active
-                : GLASS_CONFIG.floatingShadow.inactive,
-            // Fade out on hover to prevent peeking when card scales
-            opacity: isHovered ? 0 : 1,
-            transition: 'box-shadow 0.4s ease-out, opacity 0.3s ease-out',
-          }}
-          aria-hidden="true"
-        />
-
         {/* Inner tilting card - receives spring-physics rotation */}
         <motion.div
           className={cn(

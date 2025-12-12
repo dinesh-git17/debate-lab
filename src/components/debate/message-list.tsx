@@ -8,11 +8,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ANIMATION_CONFIG } from '@/lib/animation-config'
 import { clientLogger } from '@/lib/client-logger'
 import { sanitizeTopic } from '@/lib/sanitize-topic'
+import { CATEGORY_GRADIENTS, CATEGORY_IMAGES, getTopicGradient } from '@/lib/topic-backgrounds'
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
 import { MessageBubble } from './message-bubble'
 
+import type { BackgroundCategory } from '@/lib/topic-backgrounds'
 import type { DebateMessage } from '@/types/debate-ui'
 
 /**
@@ -36,10 +38,19 @@ function EmptyState() {
   const debateId = useDebateViewStore((s) => s.debateId)
   const topic = useDebateViewStore((s) => s.topic)
   const format = useDebateViewStore((s) => s.format)
+  const backgroundCategory = useDebateViewStore((s) => s.backgroundCategory)
   const setStatus = useDebateViewStore((s) => s.setStatus)
   const setError = useDebateViewStore((s) => s.setError)
 
   const formatDisplayName = FORMAT_DISPLAY_NAMES[format] ?? format
+
+  // Get topic-specific gradient and image from pre-computed category (calculated at debate creation)
+  // Falls back to keyword-based gradient if category not available (legacy debates)
+  const category = backgroundCategory as BackgroundCategory | undefined
+  const topicGradient = category
+    ? (CATEGORY_GRADIENTS[category] ?? getTopicGradient(topic))
+    : getTopicGradient(topic)
+  const topicImage = category ? CATEGORY_IMAGES[category] : null
 
   const handleStart = async () => {
     if (!debateId || isLoading) return
@@ -86,10 +97,47 @@ function EmptyState() {
   }
 
   return (
-    <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24">
+    <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24 overflow-hidden">
+      {/* Background image layer - topic-specific (fixed to cover full viewport including header) */}
+      {topicImage && (
+        <motion.div
+          className="pointer-events-none fixed inset-0 z-0"
+          initial={{ opacity: 0, scale: 1.15 }}
+          animate={{ opacity: 0.4, scale: 1.05 }}
+          transition={{ duration: 2, ease: [0.22, 0.61, 0.36, 1] }}
+          style={{
+            backgroundImage: `url(${topicImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(2px)',
+          }}
+        />
+      )}
+
+      {/* Dark overlay for image readability */}
+      {topicImage && (
+        <div
+          className="pointer-events-none fixed inset-0 z-[1]"
+          style={{
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%)',
+          }}
+        />
+      )}
+
+      {/* Gradient overlay - topic-specific colors (appears with or slightly after background) */}
+      <motion.div
+        className="pointer-events-none fixed inset-0 z-[2]"
+        initial={{ opacity: 0, scale: 1.1 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.8, delay: topicImage ? 0.2 : 0, ease: [0.22, 0.61, 0.36, 1] }}
+        style={{
+          background: topicGradient,
+        }}
+      />
+
       {/* Title - Apple-style blur-in with refined typography */}
       <motion.div
-        className="relative"
+        className="relative z-10"
         style={{
           marginBottom: '8px',
           marginTop: '-72px', // Optical centering - shifts content up for visual balance (24px additional lift)
@@ -98,76 +146,25 @@ function EmptyState() {
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
         transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 0.61, 0.36, 1] }}
       >
-        {/* Title spotlight - subtle radial for perceived contrast (700ms → 1100ms) */}
-        <motion.div
-          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: '140%',
-            height: '180%',
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.2, ease: [0.22, 0.61, 0.36, 1] }}
-          aria-hidden="true"
-        >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              background:
-                'radial-gradient(ellipse at center, rgba(255,255,255,0.055) 0%, transparent 55%)',
-            }}
-          />
-        </motion.div>
         <h1
-          className="relative text-center text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl"
+          className="relative text-center text-4xl font-semibold tracking-tight text-gradient-cinematic sm:text-5xl md:text-6xl"
           style={{
             textWrap: 'balance',
             lineHeight: 1.18,
             maxWidth: '20ch',
             marginLeft: 'auto',
             marginRight: 'auto',
-            background:
-              'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgb(200,200,205) 45%, rgb(130,130,135) 100%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-            textShadow: '0 -1px 2px rgba(255,255,255,0.22), 0 2px 6px rgba(0,0,0,0.25)',
-            WebkitFontSmoothing: 'antialiased',
-            textRendering: 'optimizeLegibility',
             letterSpacing: '0.005em',
             paddingBottom: '8px',
           }}
         >
-          {/* Text content with cinematic light sweep overlay */}
-          <span className="relative inline-block">
-            {sanitizeTopic(topic)}
-            {/* Cinematic light sweep - affects TEXT ONLY via mix-blend-mode */}
-            <motion.span
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(90deg, transparent 0%, transparent 35%, rgba(255,255,255,0.12) 50%, transparent 65%, transparent 100%)',
-                mixBlendMode: 'soft-light',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-              }}
-              initial={{ x: '-100%' }}
-              animate={{ x: '200%' }}
-              transition={{
-                duration: 1.4,
-                delay: 2.0,
-                ease: [0.22, 0.61, 0.36, 1],
-              }}
-              aria-hidden="true"
-            />
-          </span>
+          {sanitizeTopic(topic)}
         </h1>
       </motion.div>
 
       {/* Metadata - Apple translucent capsules (staggered entrance) */}
       <motion.div
-        className="mt-5 flex gap-3"
+        className="relative z-10 mt-5 flex gap-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.9, ease: [0.22, 0.61, 0.36, 1] }}
@@ -224,7 +221,7 @@ function EmptyState() {
 
       {/* CTA - Apple premium capsule button (landing animation) */}
       <motion.div
-        className="relative mt-7 group"
+        className="relative z-10 mt-7 group"
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{
@@ -233,22 +230,6 @@ function EmptyState() {
           ease: [0.22, 0.61, 0.36, 1],
         }}
       >
-        {/* Soft radial glow under button - intensifies on hover and loading */}
-        <div
-          className={cn(
-            'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
-            'transition-all duration-300 ease-out',
-            isLoading ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 group-hover:scale-110'
-          )}
-          style={{
-            width: '200px',
-            height: '100px',
-            background: isLoading
-              ? 'radial-gradient(ellipse at center, rgba(0,0,0,0.18) 0%, transparent 70%)'
-              : 'radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 70%)',
-          }}
-          aria-hidden="true"
-        />
         <motion.button
           onClick={handleStart}
           disabled={isLoading}
@@ -258,34 +239,25 @@ function EmptyState() {
             'cursor-pointer',
             'disabled:cursor-not-allowed'
           )}
-          initial={{
-            boxShadow:
-              'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.05)',
-          }}
           animate={{
             scale: isLoading ? 0.985 : 1,
             background: isLoading
               ? 'linear-gradient(to bottom, rgba(255,255,255,0.94) 0%, rgba(250,250,250,0.90) 100%)'
               : 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(248,248,250,0.98) 100%)',
-            boxShadow: isLoading
-              ? 'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.02), 0 4px 20px rgba(0,0,0,0.10)'
-              : 'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.03), 0 8px 32px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.08)',
           }}
           style={{
-            color: 'rgba(0, 0, 0, 0.80)',
+            color: 'rgba(0, 0, 0, 0.85)',
             borderRadius: '30px',
             letterSpacing: '-0.01em',
             WebkitFontSmoothing: 'antialiased',
-            border: '1px solid rgba(255,255,255,0.5)',
-            backdropFilter: isLoading ? 'blur(12px)' : 'none',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
           }}
           whileHover={
             !isLoading
               ? {
                   scale: 1.012,
                   y: -1.5,
-                  boxShadow:
-                    'inset 0 1px 2px rgba(255,255,255,1), inset 0 -1px 1px rgba(0,0,0,0.03), 0 12px 36px rgba(0,0,0,0.22), 0 4px 14px rgba(0,0,0,0.12), 0 0 24px rgba(255,255,255,0.06)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.20)',
                 }
               : {}
           }

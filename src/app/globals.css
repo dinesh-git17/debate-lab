@@ -542,3 +542,19 @@ body {
 .animate-breathe-glow {
   animation: breathe-glow 3s ease-in-out infinite;
 }
+
+/* Cinematic gradient text - Apple-style metallic/glass hero typography */
+.text-gradient-cinematic {
+  background: linear-gradient(
+    180deg,
+    rgb(200, 205, 215) 0%,
+    rgb(160, 165, 180) 30%,
+    rgb(190, 195, 210) 50%,
+    rgb(120, 130, 155) 75%,
+    rgb(90, 100, 130) 100%
+  ) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}

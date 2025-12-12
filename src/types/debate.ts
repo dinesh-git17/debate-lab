@@ -60,6 +60,8 @@ export interface DebateSession {
   createdAt: Date
   updatedAt: Date
   expiresAt: Date
+  /** Background category for ambient gradient - computed at creation */
+  backgroundCategory?: string | undefined
 }
 
 export interface DebateSessionPublic {
@@ -71,6 +73,8 @@ export interface DebateSessionPublic {
   customRules: string[]
   status: DebatePhase
   createdAt: Date
+  /** Background category for ambient gradient */
+  backgroundCategory?: string | undefined
 }
 
 export interface DebateFilters {

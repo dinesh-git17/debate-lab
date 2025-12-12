@@ -1,15 +1,14 @@
 // src/lib/security/validate-input.ts
-// Unified input validation combining sanitization and content filtering
-// Uses a hybrid approach: fast regex patterns first, then OpenAI Moderation API as secondary check
+// Unified input validation combining sanitization and 4-layer moderation stack
+// Layers: (1) Keyword Scanner → (2) Semantic Classifier → (3) OpenAI Moderation → (4) Business Rules
 
 import { logger } from '@/lib/logging'
 
 import { logContentFilterViolation, logInjectionAttempt } from './abuse-logger'
 import { recordContentViolation, recordPromptInjection, hashIP } from './abuse-tracker'
-import { filterDebateTopic, filterCustomRule, isPromptInjection } from './content-filter'
-import { moderateWithOpenAI, isOpenAIModerationEnabled } from './openai-moderation'
+import { filterCustomRule, isPromptInjection } from './content-filter'
+import { moderateContent } from './moderation-stack'
 import { sanitizeTopic, sanitizeCustomRule, containsDangerousPatterns } from './sanitizer'
-import { semanticFilter, isSemanticFilterEnabled } from './semantic-filter'
 
 import type { SecurityContext, ContentFilterResult } from '@/types/security'
 
@@ -123,105 +122,7 @@ export async function validateDebateTopic(
     }
   }
 
-  // Check ORIGINAL input for prompt injection and harmful content
-  const filterResult = filterDebateTopic(topic)
-
-  if (filterResult.shouldBlock) {
-    if (context) {
-      logContentFilterViolation(context, '/api/debate', filterResult, topic)
-    }
-
-    const categories = [...new Set(filterResult.matches.map((m) => m.category))]
-    let blockReason: BlockReason = 'content_policy'
-
-    if (categories.includes('prompt_injection')) {
-      errors.push(
-        'Your input contains content that violates our Terms of Service. Repeated violations may result in access termination.'
-      )
-      blockReason = 'prompt_injection'
-      if (context) {
-        logInjectionAttempt(context, '/api/debate', 'prompt_injection', topic)
-        await recordAbuseIfContext(
-          context,
-          'injection',
-          { type: 'prompt_injection', topic, matches: filterResult.matches },
-          '/api/debate'
-        )
-      }
-    } else if (categories.includes('harmful_content')) {
-      errors.push(
-        'Your input contains content that violates our Terms of Service. This type of content is strictly prohibited.'
-      )
-      blockReason = 'harmful_content'
-      if (context) {
-        await recordAbuseIfContext(
-          context,
-          'content',
-          { type: 'harmful_content', topic, categories },
-          '/api/debate'
-        )
-      }
-    } else if (categories.includes('sensitive_topic')) {
-      errors.push(
-        'This topic involves sensitive content that cannot be debated on our platform. Please choose a different topic.'
-      )
-      blockReason = 'sensitive_topic'
-      if (context) {
-        await recordAbuseIfContext(
-          context,
-          'content',
-          { type: 'sensitive_topic', topic, categories },
-          '/api/debate'
-        )
-      }
-    } else if (categories.includes('manipulation')) {
-      errors.push(
-        'Your input contains content that violates our Terms of Service. Repeated violations may result in access termination.'
-      )
-      blockReason = 'manipulation'
-      if (context) {
-        await recordAbuseIfContext(
-          context,
-          'content',
-          { type: 'manipulation', topic, categories },
-          '/api/debate'
-        )
-      }
-    } else if (categories.includes('profanity')) {
-      errors.push('Your input contains inappropriate language. Please revise your topic.')
-      blockReason = 'profanity'
-      if (context) {
-        await recordAbuseIfContext(
-          context,
-          'content',
-          { type: 'profanity', topic, categories },
-          '/api/debate'
-        )
-      }
-    } else {
-      errors.push('Your input was flagged by our content filter. Please revise your topic.')
-      if (context) {
-        await recordAbuseIfContext(
-          context,
-          'content',
-          { type: 'content_policy', topic, categories },
-          '/api/debate'
-        )
-      }
-    }
-
-    return {
-      valid: false,
-      sanitizedValue: '',
-      errors,
-      blocked: true,
-      blockReason,
-      filterResult,
-    }
-  }
-
-  // Now sanitize for XSS/storage (after security checks pass)
-  // Always use sanitized.value as the final value - it has HTML stripped and proper truncation
+  // Sanitize for XSS/storage first to validate length
   const sanitized = sanitizeTopic(topic)
 
   if (sanitized.sanitizedLength < 10) {
@@ -232,111 +133,116 @@ export async function validateDebateTopic(
     errors.push('Topic must be less than 500 characters')
   }
 
-  // Use the sanitized value (HTML stripped, truncated) as the final value
-  const finalValue = sanitized.value
-
-  // SECONDARY CHECK: OpenAI Moderation API for content that passed regex filters
-  // This catches nuanced harmful content that regex patterns might miss
-  if (isOpenAIModerationEnabled()) {
-    const moderationResult = await moderateWithOpenAI(topic)
-
-    if (moderationResult.flagged && moderationResult.blockReason) {
-      const moderationErrors = getModerationErrorMessage(moderationResult.blockReason)
-      errors.push(moderationErrors)
-
-      if (context) {
-        logContentFilterViolation(
-          context,
-          '/api/debate',
-          {
-            passed: false,
-            matches: [],
-            sanitizedContent: null,
-            shouldBlock: true,
-            shouldLog: true,
-          },
-          topic
-        )
-        await recordAbuseIfContext(
-          context,
-          'content',
-          { type: 'openai_moderation', blockReason: moderationResult.blockReason, topic },
-          '/api/debate'
-        )
-      }
-
-      return {
-        valid: false,
-        sanitizedValue: '',
-        errors,
-        blocked: true,
-        blockReason: moderationResult.blockReason,
-        filterResult,
-        moderationSource: 'openai',
-      }
+  // Return early if basic validation fails
+  if (errors.length > 0) {
+    return {
+      valid: false,
+      sanitizedValue: '',
+      errors,
+      blocked: false,
+      filterResult: null,
     }
   }
 
-  // TERTIARY CHECK: Semantic filter using embeddings to catch euphemistic harmful content
-  // This catches content that evades both regex patterns and OpenAI moderation (e.g., "societal cleansing")
-  if (isSemanticFilterEnabled()) {
-    const semanticResult = await semanticFilter(topic)
+  // ============================================
+  // 5-LAYER MODERATION STACK
+  // Layer 1: Keyword Scanner (risk score only)
+  // Layer 2: Semantic Category Classifier (GPT-4o-mini)
+  // Layer 3: Embedding Similarity Filter (catches euphemisms)
+  // Layer 4: OpenAI Moderation API (final gate)
+  // Layer 5: Custom Business Rules
+  // ============================================
+  const moderationResult = await moderateContent(topic)
 
-    if (semanticResult.flagged && semanticResult.blockReason) {
-      const semanticErrors = getModerationErrorMessage(semanticResult.blockReason)
-      errors.push(semanticErrors)
+  if (!moderationResult.allowed) {
+    // Map moderation result to block reason
+    let blockReason: BlockReason = 'content_policy'
 
-      logger.info('Semantic filter blocked content - preparing to record abuse', {
-        hasContext: !!context,
-        contextIp: context?.ip ?? 'no-context',
-        blockReason: semanticResult.blockReason,
-        maxSimilarity: semanticResult.maxSimilarity,
-      })
+    switch (moderationResult.category) {
+      case 'child_safety':
+      case 'self_harm':
+      case 'violent':
+        blockReason = 'harmful_content'
+        break
+      case 'hate':
+      case 'extremist':
+        blockReason = 'sensitive_topic'
+        break
+      case 'illegal':
+        blockReason = 'harmful_content'
+        break
+      case 'sexual':
+        blockReason = 'content_policy'
+        break
+      default:
+        blockReason = 'content_policy'
+    }
 
-      if (context) {
-        logContentFilterViolation(
-          context,
-          '/api/debate',
-          {
-            passed: false,
-            matches: [],
-            sanitizedContent: null,
-            shouldBlock: true,
-            shouldLog: true,
-          },
-          topic
-        )
-        logger.info('About to call recordAbuseIfContext for semantic filter block')
-        await recordAbuseIfContext(
-          context,
-          'content',
-          { type: 'semantic_filter', blockReason: semanticResult.blockReason, topic },
-          '/api/debate'
-        )
-        logger.info('recordAbuseIfContext completed for semantic filter block')
-      } else {
-        logger.warn('No context provided for semantic filter block - abuse not recorded')
-      }
+    const errorMessage = getModerationErrorMessage(blockReason)
+    errors.push(errorMessage)
 
-      return {
-        valid: false,
-        sanitizedValue: '',
-        errors,
-        blocked: true,
-        blockReason: semanticResult.blockReason,
-        filterResult,
-        moderationSource: 'semantic',
-      }
+    logger.info('5-layer moderation blocked content', {
+      category: moderationResult.category,
+      severity: moderationResult.severity,
+      layer: moderationResult.layer,
+      blockReason: moderationResult.blockReason,
+      riskScore: moderationResult.riskScore,
+      hasContext: !!context,
+    })
+
+    if (context) {
+      logContentFilterViolation(
+        context,
+        '/api/debate',
+        {
+          passed: false,
+          matches: [],
+          sanitizedContent: null,
+          shouldBlock: true,
+          shouldLog: true,
+        },
+        topic
+      )
+      await recordAbuseIfContext(
+        context,
+        'content',
+        {
+          type: 'moderation_stack',
+          category: moderationResult.category,
+          severity: moderationResult.severity,
+          layer: moderationResult.layer,
+          blockReason,
+          topic,
+        },
+        '/api/debate'
+      )
+    }
+
+    return {
+      valid: false,
+      sanitizedValue: '',
+      errors,
+      blocked: true,
+      blockReason,
+      filterResult: null,
+      moderationSource: moderationResult.layer === 'openai' ? 'openai' : 'semantic',
     }
   }
+
+  // All moderation layers passed
+  logger.info('5-layer moderation approved content', {
+    category: moderationResult.category,
+    layer: moderationResult.layer,
+    riskScore: moderationResult.riskScore,
+  })
 
   return {
-    valid: errors.length === 0,
-    sanitizedValue: finalValue,
-    errors,
+    valid: true,
+    sanitizedValue: sanitized.value,
+    errors: [],
     blocked: false,
-    filterResult,
-    moderationSource: 'regex',
+    filterResult: null,
+    moderationSource: moderationResult.layer === 'openai' ? 'openai' : 'semantic',
   }
 }
 

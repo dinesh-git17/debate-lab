@@ -8,6 +8,7 @@ import {
   recordDebateError,
 } from '@/lib/logging'
 import { getSession, storeSession, toPublicSession, updateSession } from '@/lib/session-store'
+import { getTopicCategoryWithFallback } from '@/lib/topic-backgrounds'
 
 import type { DebateFormValues } from '@/lib/schemas/debate-schema'
 import type {
@@ -44,6 +45,9 @@ export async function createDebateSession(
     const assignment = generateDebateAssignment()
     const now = new Date()
 
+    // Classify topic at creation time (keyword matching + semantic fallback)
+    const backgroundCategory = await getTopicCategoryWithFallback(formData.topic)
+
     const session: DebateSession = {
       id: debateId,
       topic: formData.topic,
@@ -56,6 +60,7 @@ export async function createDebateSession(
       createdAt: now,
       updatedAt: now,
       expiresAt: new Date(now.getTime() + SESSION_TTL_HOURS * 60 * 60 * 1000),
+      backgroundCategory,
     }
 
     await storeSession(session)

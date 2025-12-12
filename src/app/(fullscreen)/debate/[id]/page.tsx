@@ -52,6 +52,7 @@ export default async function DebatePage({ params }: DebatePageProps) {
       initialTopic={session.topic}
       initialFormat={session.format}
       initialStatus={session.status}
+      initialBackgroundCategory={session.backgroundCategory}
     />
   )
 }

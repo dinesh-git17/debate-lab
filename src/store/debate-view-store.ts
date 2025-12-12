@@ -11,7 +11,12 @@ import type {
 } from '@/types/debate-ui'
 
 interface DebateViewActions {
-  setDebateInfo: (info: { debateId: string; topic: string; format: string }) => void
+  setDebateInfo: (info: {
+    debateId: string
+    topic: string
+    format: string
+    backgroundCategory?: string | undefined
+  }) => void
   setStatus: (status: DebateViewStatus) => void
   setConnection: (status: ViewConnectionStatus) => void
   setError: (error: string | null) => void
@@ -70,6 +75,7 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
       debateId: info.debateId,
       topic: info.topic,
       format: info.format,
+      backgroundCategory: info.backgroundCategory,
     }),
 
   setStatus: (status) =>

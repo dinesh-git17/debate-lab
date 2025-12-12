@@ -40,13 +40,13 @@ export function DebateHeader({ className }: DebateHeaderProps) {
         'rounded-full',
         // Padding matching landing navbar
         'px-5 md:px-6 lg:px-8 py-3',
-        // Frosted glass material - identical to navbar
-        'bg-white/75 dark:bg-white/[0.03]',
+        // Frosted glass material - slightly lifted dark background for visibility over images
+        'bg-white/90 dark:bg-zinc-900/95',
         'backdrop-blur-[28px] backdrop-saturate-[1.9]',
-        'border border-neutral-200/60 dark:border-white/[0.08]',
-        // Multi-layer shadow system - matches navbar exactly
+        'border border-neutral-200/60 dark:border-white/[0.15]',
+        // Multi-layer shadow system + outer glow for dark mode
         'shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_12px_rgba(0,0,0,0.04)]',
-        'dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_2px_12px_rgba(0,0,0,0.25),inset_0_0_0_0.5px_rgba(255,255,255,0.05)]',
+        'dark:shadow-[0_8px_32px_rgba(0,0,0,0.9),0_0_1px_rgba(255,255,255,0.1)]',
         // Layout
         'flex items-center justify-between',
         'transition-all duration-300 ease-out',
@@ -65,7 +65,7 @@ export function DebateHeader({ className }: DebateHeaderProps) {
       <div className="absolute left-1/2 -translate-x-1/2 h-9 flex items-center">
         <motion.div
           className={cn(
-            'inline-flex items-center gap-2 px-4 h-9',
+            'group inline-flex items-center gap-2 px-4 h-9',
             'rounded-full',
             // Light/dark mode backgrounds matching navbar button style
             'bg-gradient-to-b from-neutral-100/80 via-neutral-100/60 to-neutral-100/40',
@@ -100,7 +100,9 @@ export function DebateHeader({ className }: DebateHeaderProps) {
           <span
             className={cn(
               'text-[11px] font-medium uppercase tracking-[0.08em]',
-              'text-neutral-500 dark:text-white/70'
+              'text-neutral-500 dark:text-white/70',
+              'transition-all duration-300',
+              'group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6),0_0_24px_rgba(255,255,255,0.3)]'
             )}
             style={{ WebkitFontSmoothing: 'antialiased' }}
           >
@@ -140,6 +142,7 @@ export function DebateHeader({ className }: DebateHeaderProps) {
               'hover:text-neutral-900 dark:hover:text-white',
               'hover:scale-[1.01]',
               'hover:[filter:brightness(1.05)_saturate(1.02)]',
+              'dark:hover:[text-shadow:0_0_12px_rgba(255,255,255,0.6),0_0_24px_rgba(255,255,255,0.3)]',
               'active:scale-[0.98]'
             )}
           >

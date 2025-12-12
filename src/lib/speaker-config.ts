@@ -245,9 +245,6 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
     'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
     // Contact shadow
     '0 1px 2px rgba(0, 0, 0, 0.18)',
-    // Role-colored atmospheric glow (enhanced)
-    `0 0 48px ${APPLE_COLORS.for.rgba(0.12)}`,
-    `0 0 96px ${APPLE_COLORS.for.rgba(0.06)}`,
     // Elevation shadows
     '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
     '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
@@ -257,8 +254,6 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
     'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
     'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
     '0 1px 2px rgba(0, 0, 0, 0.18)',
-    `0 0 48px ${APPLE_COLORS.against.rgba(0.12)}`,
-    `0 0 96px ${APPLE_COLORS.against.rgba(0.06)}`,
     '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
     '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
   ].join(', '),
@@ -267,8 +262,6 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
     'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
     'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
     '0 1px 2px rgba(0, 0, 0, 0.18)',
-    `0 0 40px ${APPLE_COLORS.moderator.rgba(0.08)}`,
-    `0 0 80px ${APPLE_COLORS.moderator.rgba(0.04)}`,
     '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
     '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
   ].join(', '),
@@ -303,8 +296,8 @@ export const SPEAKER_PILL_STYLES: Record<
     )`.replace(/\s+/g, ' '),
     text: APPLE_COLORS.for.highlight,
     border: APPLE_COLORS.for.rgba(0.25),
-    glow: `0 0 20px ${APPLE_COLORS.for.rgba(0.15)}, 0 0 40px ${APPLE_COLORS.for.rgba(0.08)}`,
-    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.35)}, inset 0 0 8px ${APPLE_COLORS.for.rgba(0.1)}`,
+    glow: 'none',
+    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.35)}`,
   },
   against: {
     background: `linear-gradient(135deg,
@@ -314,8 +307,8 @@ export const SPEAKER_PILL_STYLES: Record<
     )`.replace(/\s+/g, ' '),
     text: APPLE_COLORS.against.highlight,
     border: APPLE_COLORS.against.rgba(0.25),
-    glow: `0 0 20px ${APPLE_COLORS.against.rgba(0.15)}, 0 0 40px ${APPLE_COLORS.against.rgba(0.08)}`,
-    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.35)}, inset 0 0 8px ${APPLE_COLORS.against.rgba(0.1)}`,
+    glow: 'none',
+    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.35)}`,
   },
   moderator: {
     background: `linear-gradient(135deg,
@@ -325,8 +318,8 @@ export const SPEAKER_PILL_STYLES: Record<
     )`.replace(/\s+/g, ' '),
     text: APPLE_COLORS.moderator.highlight,
     border: APPLE_COLORS.moderator.rgba(0.2),
-    glow: `0 0 16px ${APPLE_COLORS.moderator.rgba(0.1)}, 0 0 32px ${APPLE_COLORS.moderator.rgba(0.05)}`,
-    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.3)}, inset 0 0 8px ${APPLE_COLORS.moderator.rgba(0.08)}`,
+    glow: 'none',
+    innerGlow: `inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.3)}`,
   },
 }
 

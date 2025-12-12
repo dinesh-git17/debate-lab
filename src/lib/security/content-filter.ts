@@ -1290,7 +1290,38 @@ export function filterContent(
   }
 }
 
+// Humor patterns that should bypass strict filtering
+// IMPORTANT: These must be SPECIFIC known-safe topics, NOT generic formats
+// DO NOT add broad patterns like "would you rather" - they can be abused
+const HUMOR_PATTERNS = [
+  /horse[- ]?sized\s+duck/i,
+  /duck[- ]?sized\s+horse/i,
+  /is\s+a?\s*hot\s?dog\s+a\s+sandwich/i,
+  /is\s+cereal\s+a?\s*soup/i,
+  /pineapple\s+(on|belongs?\s+on)\s+pizza/i,
+  /is\s+water\s+wet/i,
+  /milk\s+(before|first|or)\s+cereal/i,
+  /toilet\s+seat\s+(up|down)/i,
+  /gif\s+(pronounced|pronunciation)/i,
+  /tabs?\s+(vs?|or|versus)\s+spaces?/i,
+]
+
+function isHumorousTopic(content: string): boolean {
+  return HUMOR_PATTERNS.some((pattern) => pattern.test(content))
+}
+
 export function filterDebateTopic(topic: string): ContentFilterResult {
+  // Bypass for clearly humorous/absurdist topics
+  if (isHumorousTopic(topic)) {
+    return {
+      passed: true,
+      matches: [],
+      sanitizedContent: topic,
+      shouldBlock: false,
+      shouldLog: false,
+    }
+  }
+
   return filterContent(topic, {
     enableProfanityFilter: true,
     enablePromptInjectionDetection: true,
