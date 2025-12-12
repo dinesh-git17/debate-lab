@@ -9,16 +9,27 @@ import { randomBytes } from 'crypto'
 const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz'
 
 /**
- * Generate a random short code
+ * Generate a random short code using unbiased rejection sampling.
+ * Security: Avoids modulo bias by rejecting bytes outside the usable range.
  */
 export function generateShortCode(length: number = 8): string {
-  const bytes = randomBytes(length)
+  const alphabetLength = ALPHABET.length
+  // Calculate the largest multiple of alphabetLength that fits in a byte (0-255)
+  // This ensures uniform distribution by rejecting biased values
+  const maxUsable = Math.floor(256 / alphabetLength) * alphabetLength
+
   let code = ''
 
-  for (let i = 0; i < length; i++) {
-    const byte = bytes[i]
-    if (byte !== undefined) {
-      code += ALPHABET[byte % ALPHABET.length]
+  while (code.length < length) {
+    // Request more bytes than needed to reduce iterations
+    const bytes = randomBytes(length - code.length + 10)
+
+    for (let i = 0; i < bytes.length && code.length < length; i++) {
+      const byte = bytes[i]
+      // Only use bytes in the unbiased range [0, maxUsable)
+      if (byte !== undefined && byte < maxUsable) {
+        code += ALPHABET[byte % alphabetLength]
+      }
     }
   }
 
