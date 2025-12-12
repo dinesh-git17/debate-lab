@@ -1,5 +1,7 @@
 // src/components/ui/__tests__/input.test.tsx
-// Unit tests for Input component
+/**
+ * Test suite for Input component covering types, states, interactions, and accessibility.
+ */
 
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

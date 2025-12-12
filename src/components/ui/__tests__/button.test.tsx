@@ -1,5 +1,7 @@
 // src/components/ui/__tests__/button.test.tsx
-// Unit tests for Button component
+/**
+ * Test suite for Button component covering variants, sizes, states, and accessibility.
+ */
 
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'

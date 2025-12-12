@@ -1,4 +1,9 @@
 // src/components/ui/timeline.tsx
+/**
+ * Vertical timeline component for displaying sequential steps or events.
+ * Supports alternating left-right layout on desktop with responsive mobile fallback.
+ */
+
 import { cn } from '@/lib/utils'
 
 interface TimelineProps {

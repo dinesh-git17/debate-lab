@@ -1,4 +1,9 @@
 // src/components/ui/prose.tsx
+/**
+ * Typography wrapper that applies consistent styling to rich text content.
+ * Handles headings, paragraphs, lists, and links with configurable max-width.
+ */
+
 import { cn } from '@/lib/utils'
 
 type ProseSize = 'sm' | 'md' | 'lg'

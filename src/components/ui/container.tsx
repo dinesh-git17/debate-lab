@@ -1,4 +1,9 @@
 // src/components/ui/container.tsx
+/**
+ * Responsive container component that constrains content width and applies consistent horizontal padding.
+ * Serves as the primary layout wrapper for page content.
+ */
+
 import { cn } from '@/lib/utils'
 
 interface ContainerProps {

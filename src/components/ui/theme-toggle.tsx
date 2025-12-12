@@ -1,6 +1,8 @@
 // src/components/ui/theme-toggle.tsx
-// iOS-style sliding toggle for light/dark mode
-
+/**
+ * iOS-style animated toggle switch for theme selection.
+ * Features spring animation with overshoot and smooth icon transitions.
+ */
 'use client'
 
 import { useTheme } from 'next-themes'
@@ -10,7 +12,7 @@ import { IoMoon, IoSunny } from 'react-icons/io5'
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  // Local visual state - decoupled from theme to allow animation
+  // Decoupled from theme state to enable animation before theme change
   const [visualState, setVisualState] = useState<'light' | 'dark'>('light')
   const isAnimating = useRef(false)
 
@@ -18,7 +20,6 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  // Sync visual state with theme on mount and when theme changes externally
   useEffect(() => {
     if (mounted && !isAnimating.current) {
       setVisualState(resolvedTheme === 'dark' ? 'dark' : 'light')
@@ -30,11 +31,10 @@ export function ThemeToggle() {
 
     const newState = visualState === 'dark' ? 'light' : 'dark'
 
-    // Start animation
     isAnimating.current = true
     setVisualState(newState)
 
-    // Update theme after spring animation completes
+    // Delay theme change until spring animation completes
     setTimeout(() => {
       setTheme(newState)
       isAnimating.current = false
@@ -58,7 +58,6 @@ export function ThemeToggle() {
       className="relative w-[52px] h-[28px] rounded-full cursor-pointer p-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-foreground/50"
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
     >
-      {/* Track background with subtle glow */}
       <span
         className="absolute inset-0 rounded-full"
         style={{
@@ -70,14 +69,11 @@ export function ThemeToggle() {
         }}
       />
 
-      {/* Sliding thumb with reflective highlight */}
       <span
         className="relative block w-6 h-6 rounded-full"
         style={{
           transform: isDark ? 'translateX(24px)' : 'translateX(0px)',
-          // Spring animation with overshoot
           transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          // Layered shadows: outer shadow + inner glossy highlight + border for light mode contrast
           background: isDark
             ? 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)'
             : 'linear-gradient(145deg, #fefefe 0%, #f0f0f0 100%)',
@@ -87,9 +83,7 @@ export function ThemeToggle() {
             : `0 2px 10px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 2px rgba(0,0,0,0.03)`,
         }}
       >
-        {/* Icon container */}
         <span className="absolute inset-0 flex items-center justify-center">
-          {/* Sun icon */}
           <IoSunny
             className="absolute w-4 h-4 text-amber-500"
             style={{
@@ -98,7 +92,6 @@ export function ThemeToggle() {
               transition: 'opacity 0.3s ease, transform 0.3s ease',
             }}
           />
-          {/* Moon icon */}
           <IoMoon
             className="absolute w-4 h-4 text-indigo-500"
             style={{

@@ -1,4 +1,9 @@
 // src/components/ui/divider.tsx
+/**
+ * Horizontal rule component for visual separation of content sections.
+ * Supports decorative mode which removes the element from the accessibility tree.
+ */
+
 import { cn } from '@/lib/utils'
 
 interface DividerProps {

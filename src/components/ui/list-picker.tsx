@@ -1,5 +1,8 @@
 // src/components/ui/list-picker.tsx
-// Apple-style floating card list picker with title + subtitle options
+/**
+ * Dropdown picker with rich option cards supporting title and subtitle.
+ * Uses portal rendering to escape stacking contexts and fixed positioning for scroll stability.
+ */
 'use client'
 
 import { Check, ChevronDown } from 'lucide-react'
@@ -48,12 +51,10 @@ export function ListPicker({
 
   const selectedOption = options.find((opt) => opt.value === value)
 
-  // Track mount state for portal
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Calculate dropdown position (viewport-relative for fixed positioning)
   const updatePosition = useCallback(() => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
@@ -65,7 +66,6 @@ export function ListPicker({
     }
   }, [])
 
-  // Recalculate position on scroll/resize when open
   useEffect(() => {
     if (!isOpen) return
 
@@ -78,11 +78,9 @@ export function ListPicker({
     }
   }, [isOpen, updatePosition])
 
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
-      // Check if click is outside both the container AND the portaled dropdown
       const isOutsideContainer = containerRef.current && !containerRef.current.contains(target)
       const isOutsideDropdown = listRef.current && !listRef.current.contains(target)
 
@@ -97,7 +95,6 @@ export function ListPicker({
     }
   }, [isOpen])
 
-  // Keyboard navigation
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (disabled) return
@@ -147,7 +144,6 @@ export function ListPicker({
     [disabled, isOpen, highlightedIndex, options, onChange, updatePosition]
   )
 
-  // Reset highlighted index when opening
   useEffect(() => {
     if (isOpen) {
       const currentIndex = options.findIndex((opt) => opt.value === value)
@@ -155,7 +151,6 @@ export function ListPicker({
     }
   }, [isOpen, options, value])
 
-  // Scroll highlighted option into view
   useEffect(() => {
     if (isOpen && listRef.current && highlightedIndex >= 0) {
       const items = listRef.current.querySelectorAll('[role="option"]')
@@ -174,7 +169,6 @@ export function ListPicker({
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      {/* Trigger Button - Card style */}
       <button
         ref={triggerRef}
         type="button"
@@ -194,28 +188,21 @@ export function ListPicker({
         }}
         onKeyDown={handleKeyDown}
         className={cn(
-          // Base card styles
           'w-full rounded-2xl p-4 text-left',
           'flex items-center justify-between gap-3',
           'transition-all duration-200',
-          // Light mode
           'bg-neutral-50/80 hover:bg-neutral-100/80',
           'border border-neutral-200/80',
-          // Dark mode
           'dark:bg-white/[0.03] dark:hover:bg-white/[0.05]',
           'dark:border-white/[0.08]',
-          // Focus state
           'focus:outline-none focus:ring-2 focus:ring-blue-500/30',
           'focus:border-blue-500/50',
-          // Open state
           isOpen && [
             'ring-2 ring-blue-500/30',
             'border-blue-500/50',
             'bg-white dark:bg-white/[0.05]',
           ],
-          // Error state
           error && 'border-red-300 dark:border-red-500/30',
-          // Disabled
           disabled && 'opacity-50 cursor-not-allowed'
         )}
       >
@@ -246,7 +233,6 @@ export function ListPicker({
         />
       </button>
 
-      {/* Floating Options List - Rendered via Portal to escape stacking contexts */}
       {mounted &&
         isOpen &&
         dropdownPosition.width > 0 &&
@@ -260,15 +246,12 @@ export function ListPicker({
             onMouseDown={(e) => e.stopPropagation()}
             className={cn(
               'fixed z-[9999] rounded-2xl overflow-hidden',
-              // Light mode - fully opaque white
               'bg-white',
               'border border-neutral-200',
               'shadow-[0_8px_30px_rgba(0,0,0,0.12),0_20px_60px_rgba(0,0,0,0.08)]',
-              // Dark mode - fully opaque dark background
               'dark:bg-[#171717]',
               'dark:border-neutral-700',
               'dark:shadow-[0_8px_30px_rgba(0,0,0,0.6),0_20px_60px_rgba(0,0,0,0.5)]',
-              // Animation with guaranteed opacity
               'animate-list-picker'
             )}
             style={{
@@ -293,11 +276,8 @@ export function ListPicker({
                       'px-4 py-3 cursor-pointer',
                       'flex items-center justify-between gap-3',
                       'transition-colors duration-100',
-                      // Base background - solid
                       'bg-white dark:bg-[#171717]',
-                      // Highlighted state
                       isHighlighted && ['bg-neutral-100 dark:bg-neutral-800'],
-                      // Selected + highlighted
                       isHighlighted && isSelected && ['bg-blue-50 dark:bg-blue-900/50']
                     )}
                   >

@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-// TypeScript strict mode disabled: Three.js WebGL shader uniforms are
-// dynamically typed but guaranteed to exist at runtime.
-'use client'
-
 // src/components/ui/liquid-ether.tsx
+/**
+ * GPU-accelerated fluid dynamics visualization using WebGL and Three.js.
+ * Implements Navier-Stokes equations for interactive liquid simulation with
+ * mouse/touch input and optional autonomous animation.
+ */
+
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck - Three.js WebGL shader uniforms are dynamically typed but guaranteed at runtime
+'use client'
 
 import React, { useEffect, useRef } from 'react'
 import * as THREE from 'three'

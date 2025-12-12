@@ -1,4 +1,8 @@
 // src/components/ui/accordion.tsx
+/**
+ * Accessible accordion component supporting single or multiple expanded items.
+ * Uses React Context for state management and CSS Grid for smooth expand/collapse animations.
+ */
 'use client'
 
 import { ChevronDown } from 'lucide-react'

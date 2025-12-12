@@ -1,4 +1,8 @@
 // src/components/ui/select.tsx
+/**
+ * Accessible dropdown select with keyboard navigation and custom styling.
+ * Implements combobox pattern with listbox for full keyboard and screen reader support.
+ */
 'use client'
 
 import { Check, ChevronDown } from 'lucide-react'
@@ -43,7 +47,6 @@ export function Select({
 
   const selectedOption = options.find((opt) => opt.value === value)
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -57,7 +60,6 @@ export function Select({
     }
   }, [isOpen])
 
-  // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (disabled) return
@@ -105,7 +107,6 @@ export function Select({
     [disabled, isOpen, highlightedIndex, options, onChange]
   )
 
-  // Reset highlighted index when opening
   useEffect(() => {
     if (isOpen) {
       const currentIndex = options.findIndex((opt) => opt.value === value)
@@ -113,7 +114,6 @@ export function Select({
     }
   }, [isOpen, options, value])
 
-  // Scroll highlighted option into view
   useEffect(() => {
     if (isOpen && listboxRef.current && highlightedIndex >= 0) {
       const highlightedElement = listboxRef.current.children[highlightedIndex] as HTMLElement
@@ -129,7 +129,6 @@ export function Select({
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      {/* Trigger Button */}
       <button
         ref={buttonRef}
         type="button"
@@ -143,30 +142,23 @@ export function Select({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
         className={cn(
-          // Base styles - Apple-style select trigger
           'flex h-12 w-full items-center justify-between rounded-xl px-4 py-3',
           'text-sm font-medium text-left',
-          // Colors
           'bg-neutral-50/50 dark:bg-white/[0.03]',
-          // Border
           'border transition-all duration-200',
           error
             ? 'border-red-300 dark:border-red-500/30'
             : 'border-neutral-300 dark:border-white/[0.10]',
-          // Hover
           !disabled && 'hover:border-neutral-400 dark:hover:border-white/[0.15]',
           !disabled && 'hover:bg-neutral-100/50 dark:hover:bg-white/[0.05]',
-          // Focus - Apple-style blue ring
           'focus:outline-none focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/[0.05]',
           'focus:ring-2 focus:ring-blue-500/20',
           'focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)]',
-          // Open state
           isOpen && [
             'border-blue-500/50 dark:border-blue-400/30',
             'ring-2 ring-blue-500/20',
             'shadow-[0_0_0_4px_rgba(59,130,246,0.1)]',
           ],
-          // Disabled
           disabled && 'cursor-not-allowed opacity-50'
         )}
       >
@@ -191,7 +183,6 @@ export function Select({
         />
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <ul
           ref={listboxRef}
@@ -202,15 +193,12 @@ export function Select({
             'absolute z-50 mt-2 w-full',
             'max-h-[280px] overflow-auto',
             'rounded-xl py-1.5',
-            // Light mode - clean white dropdown
             'bg-white',
             'border border-neutral-200',
             'shadow-[0_4px_20px_rgba(0,0,0,0.08),0_8px_40px_rgba(0,0,0,0.06)]',
-            // Dark mode - elevated surface
             'dark:bg-neutral-900',
             'dark:border-white/[0.10]',
             'dark:shadow-[0_4px_20px_rgba(0,0,0,0.4),0_8px_40px_rgba(0,0,0,0.3)]',
-            // Animation
             'animate-[selectFadeIn_0.15s_ease-out]'
           )}
         >
@@ -228,16 +216,12 @@ export function Select({
                 className={cn(
                   'flex items-center justify-between px-4 py-2.5 cursor-pointer',
                   'text-sm transition-colors duration-100',
-                  // Default text colors
                   'text-neutral-700 dark:text-neutral-200',
-                  // Highlighted state (keyboard or hover)
                   isHighlighted && [
                     'bg-neutral-100 dark:bg-white/[0.08]',
                     'text-neutral-900 dark:text-white',
                   ],
-                  // Selected state
                   isSelected && ['font-medium', 'text-blue-600 dark:text-blue-400'],
-                  // Combined highlighted + selected
                   isHighlighted &&
                     isSelected && [
                       'bg-blue-50 dark:bg-blue-500/15',

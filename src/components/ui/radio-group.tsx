@@ -1,4 +1,8 @@
 // src/components/ui/radio-group.tsx
+/**
+ * Generic radio group component with card-style option rendering.
+ * Supports horizontal and vertical layouts with optional descriptions.
+ */
 'use client'
 
 import { cn } from '@/lib/utils'
@@ -46,25 +50,20 @@ export function RadioGroup<T extends string | number = string>({
             key={String(option.value)}
             htmlFor={inputId}
             className={cn(
-              // Base styles - Apple-style pill card
               'relative flex cursor-pointer rounded-xl p-4',
               'border transition-all duration-200 ease-out',
-              // Focus ring
               'focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-offset-2',
-              // Selected state - Blue accent
               isSelected && [
                 'bg-blue-50 dark:bg-blue-500/10',
                 'border-blue-500/50 dark:border-blue-400/30',
                 'shadow-[0_0_0_1px_rgba(59,130,246,0.1),0_2px_8px_rgba(59,130,246,0.1)]',
               ],
-              // Default state
               !isSelected && [
                 'bg-neutral-50/50 dark:bg-white/[0.02]',
                 'border-neutral-200 dark:border-white/[0.08]',
                 'hover:bg-neutral-100/80 dark:hover:bg-white/[0.04]',
                 'hover:border-neutral-300 dark:hover:border-white/[0.12]',
               ],
-              // Error state
               error && !isSelected && 'border-red-300 dark:border-red-500/30'
             )}
           >
@@ -78,7 +77,6 @@ export function RadioGroup<T extends string | number = string>({
               className="sr-only"
               aria-describedby={option.description ? `${inputId}-desc` : undefined}
             />
-            {/* Apple-style radio indicator */}
             <span
               className={cn(
                 'mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full',
@@ -89,7 +87,6 @@ export function RadioGroup<T extends string | number = string>({
               )}
               aria-hidden="true"
             >
-              {/* Inner check dot with scale animation */}
               <span
                 className={cn(
                   'h-1.5 w-1.5 rounded-full bg-white',

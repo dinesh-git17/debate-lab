@@ -1,4 +1,9 @@
 // src/components/ui/section.tsx
+/**
+ * Page section component with consistent vertical spacing and background variants.
+ * Used to structure page content into distinct visual regions.
+ */
+
 import { cn } from '@/lib/utils'
 
 type SectionVariant = 'default' | 'muted' | 'accent'

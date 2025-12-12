@@ -1,4 +1,8 @@
 // src/components/ui/button.tsx
+/**
+ * Core button component with multiple visual variants and sizes.
+ * Supports polymorphism via asChild prop for rendering as different elements.
+ */
 
 import { Slot } from '@radix-ui/react-slot'
 import { forwardRef } from 'react'

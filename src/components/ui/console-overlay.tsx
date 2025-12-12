@@ -1,5 +1,8 @@
 // src/components/ui/console-overlay.tsx
-
+/**
+ * Full-screen overlay that displays IntelligenceConsole with cinematic background effects.
+ * Used during debate initialization to show processing status.
+ */
 'use client'
 
 import { motion } from 'framer-motion'
@@ -14,7 +17,6 @@ interface ConsoleOverlayProps {
 }
 
 export function ConsoleOverlay({ steps, topic, onComplete }: ConsoleOverlayProps) {
-  // Lock body scroll when mounted
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => {
@@ -30,10 +32,8 @@ export function ConsoleOverlay({ steps, topic, onComplete }: ConsoleOverlayProps
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Solid background - completely opaque, hides everything */}
       <div className="absolute inset-0 bg-[#050505]" />
 
-      {/* Dimmed God Ray - centered, subtle */}
       <motion.div
         className="pointer-events-none absolute left-1/2 top-1/2 h-[1000px] w-[1000px] -translate-x-1/2 -translate-y-1/2"
         style={{
@@ -51,7 +51,6 @@ export function ConsoleOverlay({ steps, topic, onComplete }: ConsoleOverlayProps
         }}
       />
 
-      {/* Heavy Vignette - tunnels focus to center */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -60,7 +59,6 @@ export function ConsoleOverlay({ steps, topic, onComplete }: ConsoleOverlayProps
         }}
       />
 
-      {/* Film Grain */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.025]"
         style={{
@@ -69,7 +67,6 @@ export function ConsoleOverlay({ steps, topic, onComplete }: ConsoleOverlayProps
         }}
       />
 
-      {/* Console - Larger, more prominent with entrance animation */}
       <motion.div
         className="relative z-10 w-full max-w-xl px-6"
         initial={{ opacity: 0, y: 30, scale: 0.95 }}

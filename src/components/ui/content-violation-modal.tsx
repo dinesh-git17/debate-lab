@@ -1,5 +1,8 @@
 // src/components/ui/content-violation-modal.tsx
-
+/**
+ * Alert dialog for displaying content policy violations with severity-based styling.
+ * Renders via portal with backdrop blur and focus trap for accessibility.
+ */
 'use client'
 
 import { AlertTriangle, ShieldAlert, XCircle } from 'lucide-react'
@@ -99,7 +102,6 @@ export function ContentViolationModal({
   const config = VIOLATION_CONFIG[blockReason]
   const Icon = config.icon
 
-  // Track mounting for SSR safety with portals
   useEffect(() => {
     setMounted(true)
     return () => setMounted(false)
@@ -117,7 +119,6 @@ export function ContentViolationModal({
     document.addEventListener('keydown', handleKeyDown)
     closeButtonRef.current?.focus()
 
-    // Prevent background scrolling while modal is open
     document.body.style.overflow = 'hidden'
 
     return () => {
@@ -141,7 +142,6 @@ export function ContentViolationModal({
     blockReason === 'dangerous_pattern' ||
     blockReason === 'sensitive_topic'
 
-  // Render modal at document.body level using portal for full-page coverage
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -151,10 +151,8 @@ export function ContentViolationModal({
       aria-labelledby="violation-title"
       aria-describedby="violation-description"
     >
-      {/* Backdrop with blur - covers entire page */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      {/* Modal */}
       <div
         ref={modalRef}
         className={cn(
@@ -164,7 +162,6 @@ export function ContentViolationModal({
           'animate-[scaleIn_0.2s_ease-out]'
         )}
       >
-        {/* Icon Header */}
         <div
           className={cn('flex items-center justify-center py-6', 'rounded-t-2xl', config.bgColor)}
         >
@@ -174,7 +171,6 @@ export function ContentViolationModal({
         </div>
 
         <div className="p-6 pt-4">
-          {/* Title */}
           <h2
             id="violation-title"
             className="mb-3 text-xl font-semibold text-center text-neutral-900 dark:text-white"
@@ -182,7 +178,6 @@ export function ContentViolationModal({
             {config.title}
           </h2>
 
-          {/* Description */}
           <p
             id="violation-description"
             className="mb-4 text-center text-neutral-600 dark:text-neutral-400"
@@ -190,7 +185,6 @@ export function ContentViolationModal({
             {message ?? config.description}
           </p>
 
-          {/* Warning Box */}
           {isSevere && (
             <div
               className={cn(
@@ -205,7 +199,6 @@ export function ContentViolationModal({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-col gap-3">
             <Button ref={closeButtonRef} variant="primary" onClick={onClose} className="w-full">
               I Understand

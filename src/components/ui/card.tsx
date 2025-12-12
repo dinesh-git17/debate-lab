@@ -1,4 +1,9 @@
 // src/components/ui/card.tsx
+/**
+ * Composable card component system with Header, Title, Description, and Content subcomponents.
+ * Provides consistent styling for contained content blocks throughout the application.
+ */
+
 import { cn } from '@/lib/utils'
 
 interface CardProps {

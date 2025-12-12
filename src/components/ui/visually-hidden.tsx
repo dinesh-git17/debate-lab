@@ -1,4 +1,8 @@
 // src/components/ui/visually-hidden.tsx
+/**
+ * Accessibility utility for hiding content visually while keeping it accessible to screen readers.
+ * Uses CSS techniques that preserve element in the accessibility tree.
+ */
 
 interface VisuallyHiddenProps {
   children: React.ReactNode

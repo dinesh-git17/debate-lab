@@ -1,5 +1,8 @@
 // src/components/ui/ban-modal.tsx
-
+/**
+ * Modal dialog for displaying temporary or permanent ban notifications.
+ * Includes countdown timer for temporary bans and prevents dismissal until expiry.
+ */
 'use client'
 
 import { Ban, Clock, AlertOctagon } from 'lucide-react'
@@ -48,7 +51,6 @@ export function BanModal({
   const [mounted, setMounted] = useState(false)
   const [remainingMs, setRemainingMs] = useState(initialRemainingMs ?? 0)
 
-  // Calculate remaining time from expiresAt if provided
   const calculateRemaining = useCallback(() => {
     if (expiresAt) {
       const expiry = new Date(expiresAt).getTime()
@@ -57,13 +59,11 @@ export function BanModal({
     return initialRemainingMs ?? 0
   }, [expiresAt, initialRemainingMs])
 
-  // Track mounting for SSR safety with portals
   useEffect(() => {
     setMounted(true)
     return () => setMounted(false)
   }, [])
 
-  // Update remaining time every second for temporary bans
   useEffect(() => {
     if (!isOpen || banType !== 'temporary') return
 
@@ -73,7 +73,6 @@ export function BanModal({
       const newRemaining = calculateRemaining()
       setRemainingMs(newRemaining)
 
-      // If ban expired, close the modal
       if (newRemaining <= 0 && onClose) {
         onClose()
       }
@@ -86,15 +85,12 @@ export function BanModal({
     if (!isOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only allow escape for temporary bans that have expired
       if (e.key === 'Escape' && banType === 'temporary' && remainingMs <= 0 && onClose) {
         onClose()
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
-
-    // Prevent background scrolling while modal is open
     document.body.style.overflow = 'hidden'
 
     return () => {
@@ -109,7 +105,6 @@ export function BanModal({
   const time = formatTimeRemainingDetailed(remainingMs)
   const hasExpired = !isPermanent && remainingMs <= 0
 
-  // Render modal at document.body level using portal for full-page coverage
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -118,10 +113,8 @@ export function BanModal({
       aria-labelledby="ban-title"
       aria-describedby="ban-description"
     >
-      {/* Backdrop with blur - covers entire page, no click to close */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
 
-      {/* Modal */}
       <div
         ref={modalRef}
         className={cn(
@@ -131,7 +124,6 @@ export function BanModal({
           'animate-[scaleIn_0.2s_ease-out]'
         )}
       >
-        {/* Icon Header */}
         <div
           className={cn(
             'flex items-center justify-center py-6',
@@ -151,7 +143,6 @@ export function BanModal({
         </div>
 
         <div className="p-6 pt-4">
-          {/* Title */}
           <h2
             id="ban-title"
             className="mb-3 text-xl font-semibold text-center text-neutral-900 dark:text-white"
@@ -159,7 +150,6 @@ export function BanModal({
             {isPermanent ? 'Account Permanently Suspended' : 'Temporarily Suspended'}
           </h2>
 
-          {/* Description */}
           <p
             id="ban-description"
             className="mb-6 text-center text-neutral-600 dark:text-neutral-400"
@@ -169,7 +159,6 @@ export function BanModal({
               : 'Your access to Debate Lab has been temporarily suspended.'}
           </p>
 
-          {/* Reason Box */}
           <div
             className={cn(
               'mb-6 p-4 rounded-xl',
@@ -191,7 +180,6 @@ export function BanModal({
             </p>
           </div>
 
-          {/* Countdown Timer for Temporary Bans */}
           {!isPermanent && !hasExpired && (
             <div className="mb-6">
               <div className="flex items-center justify-center gap-2 mb-3 text-neutral-500 dark:text-neutral-400">
@@ -244,7 +232,6 @@ export function BanModal({
             </div>
           )}
 
-          {/* Ban Expired Message */}
           {hasExpired && (
             <div className="mb-6 p-4 rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20">
               <p className="text-sm text-green-700 dark:text-green-400 text-center font-medium">
@@ -253,7 +240,6 @@ export function BanModal({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-col gap-3">
             {hasExpired && onClose ? (
               <Button variant="primary" onClick={onClose} className="w-full">
@@ -281,7 +267,7 @@ export function BanModal({
   )
 }
 
-// Hook to check ban status
+/** Hook to fetch and track current user ban status from the API. */
 export function useBanStatus() {
   const [banStatus, setBanStatus] = useState<{
     isBanned: boolean

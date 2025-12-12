@@ -1,4 +1,8 @@
 // src/components/ui/table-of-contents.tsx
+/**
+ * Sticky navigation component that tracks and highlights the current section in view.
+ * Uses IntersectionObserver for scroll-aware active state management.
+ */
 'use client'
 
 import { useEffect, useState } from 'react'

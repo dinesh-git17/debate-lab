@@ -1,4 +1,9 @@
 // src/components/ui/tech-badge.tsx
+/**
+ * Badge component for displaying technology or feature items with icon, name, and description.
+ * Renders as a link when href is provided, otherwise as a static container.
+ */
+
 import { cn } from '@/lib/utils'
 
 interface TechBadgeProps {

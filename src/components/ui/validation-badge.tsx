@@ -1,4 +1,9 @@
 // src/components/ui/validation-badge.tsx
+/**
+ * Status indicator badge for form validation states.
+ * Renders appropriate icons for idle, validating, valid, invalid, and revision states.
+ */
+
 import { AlertTriangle, Check, Loader2, X } from 'lucide-react'
 
 import { cn } from '@/lib/utils'

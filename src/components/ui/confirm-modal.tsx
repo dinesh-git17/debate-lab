@@ -1,5 +1,8 @@
 // src/components/ui/confirm-modal.tsx
-
+/**
+ * Generic confirmation dialog with support for destructive and default variants.
+ * Renders via portal with backdrop blur and keyboard navigation support.
+ */
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -34,7 +37,6 @@ export function ConfirmModal({
   const confirmButtonRef = useRef<HTMLButtonElement>(null)
   const [mounted, setMounted] = useState(false)
 
-  // Ensure we only render portal on client
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -72,7 +74,6 @@ export function ConfirmModal({
     }
   }
 
-  // Render via portal to escape parent positioning context
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center"
@@ -81,10 +82,8 @@ export function ConfirmModal({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      {/* Backdrop - strong blur to lock background */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
 
-      {/* Modal - dark glass styling */}
       <div
         ref={modalRef}
         className={cn(
@@ -96,15 +95,12 @@ export function ConfirmModal({
         )}
       >
         <div className="p-6">
-          {/* Header */}
           <h2 id="modal-title" className="mb-2 text-lg font-semibold text-white">
             {title}
           </h2>
 
-          {/* Description */}
           <p className="mb-6 text-zinc-400">{description}</p>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={onClose}

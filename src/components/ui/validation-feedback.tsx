@@ -1,4 +1,8 @@
 // src/components/ui/validation-feedback.tsx
+/**
+ * Displays detailed validation feedback including issues, suggestions, and reasoning.
+ * Supports applying AI-generated suggestions directly to form fields.
+ */
 'use client'
 
 import { ChevronDown, Sparkles } from 'lucide-react'

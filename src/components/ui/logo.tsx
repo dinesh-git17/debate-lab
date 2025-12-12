@@ -1,6 +1,8 @@
 // src/components/ui/logo.tsx
-// Debate Lab logo component with theme-aware image and responsive sizing
-
+/**
+ * Theme-aware logo component with responsive sizing and navigation link.
+ * Automatically switches between light and dark logo variants based on current theme.
+ */
 'use client'
 
 import Image from 'next/image'

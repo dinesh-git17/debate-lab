@@ -1,5 +1,8 @@
 // src/components/ui/sparkle-button.tsx
-
+/**
+ * Animated icon button for AI-powered text enhancement actions.
+ * Features subtle sparkle animation and loading spinner state.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

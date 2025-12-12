@@ -1,4 +1,9 @@
 // src/components/ui/form-field.tsx
+/**
+ * Wrapper component for form inputs that handles labels, error messages, and helper text.
+ * Provides consistent form field structure and accessibility attributes.
+ */
+
 import { cn } from '@/lib/utils'
 
 interface FormFieldProps {

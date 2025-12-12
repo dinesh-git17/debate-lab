@@ -1,5 +1,8 @@
 // src/components/ui/segmented-control.tsx
-// Apple-style iOS Segmented Control with animated selection indicator
+/**
+ * Tab-style segmented control with animated sliding indicator.
+ * Supports keyboard navigation and responsive grid-to-flex layout.
+ */
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -35,7 +38,6 @@ export function SegmentedControl<T extends string | number = string>({
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  // Calculate indicator position based on selected option
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -57,38 +59,28 @@ export function SegmentedControl<T extends string | number = string>({
 
   return (
     <div className={cn('relative', className)}>
-      {/* Container with iOS-style pill shape */}
       <div
         ref={containerRef}
         role="radiogroup"
         aria-label={name}
         className={cn(
           'relative w-full rounded-xl p-1',
-          // Grid layout: 2 columns on mobile, flex row on sm+
           'grid grid-cols-2 gap-1',
           'sm:flex sm:flex-row sm:gap-0',
-          // Light mode
           'bg-neutral-100',
-          // Dark mode
           'dark:bg-white/[0.06]',
-          // Error state
           error && 'ring-2 ring-red-500/30',
-          // Disabled state
           disabled && 'opacity-50 pointer-events-none'
         )}
       >
-        {/* Animated selection indicator - hidden on mobile due to grid layout */}
         <div
           className={cn(
             'absolute top-1 bottom-1 rounded-lg',
             'hidden sm:block',
-            // Light mode - white pill
             'bg-white',
             'shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.06)]',
-            // Dark mode - elevated surface
             'dark:bg-white/[0.12]',
             'dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]',
-            // Smooth spring-like transition
             'transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]'
           )}
           style={{
@@ -98,7 +90,6 @@ export function SegmentedControl<T extends string | number = string>({
           aria-hidden="true"
         />
 
-        {/* Segment options */}
         {options.map((option, index) => {
           const isSelected = value === option.value
           const isHovered = hoveredIndex === index
@@ -131,27 +122,22 @@ export function SegmentedControl<T extends string | number = string>({
                 'text-sm font-medium text-center',
                 'transition-colors duration-200',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1',
-                // Last item spans full width if odd number of options (mobile only)
                 index === options.length - 1 &&
                   options.length % 2 === 1 &&
                   'col-span-2 sm:col-span-1',
-                // Mobile selected state (since indicator is hidden)
                 isSelected && [
                   'sm:bg-transparent',
                   'bg-white dark:bg-white/[0.12]',
                   'shadow-[0_1px_3px_rgba(0,0,0,0.08)] sm:shadow-none',
                 ],
-                // Text colors
                 isSelected
                   ? 'text-neutral-900 dark:text-white'
                   : 'text-neutral-600 dark:text-neutral-400',
-                // Hover state (only for non-selected)
                 !isSelected && isHovered && 'text-neutral-800 dark:text-neutral-300'
               )}
             >
               <span className="relative">
                 {option.label}
-                {/* Tooltip for description - smooth floating fade */}
                 {option.description && isHovered && !isSelected && (
                   <span
                     className={cn(
@@ -175,7 +161,6 @@ export function SegmentedControl<T extends string | number = string>({
         })}
       </div>
 
-      {/* Selected option description (shown below) */}
       {options[selectedIndex]?.description && (
         <p
           className={cn(
