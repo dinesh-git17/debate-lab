@@ -29,7 +29,7 @@ export function NewDebateForm() {
   const banStatus = useBanStatus()
   const [showBanModal, setShowBanModal] = useState(true)
 
-  // Track when component is mounted for portal rendering
+  // Required for portal rendering to document.body
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -42,16 +42,13 @@ export function NewDebateForm() {
     pendingError.current = null
 
     try {
-      // API call runs in parallel with console animation
       const result = await createDebate(data)
 
       if (result.success && result.debateId) {
         pendingDebateId.current = result.debateId
-        // Console onComplete will handle navigation
         return { success: true }
       }
 
-      // Store error for console completion handler
       pendingError.current = {
         error: result.error ?? 'Failed to create debate',
         blocked: result.blocked,
@@ -73,11 +70,10 @@ export function NewDebateForm() {
     if (pendingDebateId.current) {
       router.push(`/debate/${pendingDebateId.current}`)
     } else if (pendingError.current) {
-      // Error occurred, hide console and show error
       setShowConsole(false)
       setIsSubmitting(false)
     } else {
-      // API still loading, wait a bit more
+      // Poll for API completion if console animation finishes first
       const checkInterval = setInterval(() => {
         if (pendingDebateId.current) {
           clearInterval(checkInterval)
@@ -89,7 +85,6 @@ export function NewDebateForm() {
         }
       }, 100)
 
-      // Timeout after 10s
       setTimeout(() => {
         clearInterval(checkInterval)
         if (!pendingDebateId.current) {
@@ -100,14 +95,12 @@ export function NewDebateForm() {
     }
   }
 
-  // Handle ban modal close (only when ban expires)
   const handleBanModalClose = () => {
     setShowBanModal(false)
   }
 
   return (
     <>
-      {/* Ban Modal - shown if user is banned */}
       {banStatus.isBanned && banStatus.banType && showBanModal && (
         <BanModal
           isOpen={true}
@@ -119,7 +112,6 @@ export function NewDebateForm() {
         />
       )}
 
-      {/* Intelligence Console Loading Overlay - rendered via portal at document root */}
       {mounted &&
         showConsole &&
         createPortal(
@@ -135,18 +127,14 @@ export function NewDebateForm() {
 
       <div
         className={cn(
-          // Apple-style card with subtle elevation
           'relative rounded-2xl',
           'p-6 sm:p-8 md:p-10',
-          // Light mode - clean white with subtle shadow
           'bg-white',
           'border border-neutral-200/60',
           'shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)]',
-          // Dark mode - elevated surface
           'dark:bg-white/[0.02]',
           'dark:border-white/[0.08]',
           'dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0_0_0.5px_rgba(255,255,255,0.05)]',
-          // Animation
           'animate-[fadeSlideUp_0.6s_ease-out_0.15s_forwards] opacity-0'
         )}
       >

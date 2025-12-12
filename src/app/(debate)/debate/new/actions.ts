@@ -19,11 +19,9 @@ interface CreateDebateData extends DebateFormValues {
   alreadyPolished?: boolean
 }
 
-// Extract security context from headers in Server Actions
 async function getSecurityContext(): Promise<SecurityContext> {
   const headersList = await headers()
 
-  // Get IP with fallback to localhost for local development
   const ip =
     headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     headersList.get('x-real-ip') ??
@@ -39,7 +37,6 @@ async function getSecurityContext(): Promise<SecurityContext> {
   }
 }
 
-// Map BlockReason to human-readable descriptions for logging
 const BLOCK_REASON_DESCRIPTIONS: Record<BlockReason, string> = {
   prompt_injection: 'Prompt injection attempt detected',
   harmful_content: 'Harmful or prohibited content detected',
@@ -73,16 +70,14 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
     }
   }
 
-  // Extract security context for abuse tracking
   const securityContext = await getSecurityContext()
 
-  // Check if user is banned before allowing debate creation
   try {
     const ipHash = await hashIP(securityContext.ip)
     const banCheck = await checkBan(ipHash)
 
     if (banCheck.isBanned && banCheck.ban) {
-      // Don't allow shadow-banned users to know they're banned
+      // Shadow bans must not reveal ban status to the user
       if (banCheck.ban.banType !== 'shadow') {
         logger.warn('Banned user attempted to create debate', {
           ipHash: ipHash.substring(0, 16) + '...',
@@ -102,7 +97,6 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
           blocked: true,
         }
       }
-      // For shadow bans, silently fail without revealing the ban
       logger.info('Shadow-banned user attempted to create debate', {
         ipHash: ipHash.substring(0, 16) + '...',
       })
@@ -112,13 +106,13 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
       }
     }
   } catch (error) {
+    // Fail open: allow debate creation if ban check is unavailable
     logger.warn('Failed to check ban status', {
       error: error instanceof Error ? error.message : 'Unknown',
     })
-    // Continue if ban check fails (fail open)
   }
 
-  // Track visit for abuse monitoring (Server Actions don't go through middleware)
+  // Server Actions bypass middleware, so we track visits explicitly here
   try {
     await trackVisitFromHeaders(securityContext.ip, securityContext.userAgent)
   } catch (error) {
@@ -127,7 +121,6 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
     })
   }
 
-  // Security validation and sanitization (hybrid: regex patterns + OpenAI Moderation API)
   const securityValidation = await validateAndSanitizeDebateConfig(
     {
       topic: validated.data.topic,
@@ -139,7 +132,6 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
   )
 
   if (!securityValidation.valid || !securityValidation.sanitizedConfig) {
-    // Log blocked content with detailed information
     const blockReason = securityValidation.blockReason ?? 'content_policy'
     const severity =
       blockReason === 'prompt_injection' ||
@@ -170,8 +162,7 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
     }
   }
 
-  // Sanitize topic via AI to create a well-formed debate question
-  // Skip if user already polished via sparkle button
+  // Skip AI topic polishing if user already invoked the sparkle button
   let finalTopic = securityValidation.sanitizedConfig.topic
   let originalTopic = securityValidation.sanitizedConfig.topic
 
@@ -181,7 +172,6 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
     originalTopic = sanitizeResult.originalTopic
   }
 
-  // Use sanitized config for debate creation
   const result = await createDebateSession({
     topic: finalTopic,
     originalTopic,
@@ -204,7 +194,6 @@ export async function createDebate(data: CreateDebateData): Promise<CreateDebate
     }
   }
 
-  // Log successful debate creation
   logDebateEvent('debate_created', result.debateId!, {
     topic: finalTopic.slice(0, 100),
     originalTopic: originalTopic.slice(0, 100),
