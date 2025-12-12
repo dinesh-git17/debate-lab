@@ -1,4 +1,8 @@
-// src/hooks/use-debate-stream.ts
+// use-debate-stream.ts
+/**
+ * Server-Sent Events (SSE) client for debate streaming.
+ * Handles connection lifecycle, reconnection with backoff, and store updates.
+ */
 
 'use client'
 

@@ -1,5 +1,8 @@
-// src/hooks/use-in-view.ts
-// Simple hook for detecting when an element is in view
+// use-in-view.ts
+/**
+ * Element visibility detection using IntersectionObserver.
+ * Supports one-time triggering for lazy initialization patterns.
+ */
 
 'use client'
 
@@ -19,7 +22,6 @@ export function useInView(ref: RefObject<Element | null>, options: UseInViewOpti
     const element = ref.current
     if (!element) return
 
-    // If already in view and once is true, don't re-observe
     if (isInView && once) return
 
     const observer = new IntersectionObserver(
@@ -28,7 +30,6 @@ export function useInView(ref: RefObject<Element | null>, options: UseInViewOpti
         const visible = entry.isIntersecting
         setIsInView(visible)
 
-        // If once is true and element is visible, disconnect
         if (visible && once) {
           observer.disconnect()
         }

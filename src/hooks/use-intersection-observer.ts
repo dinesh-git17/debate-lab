@@ -1,5 +1,8 @@
-// src/hooks/use-intersection-observer.ts
-// Intersection observer hook for lazy loading and visibility detection
+// use-intersection-observer.ts
+/**
+ * IntersectionObserver hooks for lazy loading and visibility detection.
+ * Provides utilities for prefetching, element visibility, and deferred rendering.
+ */
 
 'use client'
 

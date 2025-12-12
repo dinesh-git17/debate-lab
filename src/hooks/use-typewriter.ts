@@ -1,11 +1,15 @@
-// src/hooks/use-typewriter.ts
+// use-typewriter.ts
+/**
+ * Typewriter animation for text transitions.
+ * Erases old text then types new text with configurable speeds.
+ */
 
 import { useState, useCallback, useRef } from 'react'
 
 interface UseTypewriterOptions {
-  eraseSpeed?: number // ms per character erased
-  typeSpeed?: number // ms per character typed
-  pauseBetween?: number // ms pause between erase and type
+  eraseSpeed?: number
+  typeSpeed?: number
+  pauseBetween?: number
 }
 
 interface UseTypewriterReturn {
@@ -34,7 +38,6 @@ export function useTypewriter(options: UseTypewriterOptions = {}): UseTypewriter
       abortRef.current = false
       setDisplayText(from)
 
-      // Phase 1: Erase (right to left)
       for (let i = from.length; i >= 0; i--) {
         if (abortRef.current) break
         setDisplayText(from.slice(0, i))
@@ -46,10 +49,8 @@ export function useTypewriter(options: UseTypewriterOptions = {}): UseTypewriter
         return
       }
 
-      // Pause
       await sleep(pauseBetween)
 
-      // Phase 2: Type (left to right)
       for (let i = 0; i <= to.length; i++) {
         if (abortRef.current) break
         setDisplayText(to.slice(0, i))

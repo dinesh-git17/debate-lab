@@ -1,4 +1,8 @@
-// src/data/debate-rules.ts
+// debate-rules.ts
+/**
+ * Static configuration for debate rules, categories, and scoring criteria.
+ * Defines the canonical rule set used by moderators and the judging system.
+ */
 
 export type RuleEnforcer = 'system' | 'moderator'
 

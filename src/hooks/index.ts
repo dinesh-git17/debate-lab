@@ -1,4 +1,8 @@
-// src/hooks/index.ts
+// index.ts
+/**
+ * Public API for custom React hooks.
+ * Re-exports hooks for debate management, animations, and UI utilities.
+ */
 
 export { useDebate } from './use-debate'
 export { useDebateMessages } from './use-debate-messages'

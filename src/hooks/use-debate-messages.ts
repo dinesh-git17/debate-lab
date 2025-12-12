@@ -1,4 +1,9 @@
-// src/hooks/use-debate-messages.ts
+// use-debate-messages.ts
+/**
+ * Paginated message fetching with infinite scroll support.
+ * Placeholder pending API route implementation.
+ */
+
 import { useInfiniteQuery } from '@tanstack/react-query'
 
 import { queryKeys } from '@/lib/query-keys'
@@ -10,11 +15,6 @@ interface MessagesPage {
   nextCursor: string | undefined
 }
 
-/**
- * Fetches debate messages with infinite scroll pagination.
- * Returns a disabled query when debateId is null.
- * Will be fully implemented when API routes are built in Phase 4.
- */
 export function useDebateMessages(debateId: string | null) {
   return useInfiniteQuery<MessagesPage>({
     queryKey: debateId ? queryKeys.debates.messages(debateId) : ['debates', 'messages', null],

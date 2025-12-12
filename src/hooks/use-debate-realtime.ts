@@ -1,4 +1,8 @@
-// src/hooks/use-debate-realtime.ts
+// use-debate-realtime.ts
+/**
+ * Real-time debate event handling via Pusher with polling fallback.
+ * Manages event synchronization, reconnection, and store updates.
+ */
 
 'use client'
 
@@ -86,13 +90,10 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     }
   }, [])
 
-  // Apply a single event to the store
-  // NOTE: Deduplication is now handled by EventSynchronizer via seq numbers
   const applyEventToStore = useCallback((event: SSEEvent) => {
     const data = event as SSEMessageData
     const store = useDebateViewStore.getState()
 
-    // Skip events if debate is already completed (prevents replay)
     if (store.status === 'completed' && data.type !== 'debate_completed') {
       clientLogger.debug('Skipping event - debate already completed', { type: data.type })
       return
@@ -133,22 +134,19 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
           if (!existingMessage) {
             clientLogger.warn('turn_streaming: message not found', { turnId: data.turnId })
           }
-          // With sequence-based ordering, events arrive in order - simple append
           store.appendToMessage(data.turnId, data.chunk)
         }
         break
 
       case 'turn_completed':
         if (data.turnId) {
-          // DON'T replace content if it matches - prevents visual flash
           const existingMessage = store.messages.find((m) => m.id === data.turnId)
           const finalContent = data.content ?? ''
 
-          // Only update content if different (handles edge cases)
+          // Only replace content if different to prevent visual flash
           if (existingMessage?.content !== finalContent) {
             store.completeMessage(data.turnId, finalContent, data.tokenCount ?? 0)
           } else {
-            // Just mark as complete without replacing content
             store.updateMessage(data.turnId, {
               isStreaming: false,
               isComplete: true,
@@ -209,7 +207,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       case 'debate_completed':
         store.setStatus('completed')
         store.setCurrentTurn(null)
-        // Stop polling/subscription when debate completes
         if (unsubscribeRef.current) {
           unsubscribeRef.current()
           unsubscribeRef.current = null
@@ -247,7 +244,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
   const connectImpl = useCallback(async () => {
     const currentDebateId = debateIdRef.current
 
-    // Cleanup existing subscription and synchronizer
     if (unsubscribeRef.current) {
       unsubscribeRef.current()
       unsubscribeRef.current = null
@@ -262,7 +258,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     const store = useDebateViewStore.getState()
     store.setConnection('connecting')
 
-    // Create EventSynchronizer for sequence-based ordering
     const sync = new EventSynchronizer({
       debateId: currentDebateId,
       applyEvent: applyEventToStore,
@@ -277,11 +272,9 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     })
     syncRef.current = sync
 
-    // If Pusher is not configured, fall back to periodic polling
     if (!isPusherAvailable) {
       clientLogger.warn('Pusher not configured, using polling fallback')
 
-      // Perform initial sync
       try {
         await sync.performInitialSync()
       } catch (error) {
@@ -289,25 +282,21 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
         store.setError('Failed to sync events')
       }
 
-      // Use recursive setTimeout for polling
       let isPolling = true
       const poll = async () => {
         if (!isPolling) return
 
         try {
-          // Re-sync to catch any new events
           await sync.handleReconnect()
         } catch (error) {
           clientLogger.error('Polling sync failed', error)
         }
 
-        // Schedule next poll only after current one completes
         if (isPolling) {
           setTimeout(poll, 500)
         }
       }
 
-      // Start polling after initial sync
       setTimeout(poll, 500)
 
       unsubscribeRef.current = () => {
@@ -317,7 +306,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       return
     }
 
-    // 1. Subscribe to Pusher FIRST - events go to buffer in synchronizer
     const handlePusherEvent = (event: SSEEvent) => {
       sync.bufferEvent(event)
     }
@@ -329,7 +317,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
         case 'connected':
           if (sync.isReady()) {
             currentStore.setConnection('connected')
-            // Reconnected - fetch any missed events
             sync.handleReconnect()
           }
           reconnectAttempts.current = 0
@@ -344,7 +331,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
         case 'failed':
           currentStore.setConnection('error')
 
-          // Attempt reconnection with exponential backoff
           if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
             const delay = Math.min(
               BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts.current),
@@ -375,7 +361,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       handleError
     )
 
-    // 2. Perform initial sync (fetches history, merges with buffer, applies in order)
     try {
       await sync.performInitialSync()
     } catch (error) {
@@ -383,7 +368,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
       store.setError('Failed to sync events')
     }
 
-    // Check current connection state
     const currentState = getConnectionState()
     if (currentState === 'connected') {
       store.setConnection('connected')
@@ -407,7 +391,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
     useDebateViewStore.getState().setConnection('disconnected')
   }, [clearReconnectTimeout])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (syncRef.current) {

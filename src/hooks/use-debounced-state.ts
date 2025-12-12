@@ -1,5 +1,8 @@
-// src/hooks/use-debounced-state.ts
-// Debounced state hook for performance optimization
+// use-debounced-state.ts
+/**
+ * State management utilities with debouncing, throttling, and transitions.
+ * Optimizes high-frequency state updates for performance.
+ */
 
 'use client'
 

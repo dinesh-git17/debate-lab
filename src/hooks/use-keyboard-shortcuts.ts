@@ -1,4 +1,8 @@
-// src/hooks/use-keyboard-shortcuts.ts
+// use-keyboard-shortcuts.ts
+/**
+ * Global keyboard shortcut handler with modifier key support.
+ * Automatically skips input elements to avoid conflicts.
+ */
 
 import { useEffect, useCallback } from 'react'
 
@@ -50,9 +54,7 @@ export function useKeyboardShortcuts({ shortcuts, enabled = true }: UseKeyboardS
   }, [handleKeyDown])
 }
 
-/**
- * Get display string for shortcut (e.g., "Cmd+E" or "Ctrl+E")
- */
+/** Formats shortcut for display with platform-appropriate symbols. */
 export function formatShortcut(shortcut: ShortcutConfig): string {
   const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.userAgent)
   const parts: string[] = []
