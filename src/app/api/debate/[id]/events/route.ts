@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/events/route.ts
+// route.ts
+/**
+ * Debate events streaming endpoint.
+ * Provides sequence-based event fetching from Redis Streams for client synchronization.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -29,25 +33,10 @@ export interface EventsResponse {
   debateId: string
   events: StoredEventResponse[]
   lastEventId: string | null
-  /** Current maximum sequence number for gap detection */
   currentSeq: number
-  /** Whether there are more events beyond the returned set */
   hasMore: boolean
 }
 
-/**
- * GET /api/debate/[id]/events
- *
- * Fetch events from Redis Stream for a debate.
- *
- * Query params:
- * - after: Sequence number to fetch events after (for sequence-based sync)
- * - since: Event ID to fetch events after (exclusive, legacy)
- * - afterTime: ISO timestamp to fetch events after (legacy)
- * - limit: Maximum number of events to return (default: 100, max: 500)
- *
- * If no query params provided, returns all events.
- */
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id: debateId } = await params
 
@@ -74,7 +63,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     logger.debug('Fetching events', { debateId, afterSeq, sinceId, afterTimestamp, limit })
 
     if (afterSeq !== null && !isNaN(parseInt(afterSeq, 10))) {
-      // NEW: Sequence-based fetching (primary method for EventSynchronizer)
       const afterSeqNum = parseInt(afterSeq, 10)
       const events = await getEventsAfterSeq(debateId, afterSeqNum, limit)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
@@ -86,12 +74,10 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
         hasMore,
       })
     } else if (sinceId) {
-      // Legacy: Fetch events since a specific event ID
       const events = await getEventsSince(debateId, sinceId)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
       logger.debug('Fetched events since ID', { debateId, sinceId, count: storedEvents.length })
     } else if (afterTimestamp) {
-      // Legacy: Fetch events after a specific timestamp
       const events = await getEventsAfterTimestamp(debateId, afterTimestamp)
       storedEvents = events.map((e) => ({ id: e.id, event: e.event }))
       logger.debug('Fetched events after timestamp', {
@@ -106,7 +92,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       logger.debug('Fetched all events', { debateId, count: storedEvents.length })
     }
 
-    // Get current max sequence for gap detection
     const currentSeq = await getCurrentSeq(debateId)
 
     const lastEvent = storedEvents.length > 0 ? storedEvents[storedEvents.length - 1] : null

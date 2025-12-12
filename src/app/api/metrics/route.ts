@@ -1,5 +1,8 @@
-// src/app/api/metrics/route.ts
-// Metrics endpoint for external collectors (Prometheus-compatible)
+// route.ts
+/**
+ * Metrics export endpoint.
+ * Exposes Prometheus-compatible metrics for external monitoring and observability platforms.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -29,10 +32,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const format = request.nextUrl.searchParams.get('format') ?? 'prometheus'
   const snapshot = request.nextUrl.searchParams.get('snapshot') === 'true'
 
-  // Get aggregated metrics
   const aggregated = metrics.getAggregatedMetrics('5m')
 
-  // Optionally write snapshot to Supabase (call with ?snapshot=true)
   if (snapshot && supabaseLogWriter.isActive()) {
     await supabaseLogWriter.writeMetricsSnapshot(
       aggregated.system,

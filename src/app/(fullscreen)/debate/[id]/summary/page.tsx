@@ -1,4 +1,8 @@
-// src/app/(debate)/debate/[id]/summary/page.tsx
+// page.tsx
+/**
+ * Server component for debate summary route.
+ * Aggregates statistics, builds share metadata, and prepares summary data for hydration.
+ */
 
 import { notFound, redirect } from 'next/navigation'
 
@@ -93,12 +97,10 @@ export default async function SummaryPage({ params }: SummaryPageProps) {
     notFound()
   }
 
-  // Redirect to debate page if not completed
   if (session.status !== 'completed') {
     redirect(`/debate/${id}`)
   }
 
-  // Build summary response
   const engineState = await getEngineState(id)
   const budgetStatus = getBudgetStatus(id)
 

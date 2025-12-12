@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/engine/control/route.ts
+// route.ts
+/**
+ * Debate engine control endpoint.
+ * Handles pause, resume, and early termination of running debates.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -29,10 +33,6 @@ function isValidAction(action: unknown): action is ControlAction {
   return typeof action === 'string' && VALID_ACTIONS.includes(action as ControlAction)
 }
 
-/**
- * POST /api/debate/[id]/engine/control
- * Control debate engine: pause, resume, or end
- */
 export async function POST(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id } = await params
 

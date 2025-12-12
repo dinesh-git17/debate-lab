@@ -1,5 +1,8 @@
-// src/app/api/admin/bans/route.ts
-// Admin API for managing IP bans
+// route.ts
+/**
+ * Admin ban management endpoint.
+ * Handles IP ban creation, lookup, and removal with hashed IP storage for privacy.
+ */
 
 import { NextResponse } from 'next/server'
 

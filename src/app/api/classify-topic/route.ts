@@ -1,5 +1,8 @@
-// src/app/api/classify-topic/route.ts
-// API route for semantic topic classification
+// route.ts
+/**
+ * Topic classification endpoint.
+ * Categorizes debate topics using keyword matching and semantic analysis for themed backgrounds.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -20,10 +23,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Topic is required' }, { status: 400 })
   }
 
-  // First try keyword matching (fast)
   let category: BackgroundCategory = getTopicCategory(topic)
 
-  // If no match, try semantic classification (slower but smarter)
   if (category === 'default') {
     category = await classifyTopicSemantically(topic)
   }

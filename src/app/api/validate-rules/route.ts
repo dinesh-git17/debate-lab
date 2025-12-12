@@ -1,4 +1,9 @@
-// src/app/api/validate-rules/route.ts
+// route.ts
+/**
+ * Custom rules validation endpoint.
+ * Validates user-provided debate rules for safety and clarity using AI moderation.
+ */
+
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 

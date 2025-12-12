@@ -1,4 +1,9 @@
-// src/app/api/debate/route.ts
+// route.ts
+/**
+ * Debate creation endpoint.
+ * Validates, sanitizes, and initializes new debate sessions with multi-layer security checks.
+ */
+
 import { NextResponse } from 'next/server'
 
 import { generateRequestId, runWithRequestContext, logRequest, logger } from '@/lib/logging'
@@ -9,10 +14,6 @@ import { createDebateSession } from '@/services/debate-service'
 import type { DebateFormat } from '@/types/debate'
 import type { NextRequest } from 'next/server'
 
-/**
- * POST /api/debate
- * Create a new debate session
- */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const requestId = generateRequestId()
   const startTime = Date.now()
@@ -21,7 +22,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       const body: unknown = await request.json()
 
-      // First pass: Zod schema validation
       const validated = debateFormSchema.safeParse(body)
 
       if (!validated.success) {
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         )
       }
 
-      // Second pass: Security validation and sanitization (hybrid: regex + OpenAI moderation)
       const securityContext = extractSecurityContext(request)
       const securityValidation = await validateAndSanitizeDebateConfig(
         {
@@ -58,7 +57,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         )
       }
 
-      // Use sanitized config for debate creation
       const result = await createDebateSession({
         topic: securityValidation.sanitizedConfig.topic,
         turns: securityValidation.sanitizedConfig.turns,

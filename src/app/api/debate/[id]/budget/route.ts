@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/budget/route.ts
+// route.ts
+/**
+ * Debate budget status endpoint.
+ * Returns token usage, cost tracking, and budget utilization metrics.
+ */
 
 import { NextResponse } from 'next/server'
 

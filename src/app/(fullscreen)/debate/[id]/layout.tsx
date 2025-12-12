@@ -1,13 +1,13 @@
-// src/app/(fullscreen)/debate/[id]/layout.tsx
+// layout.tsx
+/**
+ * Passthrough layout for individual debate views.
+ * Inherits fullscreen context from parent route group.
+ */
 
 interface DebateViewLayoutProps {
   children: React.ReactNode
 }
 
-/**
- * Minimal layout for active debate view.
- * Part of (fullscreen) route group - no navbar, no footer.
- */
 export default function DebateViewLayout({ children }: DebateViewLayoutProps) {
   return <>{children}</>
 }

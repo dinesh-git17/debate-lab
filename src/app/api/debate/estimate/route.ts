@@ -1,4 +1,8 @@
-// src/app/api/debate/estimate/route.ts
+// route.ts
+/**
+ * Debate cost estimation endpoint.
+ * Calculates expected token usage and costs before debate creation.
+ */
 
 import { NextResponse } from 'next/server'
 

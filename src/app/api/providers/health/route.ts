@@ -1,4 +1,8 @@
-// src/app/api/providers/health/route.ts
+// route.ts
+/**
+ * LLM provider health check endpoint.
+ * Verifies connectivity and configuration status for all AI providers.
+ */
 
 import { NextResponse } from 'next/server'
 

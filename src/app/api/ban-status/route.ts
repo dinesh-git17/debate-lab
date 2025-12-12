@@ -1,5 +1,8 @@
-// src/app/api/ban-status/route.ts
-// Public API for checking ban status of the current user
+// route.ts
+/**
+ * User ban status endpoint.
+ * Returns ban information for the current client while concealing shadow bans.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -16,10 +19,6 @@ export interface BanStatusResponse {
   remainingMs?: number | undefined
 }
 
-/**
- * GET /api/ban-status
- * Check if the current user's IP is banned
- */
 export async function GET(request: NextRequest): Promise<NextResponse<BanStatusResponse>> {
   try {
     const ip = getClientIP(request)
@@ -30,7 +29,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<BanStatusR
       return NextResponse.json({ isBanned: false })
     }
 
-    // Don't reveal shadow bans to the user
     if (banCheck.ban.banType === 'shadow') {
       return NextResponse.json({ isBanned: false })
     }
@@ -44,7 +42,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<BanStatusR
     })
   } catch (error) {
     logger.error('Ban status check error', error instanceof Error ? error : null, {})
-    // On error, allow access (fail open)
     return NextResponse.json({ isBanned: false })
   }
 }

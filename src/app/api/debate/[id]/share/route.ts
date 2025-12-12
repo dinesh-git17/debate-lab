@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/share/route.ts
+// route.ts
+/**
+ * Debate sharing configuration endpoint.
+ * Manages visibility settings and tracks share analytics.
+ */
 
 import { NextResponse } from 'next/server'
 

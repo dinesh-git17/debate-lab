@@ -1,4 +1,8 @@
-// src/app/api/topic/polish/route.ts
+// route.ts
+/**
+ * Topic polishing endpoint.
+ * Sanitizes and refines user-provided debate topics for clarity and safety.
+ */
 
 import { NextRequest, NextResponse } from 'next/server'
 

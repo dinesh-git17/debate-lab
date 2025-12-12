@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/engine/route.ts
+// route.ts
+/**
+ * Debate engine orchestration endpoint.
+ * Manages debate execution lifecycle with SSE streaming for real-time turn updates.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -17,17 +21,12 @@ import { isMockMode, runMockDebateLoop } from '@/services/mock-debate-engine'
 import type { SSEEvent } from '@/types/execution'
 import type { NextRequest } from 'next/server'
 
-// Use longer timeout for debate execution
-export const maxDuration = 300 // 5 minutes (requires Vercel Pro)
+export const maxDuration = 300
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-/**
- * GET /api/debate/[id]/engine
- * Get engine state and current turn info
- */
 export async function GET(_request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id } = await params
 
@@ -55,10 +54,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
   })
 }
 
-/**
- * POST /api/debate/[id]/engine
- * Start the debate engine and stream events
- */
 export async function POST(_request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { id } = await params
 
@@ -83,19 +78,15 @@ export async function POST(_request: NextRequest, { params }: RouteParams): Prom
     return NextResponse.json({ error: result.error }, { status: 500 })
   }
 
-  // Create a streaming response that runs the debate and streams events
   const encoder = new TextEncoder()
 
   const stream = new ReadableStream({
     async start(controller) {
-      // Subscribe to debate events and forward them to the stream
       const unsubscribe = debateEvents.subscribe(id, (event: SSEEvent) => {
         try {
           const message = `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`
           controller.enqueue(encoder.encode(message))
-        } catch {
-          // Stream may be closed
-        }
+        } catch {}
       })
 
       // Send initial success message
@@ -110,7 +101,6 @@ export async function POST(_request: NextRequest, { params }: RouteParams): Prom
       )
 
       try {
-        // Run the debate loop - use mock or real based on DEBATE_MODE
         const loopResult = isMockMode() ? await runMockDebateLoop(id) : await runDebateLoop(id)
 
         if (!loopResult.success) {

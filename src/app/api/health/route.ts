@@ -1,5 +1,8 @@
-// src/app/api/health/route.ts
-// Health check endpoint for load balancers and monitoring
+// route.ts
+/**
+ * Application health check endpoint.
+ * Monitors system resources, active alerts, and connection pools for load balancer probes.
+ */
 
 import { NextResponse } from 'next/server'
 

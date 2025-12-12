@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/history/route.ts
+// route.ts
+/**
+ * Debate history endpoint.
+ * Returns chronological message history with metadata for UI rendering.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -48,7 +52,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 
   const engineState = await getEngineState(id)
 
-  // Map completed turns to messages format expected by the client
   const messages: DebateHistoryMessage[] = (engineState?.completedTurns ?? []).map((turn) => ({
     id: turn.id,
     speaker: turn.speaker,

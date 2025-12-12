@@ -1,4 +1,9 @@
-// src/app/(marketing)/terms/page.tsx
+// page.tsx
+/**
+ * Terms of service page.
+ * Delegates content rendering to TermsPageContent component.
+ */
+
 import { TermsPageContent } from '@/components/features/terms-page-content'
 
 import type { Metadata } from 'next'

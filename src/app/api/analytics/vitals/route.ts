@@ -1,5 +1,8 @@
-// src/app/api/analytics/vitals/route.ts
-// Web Vitals collection endpoint
+// route.ts
+/**
+ * Web Vitals collection endpoint.
+ * Receives and logs Core Web Vitals metrics from client-side RUM instrumentation.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -18,7 +21,6 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const body = (await request.json()) as WebVitalPayload
 
-    // Validate required fields
     if (!body.name || typeof body.value !== 'number') {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
@@ -30,7 +32,6 @@ export async function POST(request: Request): Promise<Response> {
       rating: body.rating,
     })
 
-    // Return success with no-store cache headers
     return NextResponse.json(
       { success: true },
       {
@@ -45,7 +46,6 @@ export async function POST(request: Request): Promise<Response> {
   }
 }
 
-// Preflight for CORS if needed
 export async function OPTIONS(): Promise<Response> {
   return new Response(null, {
     status: 204,

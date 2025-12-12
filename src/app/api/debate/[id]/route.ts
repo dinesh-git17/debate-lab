@@ -1,4 +1,9 @@
-// src/app/api/debate/[id]/route.ts
+// route.ts
+/**
+ * Debate session retrieval endpoint.
+ * Fetches active or completed debate session data.
+ */
+
 import { NextResponse } from 'next/server'
 
 import { isValidDebateId } from '@/lib/id-generator'

@@ -1,6 +1,8 @@
-// src/app/(fullscreen)/layout.tsx
-// Minimal layout for fullscreen, distraction-free experiences
-// No navbar, no footer - just the content
+// layout.tsx
+/**
+ * Root layout for fullscreen route group.
+ * Renders children without navigation chrome to maximize content area.
+ */
 
 interface FullscreenLayoutProps {
   children: React.ReactNode

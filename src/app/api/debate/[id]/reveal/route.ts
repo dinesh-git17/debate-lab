@@ -1,4 +1,9 @@
-// src/app/api/debate/[id]/reveal/route.ts
+// route.ts
+/**
+ * Debate reveal endpoint.
+ * Returns model assignments after debate completion.
+ */
+
 import { NextResponse } from 'next/server'
 
 import { isValidDebateId } from '@/lib/id-generator'

@@ -1,4 +1,8 @@
-// src/app/(debate)/debate/[id]/judge/page.tsx
+// page.tsx
+/**
+ * Server component for judge analysis route.
+ * Validates debate completion status and generates SEO metadata.
+ */
 
 import { notFound, redirect } from 'next/navigation'
 

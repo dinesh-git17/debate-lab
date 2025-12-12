@@ -1,4 +1,9 @@
-// src/app/(marketing)/about/page.tsx
+// page.tsx
+/**
+ * About page presenting company mission, technology, and policies.
+ * Composes multiple informational sections with consistent styling.
+ */
+
 import { AboutHero } from '@/components/features/about-hero'
 import { AiModelsSection } from '@/components/features/ai-models-section'
 import { ContactSection } from '@/components/features/contact-section'
@@ -22,7 +27,6 @@ export const metadata: Metadata = {
   },
 }
 
-// Subtle section divider component
 function SectionDivider() {
   return (
     <div
@@ -38,12 +42,9 @@ function SectionDivider() {
 export default function AboutPage() {
   return (
     <div className="relative">
-      {/* Hero section */}
       <AboutHero />
 
-      {/* Main content */}
       <div className="relative overflow-hidden">
-        {/* Ambient background glow */}
         <div
           className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2"
           style={{
@@ -57,45 +58,23 @@ export default function AboutPage() {
 
         <Container>
           <article className="relative">
-            {/* Mission - uses internal 2-col layout */}
             <MissionSection />
-
             <SectionDivider />
-
-            {/* Tech Stack - uses 3-col grid */}
             <TechStackSection />
-
             <SectionDivider />
-
-            {/* AI Models - uses 3-col grid, full width needed */}
             <AiModelsSection />
-
-            {/* Privacy - has dark panel, no divider needed (panel acts as separator) */}
             <PrivacySection />
-
             <SectionDivider />
-
-            {/* Safety - uses 2-col grid */}
             <SafetySection />
-
             <SectionDivider />
-
-            {/* Disclaimers - narrow centered panel */}
             <DisclaimersSection />
-
             <SectionDivider />
-
-            {/* Open Source - 2-col cards */}
             <OpenSourceSection />
-
             <SectionDivider />
-
-            {/* Contact - 2-col layout */}
             <ContactSection />
           </article>
         </Container>
 
-        {/* Bottom fade gradient */}
         <div
           className="pointer-events-none absolute bottom-0 left-0 right-0 h-64"
           style={{

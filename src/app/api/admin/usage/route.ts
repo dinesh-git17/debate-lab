@@ -1,4 +1,8 @@
-// src/app/api/admin/usage/route.ts
+// route.ts
+/**
+ * Admin usage statistics endpoint.
+ * Aggregates token consumption and cost metrics across time periods.
+ */
 
 import { NextResponse } from 'next/server'
 

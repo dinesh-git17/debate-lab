@@ -1,4 +1,9 @@
-// src/app/(marketing)/privacy/page.tsx
+// page.tsx
+/**
+ * Privacy policy page.
+ * Delegates content rendering to PrivacyPageContent component.
+ */
+
 import { PrivacyPageContent } from '@/components/features/privacy-page-content'
 
 import type { Metadata } from 'next'

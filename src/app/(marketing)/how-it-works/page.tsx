@@ -1,4 +1,9 @@
-// src/app/(marketing)/how-it-works/page.tsx
+// page.tsx
+/**
+ * Educational page explaining the debate workflow.
+ * Presents the process timeline and detailed feature explanations.
+ */
+
 import { DebateDetailsAccordion } from '@/components/features/debate-details-accordion'
 import { HowItWorksHero } from '@/components/features/how-it-works-hero'
 import { ProcessTimeline } from '@/components/features/process-timeline'

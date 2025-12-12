@@ -1,6 +1,7 @@
+// client.tsx
 /**
- * src/app/(fullscreen)/debate/[id]/client.tsx
- * Fullscreen debate viewer with Apple-inspired atmospheric design
+ * Interactive debate viewer client component.
+ * Manages real-time message streaming, state hydration, and user controls.
  */
 
 'use client'
@@ -63,27 +64,6 @@ export function DebatePageClient({
   const hasHydrated = useRef(false)
   const previousDebateId = useRef<string | null>(null)
 
-  // TODO: Re-enable auto-start after empty state review
-  // const autoStartDebate = useCallback(async () => {
-  //   if (hasAutoStarted.current) return
-  //   hasAutoStarted.current = true
-  //
-  //   try {
-  //     const response = await fetch(`/api/debate/${debateId}/engine`, {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //     })
-  //
-  //     if (!response.ok) {
-  //       const data = (await response.json()) as { error?: string }
-  //       clientLogger.error('Auto-start failed', null, { error: data.error ?? 'Unknown error' })
-  //     }
-  //   } catch (error) {
-  //     clientLogger.error('Auto-start error', error)
-  //   }
-  // }, [debateId])
-
-  // Fetch and hydrate existing debate history from server
   const hydrateFromServer = useCallback(async () => {
     if (hasHydrated.current) return
     hasHydrated.current = true
@@ -95,7 +75,6 @@ export function DebatePageClient({
       const data = (await response.json()) as DebateHistoryResponse
 
       if (data.messages && data.messages.length > 0) {
-        // Convert server messages to client format
         const messages: DebateMessage[] = data.messages.map((msg) => ({
           id: msg.id,
           speaker: msg.speaker,
@@ -118,12 +97,12 @@ export function DebatePageClient({
         })
       }
     } catch {
-      // Failed to hydrate from server - continue without history
+      // Silent failure: debate will start fresh without history
     }
   }, [debateId, hydrateMessages, setProgress])
 
   useEffect(() => {
-    // Reset store only when switching to a DIFFERENT debate
+    // Reset only on debate ID change to preserve state during navigation
     if (previousDebateId.current && previousDebateId.current !== debateId) {
       reset()
       hasAutoStarted.current = false
@@ -139,17 +118,7 @@ export function DebatePageClient({
     })
     setStatus(mapPhaseToViewStatus(initialStatus))
 
-    // Hydrate existing messages from server (for page reload or navigation back)
     hydrateFromServer()
-
-    // Auto-start debate if status is ready
-    // TODO: Re-enable auto-start after empty state review
-    // if (initialStatus === 'ready') {
-    //   autoStartDebate()
-    // }
-
-    // No cleanup reset - we want to preserve messages when navigating away
-    // Messages are only cleared when switching to a different debate
   }, [
     debateId,
     initialTopic,
@@ -158,8 +127,8 @@ export function DebatePageClient({
     setDebateInfo,
     setStatus,
     reset,
-    // autoStartDebate, // TODO: Re-enable
     hydrateFromServer,
+    initialBackgroundCategory,
   ])
 
   useDebateRealtime({
@@ -169,15 +138,11 @@ export function DebatePageClient({
 
   return (
     <motion.div
-      className={cn(
-        // Fullscreen fixed container - no navbar to account for
-        'fixed inset-0 z-50 flex flex-col overflow-hidden'
-      )}
+      className={cn('fixed inset-0 z-50 flex flex-col overflow-hidden')}
       initial={{ opacity: 0, scale: 1.008 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
     >
-      {/* Apple-inspired static background - 3 CSS layers, cinematic entrance */}
       <AppleBackground className="z-0" />
 
       <DebateHeader debateId={debateId} className="relative z-10" />
@@ -189,7 +154,6 @@ export function DebatePageClient({
           initialStatus={mapPhaseToViewStatus(initialStatus)}
         />
 
-        {/* Shortcuts help - bottom right */}
         <motion.div
           className="absolute bottom-4 right-4 z-10"
           initial={{ opacity: 0 }}
@@ -200,7 +164,6 @@ export function DebatePageClient({
         </motion.div>
       </main>
 
-      {/* Floating controls - only visible during active debate or completed */}
       {(status === 'active' || status === 'paused' || status === 'completed') && (
         <div className="relative z-10">
           <FloatingControls debateId={debateId} />

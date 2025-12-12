@@ -1,4 +1,9 @@
-// src/app/api/debate/[id]/stream/route.ts
+// route.ts
+/**
+ * Server-Sent Events streaming endpoint.
+ * Provides real-time debate updates via SSE for local development fallback.
+ * Production uses Pusher for scalability.
+ */
 
 import { debateEvents, formatSSEComment, formatSSEMessage } from '@/lib/debate-events'
 import { isValidDebateId } from '@/lib/id-generator'
@@ -19,15 +24,6 @@ interface RouteParams {
 
 const HEARTBEAT_INTERVAL = 30000
 
-/**
- * GET /api/debate/[id]/stream
- * Server-Sent Events stream for real-time debate updates
- *
- * @deprecated This SSE endpoint is kept for local development fallback only.
- * In production, use Pusher for real-time events via the useDebateRealtime hook.
- * Events are persisted to Redis Streams and can be fetched via /api/debate/[id]/events
- * for catch-up after reconnection.
- */
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { id: debateId } = await params
   const connectionId = generateRequestId()
@@ -48,7 +44,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     })
   }
 
-  // Track SSE connection
   incrementConnections()
   log.info('SSE connection opened', { connectionId })
   const connectionStartTime = Date.now()
@@ -91,7 +86,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
         if (isClosed) return
         isClosed = true
 
-        // Track connection close
         decrementConnections()
         const connectionDuration = Date.now() - connectionStartTime
         log.info('SSE connection closed', { connectionId, durationMs: connectionDuration })
@@ -108,9 +102,7 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
         try {
           controller.close()
-        } catch {
-          // Already closed
-        }
+        } catch {}
       }
 
       unsubscribe = debateEvents.subscribe(debateId, sendEvent)
@@ -132,7 +124,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       if (isClosed) return
       isClosed = true
 
-      // Track connection close on cancel
       decrementConnections()
       const connectionDuration = Date.now() - connectionStartTime
       log.info('SSE connection cancelled', { connectionId, durationMs: connectionDuration })

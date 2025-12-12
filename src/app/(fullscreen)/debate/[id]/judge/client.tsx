@@ -1,4 +1,8 @@
-// src/app/(debate)/debate/[id]/judge/client.tsx
+// client.tsx
+/**
+ * Client component for judge analysis display.
+ * Renders scoring, clash analysis, and educational insights from Claude's evaluation.
+ */
 
 'use client'
 

@@ -1,4 +1,9 @@
-// src/app/(marketing)/layout.tsx
+// layout.tsx
+/**
+ * Root layout for marketing route group.
+ * Wraps public-facing pages with standard navigation and SEO metadata.
+ */
+
 import { MainLayout } from '@/components/layouts/main-layout'
 
 import type { Metadata } from 'next'

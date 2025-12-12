@@ -1,4 +1,8 @@
-// src/app/(debate)/debate/[id]/summary/client.tsx
+// client.tsx
+/**
+ * Client component for debate summary display.
+ * Orchestrates reveal, statistics, sharing, and Claude's analysis sections.
+ */
 
 'use client'
 
@@ -28,7 +32,6 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
   const error = useSummaryStore((s) => s.error)
   const hasFetchedSummary = useRef(false)
 
-  // Fetch Claude's judge analysis for the summary section
   const fetchClaudeSummary = useCallback(async () => {
     if (hasFetchedSummary.current) return
     hasFetchedSummary.current = true
@@ -58,8 +61,6 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
 
   useEffect(() => {
     useSummaryStore.getState().loadSummary(initialData)
-
-    // Fetch Claude's analysis for the summary section
     fetchClaudeSummary()
 
     return () => {
@@ -106,36 +107,19 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Navigation and header */}
         <SummaryNavigation className="mb-12" />
-
-        {/* Reveal section */}
         <RevealSection className="mb-16" />
-
-        {/* Divider */}
         <hr className="border-border my-12" />
-
-        {/* Statistics dashboard */}
         <StatisticsDashboard className="mb-16" />
-
-        {/* Divider */}
         <hr className="border-border my-12" />
-
-        {/* Claude's summary */}
         <SummaryCard className="mb-16" />
-
-        {/* Divider */}
         <hr className="border-border my-12" />
-
-        {/* Share section */}
         <ShareSection
           debateId={initialData.debateId}
           shareUrl={shareUrl}
           shortCode={shortCode}
           className="mb-16"
         />
-
-        {/* Footer spacing */}
         <div className="h-16" />
       </div>
     </div>

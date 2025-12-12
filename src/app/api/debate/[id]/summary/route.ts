@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/summary/route.ts
+// route.ts
+/**
+ * Debate summary endpoint.
+ * Provides comprehensive post-debate analytics including turns, statistics, and model assignments.
+ */
 
 import { NextResponse } from 'next/server'
 

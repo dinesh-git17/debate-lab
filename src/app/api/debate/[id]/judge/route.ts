@@ -1,4 +1,8 @@
-// src/app/api/debate/[id]/judge/route.ts
+// route.ts
+/**
+ * Debate judge analysis endpoint.
+ * Generates or retrieves AI-powered scoring and clash analysis for completed debates.
+ */
 
 import { NextResponse } from 'next/server'
 
@@ -11,10 +15,6 @@ interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-/**
- * GET /api/debate/[id]/judge
- * Retrieve or generate judge analysis for a completed debate
- */
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id: debateId } = await params
 
@@ -46,10 +46,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   )
 }
 
-/**
- * HEAD /api/debate/[id]/judge
- * Check if analysis exists in cache
- */
 export async function HEAD(request: NextRequest, { params }: RouteParams): Promise<Response> {
   const { id: debateId } = await params
 

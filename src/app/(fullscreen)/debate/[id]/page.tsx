@@ -1,4 +1,8 @@
-// src/app/(fullscreen)/debate/[id]/page.tsx
+// page.tsx
+/**
+ * Server component for debate viewer route.
+ * Handles session validation, metadata generation, and initial state hydration.
+ */
 
 import { notFound } from 'next/navigation'
 
@@ -9,7 +13,6 @@ import { DebatePageClient } from './client'
 
 import type { Metadata } from 'next'
 
-// Ensure page is always dynamically rendered (no caching)
 export const dynamic = 'force-dynamic'
 
 interface DebatePageProps {
