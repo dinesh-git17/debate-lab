@@ -1,4 +1,8 @@
-// src/components/features/debate-form.tsx
+// debate-form.tsx
+/**
+ * Main debate creation form with topic polishing, format selection, and custom rules.
+ * Integrates with react-hook-form and Zod for validation with local draft persistence.
+ */
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'

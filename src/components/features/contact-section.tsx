@@ -1,4 +1,8 @@
-// src/components/features/contact-section.tsx
+// contact-section.tsx
+/**
+ * Contact and feedback section with GitHub integration links.
+ * Provides animated CTAs for issue submission and community discussions.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

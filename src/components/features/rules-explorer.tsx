@@ -1,4 +1,8 @@
-// src/components/features/rules-explorer.tsx
+// rules-explorer.tsx
+/**
+ * Interactive rules browser with expand/collapse controls.
+ * Renders categorized debate rules with bulk toggle functionality.
+ */
 'use client'
 
 import { ChevronDown, ChevronUp } from 'lucide-react'

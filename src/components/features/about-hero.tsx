@@ -1,4 +1,8 @@
-// src/components/features/about-hero.tsx
+// about-hero.tsx
+/**
+ * Hero section for the About page.
+ * Animated header introducing the Debate Lab platform.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

@@ -1,4 +1,8 @@
-// src/components/features/rule-item.tsx
+// rule-item.tsx
+/**
+ * Expandable rule display component with enforcement badge.
+ * Renders individual debate rules with collapsible details and examples.
+ */
 'use client'
 
 import { ChevronDown, Cpu, Shield } from 'lucide-react'

@@ -1,4 +1,8 @@
-// src/components/features/open-source-section.tsx
+// open-source-section.tsx
+/**
+ * Open source community section with GitHub links.
+ * Showcases repository and issue tracker with animated link cards.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

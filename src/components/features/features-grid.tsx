@@ -1,4 +1,8 @@
-// src/components/features/features-grid.tsx
+// features-grid.tsx
+/**
+ * Animated feature showcase grid with intersection-based reveal.
+ * Displays platform capabilities in a responsive card layout with glass effects.
+ */
 'use client'
 
 import { Bot, Eye, Globe, Link2, Scale, Zap } from 'lucide-react'

@@ -1,4 +1,8 @@
-// src/components/features/debate-details-accordion.tsx
+// debate-details-accordion.tsx
+/**
+ * Expandable accordion for debate format documentation.
+ * Covers turn structure, moderation rules, and scoring criteria.
+ */
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'

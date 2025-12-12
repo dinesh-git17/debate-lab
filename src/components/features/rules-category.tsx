@@ -1,4 +1,8 @@
-// src/components/features/rules-category.tsx
+// rules-category.tsx
+/**
+ * Collapsible category container for grouping related debate rules.
+ * Supports icon display and aggregates RuleItem components.
+ */
 'use client'
 
 import {

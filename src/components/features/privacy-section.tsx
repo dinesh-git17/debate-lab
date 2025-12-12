@@ -1,4 +1,8 @@
-// src/components/features/privacy-section.tsx
+// privacy-section.tsx
+/**
+ * Condensed privacy commitment section for About page.
+ * Highlights data protection principles with animated pills and content.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

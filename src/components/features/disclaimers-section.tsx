@@ -1,4 +1,8 @@
-// src/components/features/disclaimers-section.tsx
+// disclaimers-section.tsx
+/**
+ * Legal disclaimers section for AI-generated content.
+ * Warns users about limitations and inappropriate reliance on debate outputs.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

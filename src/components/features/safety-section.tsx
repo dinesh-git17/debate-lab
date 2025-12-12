@@ -1,4 +1,8 @@
-// src/components/features/safety-section.tsx
+// safety-section.tsx
+/**
+ * Content moderation and safety policy display component.
+ * Presents moderator rules and prohibited content with animated checklists.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

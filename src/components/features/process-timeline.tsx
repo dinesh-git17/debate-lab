@@ -1,4 +1,8 @@
-// src/components/features/process-timeline.tsx
+// process-timeline.tsx
+/**
+ * Four-step process timeline with animated cards.
+ * Illustrates the debate journey from topic selection to results.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

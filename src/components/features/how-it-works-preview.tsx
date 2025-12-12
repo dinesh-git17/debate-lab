@@ -1,4 +1,8 @@
-// src/components/features/how-it-works-preview.tsx
+// how-it-works-preview.tsx
+/**
+ * Landing page process overview with step-by-step cards.
+ * Intersection-triggered animations reveal the four-step debate flow.
+ */
 'use client'
 
 import { Lightbulb, MessageSquare, Scale } from 'lucide-react'

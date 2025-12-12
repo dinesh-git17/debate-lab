@@ -1,4 +1,8 @@
-// src/components/features/hero-section.tsx
+// hero-section.tsx
+/**
+ * Landing page hero with animated WebGL background.
+ * Primary entry point featuring debate creation CTA and scroll navigation.
+ */
 'use client'
 
 import { ArrowRight, ChevronDown } from 'lucide-react'

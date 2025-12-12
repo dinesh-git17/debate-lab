@@ -1,4 +1,8 @@
-// src/components/features/ai-models-section.tsx
+// ai-models-section.tsx
+/**
+ * AI model showcase with animated profile cards.
+ * Displays debater and moderator models with roles, descriptions, and version info.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

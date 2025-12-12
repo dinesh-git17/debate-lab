@@ -1,4 +1,8 @@
-// src/components/features/how-it-works-hero.tsx
+// how-it-works-hero.tsx
+/**
+ * Hero section for the How It Works page.
+ * Animated header with ambient glow introducing the debate journey.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

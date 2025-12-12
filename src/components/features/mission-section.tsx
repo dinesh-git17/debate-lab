@@ -1,4 +1,8 @@
-// src/components/features/mission-section.tsx
+// mission-section.tsx
+/**
+ * Platform mission and purpose statement section.
+ * Explains the motivation and goals behind the Debate Lab project.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

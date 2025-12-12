@@ -1,4 +1,8 @@
-// src/components/features/how-it-works-cta.tsx
+// how-it-works-cta.tsx
+/**
+ * Call-to-action section for the How It Works page.
+ * Encourages users to create their first debate with prominent action button.
+ */
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'

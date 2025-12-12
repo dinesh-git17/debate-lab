@@ -1,4 +1,8 @@
-// src/components/features/custom-rules-input.tsx
+// custom-rules-input.tsx
+/**
+ * Dynamic custom rules input with server-side validation.
+ * Supports debounced validation, caching, and inline feedback with suggestions.
+ */
 'use client'
 
 import { ExternalLink, Plus, Trash2 } from 'lucide-react'

@@ -1,4 +1,8 @@
-// src/components/features/terms-page-content.tsx
+// terms-page-content.tsx
+/**
+ * Complete terms of service page with animated sections.
+ * Covers acceptable use, content policies, and legal disclaimers.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

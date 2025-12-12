@@ -1,4 +1,8 @@
-// src/components/features/tech-stack-section.tsx
+// tech-stack-section.tsx
+/**
+ * Technology stack showcase with animated cards.
+ * Displays frameworks, services, and AI providers powering the platform.
+ */
 'use client'
 
 import { motion } from 'framer-motion'

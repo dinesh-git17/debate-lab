@@ -1,4 +1,8 @@
-// src/components/features/privacy-page-content.tsx
+// privacy-page-content.tsx
+/**
+ * Complete privacy policy page with animated sections.
+ * Covers data collection, AI handling, security, and user rights.
+ */
 'use client'
 
 import { motion } from 'framer-motion'
