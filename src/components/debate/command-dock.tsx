@@ -1,6 +1,7 @@
+// src/components/debate/command-dock.tsx
 /**
- * src/components/debate/command-dock.tsx
- * Apple-inspired roundel button dock with icon + label layout
+ * Icon-based command dock for debate controls with hover-reveal labels.
+ * Renders context-aware actions based on current debate status.
  */
 
 'use client'
@@ -23,31 +24,22 @@ import { ExportModal } from './export-modal'
 
 import type { ExportConfig } from '@/types/export'
 
-/**
- * Compact pill button configuration - Safari-inspired
- */
 const BUTTON_CONFIG = {
-  height: 36, // px - button height
-  iconSize: 18, // px - icon size
-  paddingX: 14, // px - horizontal padding
-  gap: 6, // px - gap between icon and label
-  fontSize: 12, // px - label font size
+  height: 36,
+  iconSize: 18,
+  paddingX: 14,
+  gap: 6,
+  fontSize: 12,
 } as const
 
 interface CommandDockProps {
   debateId: string
 }
 
-/**
- * Divider component for button groups - subtle vertical line
- */
 function Divider() {
   return <div className="w-px h-5 bg-white/[0.1] mx-1" aria-hidden="true" />
 }
 
-/**
- * Compact pill button with hover-expand label
- */
 interface PillButtonProps {
   icon: React.ReactNode
   label?: string
@@ -67,7 +59,6 @@ function PillButton({
 }: PillButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  // Text color: brighter on hover for subtle feedback
   const baseColor = variant === 'danger' ? 'rgb(251, 113, 133)' : 'rgba(255, 255, 255, 0.6)'
   const hoverColor = variant === 'danger' ? 'rgb(255, 140, 160)' : 'rgba(255, 255, 255, 1)'
 
@@ -121,9 +112,6 @@ function PillButton({
   )
 }
 
-/**
- * Compact pill link with hover-expand label
- */
 interface PillLinkProps {
   href: string
   icon: React.ReactNode
@@ -133,7 +121,6 @@ interface PillLinkProps {
 function PillLink({ href, icon, label }: PillLinkProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  // Text color: brighter on hover for subtle feedback
   const baseColor = 'rgba(255, 255, 255, 0.6)'
   const hoverColor = 'rgba(255, 255, 255, 1)'
 
@@ -200,8 +187,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
 
   const isActive = status === 'active' || status === 'paused'
   const isRunning = status === 'active'
-
-  // ===== HANDLERS =====
 
   const handleStart = async () => {
     setIsLoading(true)
@@ -364,13 +349,10 @@ export function CommandDock({ debateId }: CommandDockProps) {
     enabled: true,
   })
 
-  // ===== RENDER =====
-
   const iconSize = BUTTON_CONFIG.iconSize
 
   return (
     <>
-      {/* ===== READY STATE: Start + New ===== */}
       {status === 'ready' && (
         <div className="flex items-center gap-1">
           <PillButton
@@ -389,7 +371,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
         </div>
       )}
 
-      {/* ===== ACTIVE STATE: Pause + End + New ===== */}
       {status === 'active' && (
         <div className="flex items-center gap-1">
           <PillButton
@@ -416,7 +397,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
         </div>
       )}
 
-      {/* ===== PAUSED STATE: Resume + End + New ===== */}
       {status === 'paused' && (
         <div className="flex items-center gap-1">
           <PillButton
@@ -443,7 +423,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
         </div>
       )}
 
-      {/* ===== COMPLETED STATE: Summary + Export + New ===== */}
       {status === 'completed' && (
         <div className="flex items-center gap-1">
           <PillLink
@@ -466,7 +445,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
         </div>
       )}
 
-      {/* ===== ERROR STATE: Retry + New ===== */}
       {status === 'error' && (
         <div className="flex items-center gap-1">
           <PillButton
@@ -485,7 +463,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
         </div>
       )}
 
-      {/* ===== MODALS ===== */}
       <ConfirmModal
         isOpen={showEndModal}
         onClose={() => setShowEndModal(false)}

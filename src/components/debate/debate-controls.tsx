@@ -1,4 +1,8 @@
 // src/components/debate/debate-controls.tsx
+/**
+ * Primary control interface for debate lifecycle management.
+ * Handles start/pause/resume/end actions with responsive mobile and desktop variants.
+ */
 
 'use client'
 
@@ -50,7 +54,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
       })
 
       if (!response.ok) {
-        // Try to parse error as JSON
         const text = await response.text()
         try {
           const data = JSON.parse(text)
@@ -60,14 +63,9 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         }
       }
 
-      // Engine started successfully - events will be received via useDebateStream
-      // which subscribes to /api/debate/[id]/stream
-      // We just need to consume the response stream to keep the connection alive
-      // but NOT process events here (that would cause duplicates)
+      // Consume stream to keep connection alive; events handled by useDebateStream hook
       const reader = response.body?.getReader()
       if (reader) {
-        // Consume stream in background without processing events
-        // Events are handled by useDebateStream hook via the /stream endpoint
         void (async () => {
           try {
             while (true) {
@@ -75,7 +73,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               if (done) break
             }
           } catch {
-            // Stream closed, ignore
+            // Stream closed
           }
         })()
       }
@@ -194,7 +192,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     enabled: true,
   })
 
-  // Header dock dropdown - opens downward (for top-positioned dock)
   const headerMenuStyles = cn(
     'absolute right-0 top-full mt-2 z-50',
     'min-w-[180px] rounded-2xl p-2',
@@ -204,7 +201,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'animate-list-picker'
   )
 
-  // Floating dock dropdown - opens upward (for bottom-positioned dock)
   const floatingMenuStyles = cn(
     'absolute right-0 bottom-full mb-2 z-50',
     'min-w-[180px] rounded-2xl p-2',
@@ -214,10 +210,8 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'animate-list-picker'
   )
 
-  // Menu items with 44pt tap targets - pill shape
   const mobileMenuItemStyles = cn(
     'flex w-full items-center gap-3 rounded-full px-4',
-    // 44pt minimum tap target
     'min-h-[44px]',
     'text-[15px] text-foreground/80',
     'hover:bg-white/[0.08] hover:text-foreground',
@@ -225,204 +219,137 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     'transition-all duration-150'
   )
 
-  // Apple-style unified dock - iOS Control Center / Apple Music style (MOBILE)
   const mobileDockStyles = cn(
-    // Floating island with generous breathing room for touch
     'relative flex items-center gap-3 px-5 py-4',
     'rounded-[28px]',
-    // True glass material - lower opacity, stronger blur
     'bg-white/[0.06] backdrop-blur-3xl backdrop-saturate-[1.8]',
-    // Ultra-subtle border (0.5px effect via opacity)
     'border border-white/[0.06]',
-    // Soft diffuse shadow with subtle inner glow
     'shadow-[0_4px_24px_rgba(0,0,0,0.2),0_0_0_0.5px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.04)]'
   )
 
-  // Refined desktop dock - tighter, more elegant (DESKTOP/HEADER)
-  const desktopDockStyles = cn(
-    // Compact proportions for desktop - no background, just layout
-    'relative flex items-center gap-2'
-  )
+  const desktopDockStyles = cn('relative flex items-center gap-2')
 
-  // Primary dock button - 44pt minimum tap target (Apple HIG) - MOBILE
   const dockPrimaryButtonStyles = cn(
     'inline-flex items-center justify-center gap-1.5',
-    // Consistent 44px height, uniform width for premium look
     'h-[44px] min-w-[88px] rounded-full px-4 text-[13px] font-semibold tracking-[-0.01em]',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover lift + active tactile feedback
     'hover:translate-y-[-1px]',
     'active:translate-y-[0.5px] active:scale-[0.98]',
     'focus-visible:outline-none',
     'disabled:pointer-events-none disabled:opacity-50'
   )
 
-  // Desktop primary button - smaller, refined (DESKTOP/HEADER)
   const desktopPrimaryButtonStyles = cn(
     'inline-flex items-center justify-center gap-1',
-    // Compact 36px height for desktop
     'h-9 min-w-[72px] rounded-full px-3 text-[12px] font-semibold tracking-[-0.01em]',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover lift + active tactile feedback
     'hover:translate-y-[-1px]',
     'active:translate-y-[0.5px] active:scale-[0.98]',
     'focus-visible:outline-none',
     'disabled:pointer-events-none disabled:opacity-50'
   )
 
-  // End button - Apple iOS systemRed style (Settings "Delete" button) - MOBILE
   const dockEndButtonStyles = cn(
     'inline-flex items-center justify-center gap-1.5',
-    // Consistent 44px height with all dock buttons
     'h-[44px] rounded-full px-4 text-[13px] font-medium tracking-[-0.01em]',
-    // iOS systemRed at 12% opacity + thin 0.75px stroke effect
     'bg-[rgba(255,59,48,0.12)]',
     'border border-[rgba(255,59,48,0.25)]',
-    // High contrast systemRed text (#FF3B30)
     'text-[#FF3B30]',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift + color pulse
     'hover:translate-y-[-1px] hover:bg-[rgba(255,59,48,0.18)] hover:border-[rgba(255,59,48,0.35)]',
-    // Press: tactile feedback + deeper color
     'active:translate-y-[0.5px] active:scale-[0.98] active:bg-[rgba(255,59,48,0.25)]',
     'focus-visible:outline-none',
     'disabled:pointer-events-none disabled:opacity-50'
   )
 
-  // New Debate button - Apple translucent glass secondary
   const dockNewButtonStyles = cn(
     'inline-flex items-center justify-center gap-1.5',
-    // Consistent 44px height, tighter spacing
     'h-[44px] rounded-full px-4 text-[13px] font-medium tracking-[-0.01em]',
-    // True glass - very translucent (not dark grey)
     'bg-white/[0.06] text-foreground/70',
     'border border-white/[0.04]',
-    // Subtle inner shadow for depth + micro top gradient
     'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.08),inset_0_-0.5px_0_rgba(0,0,0,0.05)]',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift effect
     'hover:translate-y-[-1px] hover:bg-white/[0.1] hover:text-foreground/90 hover:border-white/[0.08]',
-    // Active: tactile feedback
     'active:translate-y-[0.5px] active:scale-[0.98] active:bg-white/[0.08]',
     'focus-visible:outline-none'
   )
 
-  // Icon button for overflow menu - 44pt tap target circle
   const dockIconButtonStyles = cn(
     'inline-flex items-center justify-center',
-    // Consistent 44px circle
     'h-[44px] w-[44px] rounded-full',
     'text-foreground/40',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift effect
     'hover:translate-y-[-1px] hover:bg-white/[0.06] hover:text-foreground/60',
-    // Active: tactile feedback
     'active:translate-y-[0.5px] active:scale-[0.98] active:bg-white/[0.08]'
   )
 
-  // Export button style for completed state - primary pill (softer than Start) - MOBILE
   const dockExportButtonStyles = cn(
     'inline-flex items-center justify-center gap-1.5',
-    // Consistent 44px height
     'h-[44px] rounded-full px-5 text-[13px] font-semibold tracking-[-0.01em]',
-    // Primary style - softer luminosity
     'bg-foreground text-background',
     'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15),0_0_12px_rgba(255,255,255,0.06)]',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift + glow increase
     'hover:translate-y-[-1px] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_18px_rgba(255,255,255,0.1)]',
-    // Active: tactile feedback
     'active:translate-y-[0.5px] active:scale-[0.98]',
     'focus-visible:outline-none'
   )
 
-  // ===== DESKTOP BUTTON STYLES (compact, refined) =====
-
-  // Desktop End button - compact
   const desktopEndButtonStyles = cn(
     'inline-flex items-center justify-center gap-1',
     'h-9 rounded-full px-3 text-[12px] font-medium tracking-[-0.01em]',
     'bg-[rgba(255,59,48,0.10)]',
     'text-[#FF3B30]',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift + color
     'hover:translate-y-[-1px] hover:bg-[rgba(255,59,48,0.15)]',
-    // Active: tactile feedback
     'active:translate-y-[0.5px] active:scale-[0.98] active:bg-[rgba(255,59,48,0.20)]',
     'focus-visible:outline-none',
     'disabled:pointer-events-none disabled:opacity-50'
   )
 
-  // Desktop New button - compact secondary
   const desktopNewButtonStyles = cn(
     'inline-flex items-center justify-center gap-1',
     'h-9 rounded-full px-3 text-[12px] font-medium tracking-[-0.01em]',
     'bg-white/[0.04] text-foreground/60',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift effect
     'hover:translate-y-[-1px] hover:bg-white/[0.08] hover:text-foreground/80',
-    // Active: tactile feedback
     'active:translate-y-[0.5px] active:scale-[0.98]',
     'focus-visible:outline-none'
   )
 
-  // Desktop Icon button - compact
   const desktopIconButtonStyles = cn(
     'inline-flex items-center justify-center',
     'h-9 w-9 rounded-full',
     'text-foreground/40',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift effect
     'hover:translate-y-[-1px] hover:bg-white/[0.06] hover:text-foreground/60',
-    // Active: tactile feedback
     'active:translate-y-[0.5px] active:scale-[0.98]'
   )
 
-  // Desktop Export button - compact
   const desktopExportButtonStyles = cn(
     'inline-flex items-center justify-center gap-1',
     'h-9 rounded-full px-4 text-[12px] font-semibold tracking-[-0.01em]',
     'bg-foreground text-background',
     'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]',
-    // GPU acceleration + premium easing
     'will-change-transform',
     'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
-    // Hover: lift + glow
     'hover:translate-y-[-1px] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_0_12px_rgba(255,255,255,0.08)]',
-    // Active: tactile feedback
     'active:translate-y-[0.5px] active:scale-[0.98]',
     'focus-visible:outline-none'
   )
 
-  // MOBILE VARIANT - Apple-style unified dock
-  // Logic:
-  // - Ready: Start, New Debate
-  // - Active/Paused: Pause/Resume, End, New Debate
-  // - Completed: Export, New Debate
   if (variant === 'mobile') {
     return (
       <>
-        {/* Unified dock container - shrink to fit viewport */}
         <div className={cn(mobileDockStyles, 'max-w-full shrink-0')}>
-          {/* Subtle internal radial glow */}
           <div
             className="pointer-events-none absolute inset-0 rounded-full"
             style={{
@@ -431,7 +358,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             }}
           />
 
-          {/* ===== READY STATE: Start + New Debate ===== */}
           {status === 'ready' && (
             <>
               <motion.button
@@ -482,7 +408,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             </>
           )}
 
-          {/* ===== ACTIVE STATE: Pause + End + New Debate ===== */}
           {status === 'active' && (
             <>
               <button
@@ -550,7 +475,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             </>
           )}
 
-          {/* ===== PAUSED STATE: Resume + End + New Debate ===== */}
           {status === 'paused' && (
             <>
               <button
@@ -558,11 +482,8 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
                 disabled={isLoading}
                 className={cn(
                   dockPrimaryButtonStyles,
-                  // Softer amber gradient - Apple-style silky, not saturated
                   'bg-gradient-to-b from-amber-400/90 to-amber-500/90 text-white',
-                  // Subtle highlight rim + soft outer glow
                   'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.25),0_0_14px_rgba(245,158,11,0.15)]',
-                  // Hover: gentle brightness increase
                   'hover:from-amber-400 hover:to-amber-500',
                   'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.3),0_0_18px_rgba(245,158,11,0.2)]'
                 )}
@@ -618,7 +539,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             </>
           )}
 
-          {/* ===== COMPLETED STATE: Export + New Debate ===== */}
           {status === 'completed' && (
             <>
               <button onClick={openExportModal} className={dockExportButtonStyles}>
@@ -659,7 +579,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
                 <span>New</span>
               </button>
 
-              {/* Summary link in overflow for completed */}
               <div className="relative">
                 <button
                   onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -708,7 +627,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
             </>
           )}
 
-          {/* ===== ERROR STATE: Retry + New Debate ===== */}
           {status === 'error' && (
             <>
               <button
@@ -759,7 +677,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           )}
         </div>
 
-        {/* Modals */}
         <ConfirmModal
           isOpen={showEndModal}
           onClose={() => setShowEndModal(false)}
@@ -791,15 +708,11 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     )
   }
 
-  // FLOATING/HEADER VARIANT - Refined desktop dock
-  // Uses floatingMenuStyles for upward menu (bottom dock) or headerMenuStyles (header)
   const menuStyles = variant === 'floating' ? floatingMenuStyles : headerMenuStyles
 
   return (
     <>
-      {/* Desktop dock container - compact and refined */}
       <div className={cn(desktopDockStyles, 'max-w-full shrink-0', className)}>
-        {/* ===== READY STATE: Start + New Debate ===== */}
         {status === 'ready' && (
           <>
             <motion.button
@@ -845,7 +758,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           </>
         )}
 
-        {/* ===== ACTIVE STATE: Pause + End + New Debate ===== */}
         {status === 'active' && (
           <>
             <button
@@ -907,7 +819,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           </>
         )}
 
-        {/* ===== PAUSED STATE: Resume + End + New Debate ===== */}
         {status === 'paused' && (
           <>
             <button
@@ -967,7 +878,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           </>
         )}
 
-        {/* ===== COMPLETED STATE: Export + New Debate ===== */}
         {status === 'completed' && (
           <>
             <button onClick={openExportModal} className={desktopExportButtonStyles}>
@@ -1008,7 +918,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
               <span>New</span>
             </button>
 
-            {/* Summary link in overflow */}
             <div className="relative">
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -1057,7 +966,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           </>
         )}
 
-        {/* ===== ERROR STATE: Retry + New Debate ===== */}
         {status === 'error' && (
           <>
             <button
@@ -1103,7 +1011,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         )}
       </div>
 
-      {/* Modals */}
       <ConfirmModal
         isOpen={showEndModal}
         onClose={() => setShowEndModal(false)}

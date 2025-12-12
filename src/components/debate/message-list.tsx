@@ -1,4 +1,8 @@
 // src/components/debate/message-list.tsx
+/**
+ * Scrollable message container with smart auto-scroll and empty state handling.
+ * Orchestrates message display, cascading animations, and scroll position management.
+ */
 
 'use client'
 
@@ -17,13 +21,8 @@ import { MessageBubble } from './message-bubble'
 import type { BackgroundCategory } from '@/lib/topic-backgrounds'
 import type { DebateMessage } from '@/types/debate-ui'
 
-/**
- * Easing function for smooth scroll animation
- * Uses Apple-style cubic-bezier curve
- */
 function easeOutCubic(t: number): number {
   const [_x1, y1, _x2, y2] = ANIMATION_CONFIG.AUTO_SCROLL.SCROLL_EASING
-  // Simplified cubic bezier approximation
   return 1 - Math.pow(1 - t, 3) * (1 - y2) + Math.pow(t, 3) * y1
 }
 
@@ -44,8 +43,6 @@ function EmptyState() {
 
   const formatDisplayName = FORMAT_DISPLAY_NAMES[format] ?? format
 
-  // Get topic-specific gradient and image from pre-computed category (calculated at debate creation)
-  // Falls back to keyword-based gradient if category not available (legacy debates)
   const category = backgroundCategory as BackgroundCategory | undefined
   const topicGradient = category
     ? (CATEGORY_GRADIENTS[category] ?? getTopicGradient(topic))
@@ -72,7 +69,6 @@ function EmptyState() {
         }
       }
 
-      // Consume stream in background
       const reader = response.body?.getReader()
       if (reader) {
         void (async () => {
@@ -98,7 +94,6 @@ function EmptyState() {
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center px-8 md:px-16 lg:px-24 overflow-hidden">
-      {/* Background image layer - topic-specific (fixed to cover full viewport including header) */}
       {topicImage && (
         <motion.div
           className="pointer-events-none fixed inset-0 z-0"
@@ -114,7 +109,6 @@ function EmptyState() {
         />
       )}
 
-      {/* Dark overlay for image readability */}
       {topicImage && (
         <div
           className="pointer-events-none fixed inset-0 z-[1]"
@@ -124,7 +118,6 @@ function EmptyState() {
         />
       )}
 
-      {/* Gradient overlay - topic-specific colors (appears with or slightly after background) */}
       <motion.div
         className="pointer-events-none fixed inset-0 z-[2]"
         initial={{ opacity: 0, scale: 1.1 }}
@@ -135,7 +128,6 @@ function EmptyState() {
         }}
       />
 
-      {/* Title - Apple-style blur-in with refined typography */}
       <motion.div
         className="relative z-10"
         style={{
@@ -162,7 +154,6 @@ function EmptyState() {
         </h1>
       </motion.div>
 
-      {/* Metadata - Apple translucent capsules (staggered entrance) */}
       <motion.div
         className="relative z-10 mt-5 flex gap-3"
         initial={{ opacity: 0 }}
@@ -219,7 +210,6 @@ function EmptyState() {
         </motion.div>
       </motion.div>
 
-      {/* CTA - Apple premium capsule button (landing animation) */}
       <motion.div
         className="relative z-10 mt-7 group"
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
@@ -274,7 +264,6 @@ function EmptyState() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.14, ease: [0.22, 0.61, 0.36, 1] }}
               >
-                {/* Apple-style circular spinner */}
                 <svg
                   width="18"
                   height="18"
@@ -443,13 +432,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
 
     const container = containerRef.current
 
-    // For completed debates with hydrated messages, scroll to top and cascade
     if (status === 'completed' && container) {
-      // Scroll to top immediately (before paint)
       container.scrollTop = 0
 
-      // Clear cascade state after all cards have animated in
-      // Total time = (numCards * stagger) + entranceDuration + buffer
       const totalCascadeTime =
         allMessages.length * ANIMATION_CONFIG.CARD_ENTRANCE.STAGGER_MS +
         ANIMATION_CONFIG.CARD_ENTRANCE.DURATION_MS +
@@ -464,13 +449,10 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     }
   }, [status, allMessages.length])
 
-  // Track if we have messages to determine when container becomes available
   const hasMessages = messages.length > 0
 
-  // Only auto-scroll during active debate, not after completion
   const shouldAutoScroll = autoScroll && hasMessages && status !== 'completed'
 
-  // Smooth scroll to a target position with Apple-style easing
   const smoothScrollTo = useCallback((container: HTMLDivElement, targetScrollTop: number) => {
     const startScrollTop = container.scrollTop
     const distance = targetScrollTop - startScrollTop
@@ -501,7 +483,6 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     smoothScrollRafRef.current = requestAnimationFrame(animateScroll)
   }, [])
 
-  // Detect when a message completes and trigger cinematic pause + scroll
   useEffect(() => {
     if (!shouldAutoScroll) return
 
@@ -515,18 +496,15 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     if (lastCompleted && lastCompleted.id !== lastCompletedMessageId.current) {
       lastCompletedMessageId.current = lastCompleted.id
 
-      // Check if there's a next message being streamed
       const lastCompletedIndex = messages.findIndex((m) => m.id === lastCompleted.id)
       const hasNextMessage = lastCompletedIndex < messages.length - 1
 
       if (hasNextMessage) {
-        // Pause for reading time before scrolling to next
         isPausedForReading.current = true
 
         setTimeout(() => {
           isPausedForReading.current = false
 
-          // Find the next message element and scroll to center it
           const nextMessageIndex = lastCompletedIndex + 1
           const messageElements = container.querySelectorAll('[role="article"]')
           const nextElement = messageElements[nextMessageIndex] as HTMLElement | undefined
@@ -535,11 +513,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             const containerRect = container.getBoundingClientRect()
             const elementTop = nextElement.offsetTop
 
-            // Calculate target scroll to position element at CENTER_OFFSET from top
             const targetScrollTop =
               elementTop - containerRect.height * ANIMATION_CONFIG.AUTO_SCROLL.CENTER_OFFSET
 
-            // Only scroll if we need to move down (don't scroll up)
             if (targetScrollTop > container.scrollTop) {
               smoothScrollTo(container, targetScrollTop)
             }
@@ -549,8 +525,6 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     }
   }, [messages, shouldAutoScroll, smoothScrollTo])
 
-  // RAF-based continuous scroll - gentle follow during streaming
-  // Keeps content visible above the safe zone during text reveal
   useEffect(() => {
     if (!shouldAutoScroll) return
 
@@ -567,13 +541,10 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
       const targetScrollTop = scrollHeight - clientHeight
       const distanceFromBottom = targetScrollTop - scrollTop
 
-      // Skip if user is manually scrolling or paused for reading
       if (!isUserScrolling.current && !isPausedForReading.current && distanceFromBottom > 1) {
-        // Gentler lerp for streaming follow - smoother than before
         const lerpFactor = ANIMATION_CONFIG.AUTO_SCROLL.LERP_FACTOR
         const newScrollTop = scrollTop + distanceFromBottom * lerpFactor
 
-        // Lock scroll detection briefly to prevent false user-scroll detection
         scrollLockUntil.current = Date.now() + 50
         container.scrollTop = newScrollTop
       }
@@ -581,7 +552,6 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
       rafId = requestAnimationFrame(checkAndScroll)
     }
 
-    // Start the RAF loop
     rafId = requestAnimationFrame(checkAndScroll)
 
     return () => {
@@ -595,33 +565,27 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     }
   }, [shouldAutoScroll])
 
-  // User scroll detection - detect when user intentionally scrolls away
-  // During active debate: snap back after user stops scrolling
   useEffect(() => {
     if (!hasMessages) return
 
     const container = containerRef.current
     if (!container) return
 
-    // Initialize lastScrollTop to current position
     lastScrollTop.current = container.scrollTop
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container
       const now = Date.now()
 
-      // Skip if we're in the lock period after a programmatic scroll
       if (now < scrollLockUntil.current) {
         lastScrollTop.current = scrollTop
         return
       }
 
-      // Detect user scrolling UP (away from content)
       const scrollDelta = scrollTop - lastScrollTop.current
-      const scrolledUp = scrollDelta < -5 // Small threshold to ignore micro-movements
+      const scrolledUp = scrollDelta < -5
       const distanceFromBottom = scrollHeight - scrollTop - clientHeight
 
-      // User is scrolling if they scrolled up significantly and are far from bottom
       if (scrolledUp && distanceFromBottom > 200) {
         isUserScrolling.current = true
 
@@ -630,14 +594,12 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
           clearTimeout(scrollEndTimeoutRef.current)
         }
 
-        // Set timeout to snap back after user stops scrolling (only during active debate)
         if (status !== 'completed') {
           scrollEndTimeoutRef.current = setTimeout(() => {
             isUserScrolling.current = false
-          }, 1500) // Snap back 1.5s after user stops scrolling
+          }, 1500)
         }
       } else if (distanceFromBottom < 100) {
-        // User scrolled back to bottom - re-enable auto-scroll
         isUserScrolling.current = false
         if (scrollEndTimeoutRef.current) {
           clearTimeout(scrollEndTimeoutRef.current)
@@ -696,10 +658,6 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         className="overflow-y-auto px-4 h-full"
         style={{
           scrollBehavior: 'auto',
-          // Fade content at top (under header) and bottom (above dock)
-          // Content behind header (0-60px): fully hidden
-          // Fade zone (60px-76px): ultra-thin 16px fade
-          // Below 76px: fully visible
           maskImage:
             'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
           WebkitMaskImage:
@@ -712,8 +670,6 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         <div
           className={cn(
             'relative flex flex-col',
-            // Center content when only 1 message, otherwise align to start
-            // pt-24 provides breathing room below the fixed header
             messages.length === 1 ? 'min-h-full justify-center' : 'pt-24 pb-6'
           )}
           style={{
@@ -725,17 +681,12 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
           {messages.map((message, index) => {
             const isLastMessage = index === messages.length - 1
             const isFirstMessage = index === 0
-            // Skip animation for messages that were already displayed (hydrated from server)
             const shouldSkipAnimation = displayedIds.has(message.id)
-            // Calculate depth index: 0 = active (last), 1 = adjacent, 2+ = distant
-            // In completed state, all cards should be fully focused (depthIndex = 0)
             const depthIndex = status === 'completed' ? 0 : messages.length - 1 - index
-            // Check if the card ABOVE this one is hovered (to fade this card's top connector)
             const previousMessage = index > 0 ? messages[index - 1] : null
             const isPreviousCardHovered = previousMessage
               ? hoveredMessageId === previousMessage.id
               : false
-            // Pass cascadeIndex only during initial cascade animation (page load with hydrated messages)
             const shouldCascade = isInitialCascade && status === 'completed' && shouldSkipAnimation
 
             return (
@@ -756,7 +707,6 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             )
           })}
 
-          {/* Safe zone padding for floating dock */}
           <div className="h-24" aria-hidden="true" />
 
           <div id="scroll-anchor" aria-hidden="true" />

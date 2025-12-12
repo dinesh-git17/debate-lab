@@ -1,4 +1,8 @@
 // src/app/embed/[id]/layout.tsx
+/**
+ * Minimal layout for embeddable debate widgets.
+ * Excludes global navigation and applies embed-specific styles.
+ */
 
 import './embed.css'
 

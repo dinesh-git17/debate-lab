@@ -1,4 +1,8 @@
 // src/app/s/[code]/route.ts
+/**
+ * Short URL redirect handler for shared debates.
+ * Resolves short codes to debate IDs and validates public access before redirecting.
+ */
 
 import { NextResponse } from 'next/server'
 

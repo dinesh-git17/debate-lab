@@ -1,4 +1,8 @@
 // src/components/debate/animated-text.tsx
+/**
+ * Animated text components for streaming debate content with word-level reveal effects.
+ * Supports markdown rendering with accessibility-aware reduced motion fallbacks.
+ */
 
 'use client'
 
@@ -20,10 +24,6 @@ interface AnimatedTextProps {
   className?: string
 }
 
-/**
- * Animated text component that renders markdown with smooth word-level reveal animations.
- * Uses a hybrid approach: markdown rendering + CSS animations for the premium wave effect.
- */
 export const AnimatedText = memo(function AnimatedText({
   content,
   isRevealing,
@@ -35,7 +35,6 @@ export const AnimatedText = memo(function AnimatedText({
   const previousContentLengthRef = useRef(0)
   const animationKeyRef = useRef(0)
 
-  // Check for reduced motion preference
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     setPrefersReducedMotion(mediaQuery.matches)
@@ -45,7 +44,6 @@ export const AnimatedText = memo(function AnimatedText({
     return () => mediaQuery.removeEventListener('change', handler)
   }, [])
 
-  // Track content changes for animation triggering
   useEffect(() => {
     if (content.length > previousContentLengthRef.current) {
       animationKeyRef.current++
@@ -61,27 +59,19 @@ export const AnimatedText = memo(function AnimatedText({
     )
   }
 
-  // Split content into already-revealed and newly-revealed portions
-  // We use a wrapper approach to animate new content smoothly
   const hasNewContent = newContentStartIndex > 0 && newContentStartIndex < content.length
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      {/* Main content with markdown */}
       <div className={cn('transition-opacity duration-75', isRevealing && 'will-change-contents')}>
         <Markdown content={content} />
       </div>
 
-      {/* Reveal wave overlay - creates the premium sweep effect */}
       {hasNewContent && isRevealing && <RevealWave key={animationKeyRef.current} />}
     </div>
   )
 })
 
-/**
- * Subtle wave effect that sweeps across newly revealed content.
- * Creates a premium "text appearing" feel without DOM manipulation.
- */
 const RevealWave = memo(function RevealWave() {
   return (
     <motion.div
@@ -104,10 +94,6 @@ const RevealWave = memo(function RevealWave() {
   )
 })
 
-/**
- * Enhanced animated text with word-level micro-animations.
- * For use when content is simple text (no markdown).
- */
 interface AnimatedWordsProps {
   /** Plain text content (no markdown) */
   text: string
@@ -141,7 +127,6 @@ export const AnimatedWords = memo(function AnimatedWords({
   return (
     <span className={className}>
       {words.map((word, index) => {
-        // Preserve whitespace as-is
         if (/^\s+$/.test(word)) {
           return <span key={index}>{word}</span>
         }

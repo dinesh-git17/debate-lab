@@ -1,4 +1,8 @@
 // src/components/debate/thinking-indicator.tsx
+/**
+ * Animated thinking indicator with rotating words and spinner.
+ * Provides visual feedback during LLM response generation with accessibility support.
+ */
 
 'use client'
 
@@ -17,9 +21,6 @@ interface ThinkingIndicatorProps {
   className?: string
 }
 
-/**
- * Fisher-Yates shuffle for randomizing word order
- */
 function shuffleArray<T>(array: readonly T[]): T[] {
   const shuffled = [...array]
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -31,10 +32,6 @@ function shuffleArray<T>(array: readonly T[]): T[] {
   return shuffled
 }
 
-/**
- * Premium "Thinking" indicator with rotating words and subtle spinner.
- * Replaces the basic bouncing dots with an intellectual, calming animation.
- */
 export const ThinkingIndicator = memo(function ThinkingIndicator({
   speaker,
   className,
@@ -43,12 +40,10 @@ export const ThinkingIndicator = memo(function ThinkingIndicator({
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Shuffle words on mount for variety
   const shuffledWords = useMemo(() => shuffleArray(ANIMATION_CONFIG.THINKING_WORDS), [])
 
   const colors = SPEAKER_ANIMATION_COLORS[speaker]
 
-  // Check for reduced motion preference
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     setPrefersReducedMotion(mediaQuery.matches)
@@ -58,7 +53,6 @@ export const ThinkingIndicator = memo(function ThinkingIndicator({
     return () => mediaQuery.removeEventListener('change', handler)
   }, [])
 
-  // Rotate through words
   const rotateWord = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % shuffledWords.length)
   }, [shuffledWords.length])
@@ -78,7 +72,6 @@ export const ThinkingIndicator = memo(function ThinkingIndicator({
 
   const currentWord = shuffledWords[currentIndex]
 
-  // Reduced motion: simple static display
   if (prefersReducedMotion) {
     return (
       <div
@@ -98,9 +91,7 @@ export const ThinkingIndicator = memo(function ThinkingIndicator({
       role="status"
       aria-label="Generating response"
     >
-      {/* Subtle rotating spinner */}
       <div className="relative h-4 w-4">
-        {/* Outer ring - rotating */}
         <motion.div
           className={cn(
             'absolute inset-0 rounded-full border-2 border-transparent',
@@ -119,7 +110,6 @@ export const ThinkingIndicator = memo(function ThinkingIndicator({
             ease: 'linear',
           }}
         />
-        {/* Inner pulse - subtle glow */}
         <motion.div
           className={cn('absolute inset-1 rounded-full', colors.spinner.replace('border-', 'bg-'))}
           style={{ opacity: 0.3 }}
@@ -135,7 +125,6 @@ export const ThinkingIndicator = memo(function ThinkingIndicator({
         />
       </div>
 
-      {/* Rotating word with crossfade */}
       <div className="relative h-5 min-w-[100px] overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.span

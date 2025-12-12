@@ -1,4 +1,8 @@
 // src/app/embed/[id]/embed-widget.tsx
+/**
+ * Client-side embeddable widget displaying debate summary and scores.
+ * Supports theme auto-detection and responsive iframe embedding.
+ */
 
 'use client'
 

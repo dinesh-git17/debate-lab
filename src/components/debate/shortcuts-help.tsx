@@ -1,4 +1,8 @@
 // src/components/debate/shortcuts-help.tsx
+/**
+ * Keyboard shortcuts reference panel with available debate actions.
+ * Displays in a dismissible popover with platform-aware key formatting.
+ */
 
 'use client'
 

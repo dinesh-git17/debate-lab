@@ -1,4 +1,8 @@
 // src/components/debate/connection-status.tsx
+/**
+ * Real-time connection status indicator with animated state transitions.
+ * Visual states reflect Pusher connection lifecycle (connecting, connected, reconnecting, error).
+ */
 
 'use client'
 
@@ -29,7 +33,6 @@ const CONNECTION_CONFIGS: Record<ViewConnectionStatus, ConnectionConfig> = {
     pulse: 'ping',
   },
   connected: {
-    // Softer green, not neon
     dot: 'bg-emerald-400',
     text: 'Live',
     pulse: 'breathe',
@@ -57,9 +60,7 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
       aria-live="polite"
       aria-label={`Connection status: ${config.text}`}
     >
-      {/* Status dot - optically centered with text */}
       <span className="relative flex h-[6px] w-[6px]">
-        {/* Ping animation for connecting/reconnecting states */}
         {config.pulse === 'ping' && (
           <span
             className={cn(
@@ -68,7 +69,6 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
             )}
           />
         )}
-        {/* Apple-style breathing glow for live state */}
         {config.pulse === 'breathe' && (
           <span
             className={cn(
@@ -77,7 +77,6 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
             )}
           />
         )}
-        {/* Core dot - breathing animation when live */}
         <span
           className={cn(
             'relative inline-flex h-[6px] w-[6px] rounded-full',
@@ -86,7 +85,6 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
           )}
         />
       </span>
-      {/* Label - baseline aligned with other text in header */}
       <span className="text-[13px] leading-none text-muted-foreground/60">{config.text}</span>
     </div>
   )

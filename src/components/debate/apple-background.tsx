@@ -1,12 +1,7 @@
+// src/components/debate/apple-background.tsx
 /**
- * src/components/debate/apple-background.tsx
- * Apple-inspired premium background - Pure solid color, maximum simplicity
- *
- * Design principles:
- * - Single solid color - no gradients, no visual artifacts
- * - Identical rendering across all browsers
- * - Zero complexity, zero distraction
- * - Content is the hero
+ * Theme-aware solid background layer for debate views.
+ * Provides consistent cross-browser rendering with smooth theme transitions.
  */
 
 'use client'
@@ -17,13 +12,6 @@ interface AppleBackgroundProps {
   className?: string
 }
 
-/**
- * AppleBackground - Pure solid color background
- *
- * Uses CSS variable for theme-aware color:
- * - Dark: deep charcoal (hsl 225, 10%, 8%)
- * - Light: warm off-white (hsl 40, 15%, 98%)
- */
 export function AppleBackground({ className }: AppleBackgroundProps) {
   return (
     <div

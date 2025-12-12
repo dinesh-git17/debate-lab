@@ -1,6 +1,7 @@
+// src/components/debate/message-bubble.tsx
 /**
- * src/components/debate/message-bubble.tsx
- * Apple-inspired glass morphism message cards with 3D floating effect
+ * Glass morphism message cards with depth-aware styling and 3D tilt effects.
+ * Renders debate turns with speaker-specific theming and streaming animations.
  */
 
 'use client'
@@ -33,65 +34,49 @@ import { cn } from '@/lib/utils'
 import type { DebateMessage } from '@/types/debate-ui'
 import type { TurnSpeaker } from '@/types/turn'
 
-/**
- * Graphite Glass configuration - Apple-inspired premium frosted effect
- * Creates depth through layered translucency and sophisticated shadows
- */
 const GLASS_CONFIG = {
-  // Optical rounding - larger top corners feel more "lifted", smaller bottom feels grounded
   borderRadius: {
-    top: 34, // px - visually larger top corners (32-36px range)
-    bottom: 28, // px - slightly tighter bottom corners (28-32px range)
-    // CSS shorthand: top-left top-right bottom-right bottom-left
+    top: 34,
+    bottom: 28,
     get css() {
       return `${this.top}px ${this.top}px ${this.bottom}px ${this.bottom}px`
     },
   },
-  backdropBlur: 28, // px - optimized frosted effect (20-32px range)
-  padding: { x: 40, y: 48 }, // px - increased for optical breathing room
-  cardGap: 56, // px - generous vertical rhythm for timeline
-  // Apple Typography System
+  backdropBlur: 28,
+  padding: { x: 40, y: 48 },
+  cardGap: 56,
   typography: {
-    // SF Pro Display for titles/headings - optical tracking for display sizes
     display: {
       fontFamily:
         '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
-      letterSpacing: '0.02em', // Optical tracking for headings
+      letterSpacing: '0.02em',
     },
-    // SF Pro Text for body - optimized for readability
     body: {
       fontFamily:
         '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
       fontSize: 17,
-      lineHeight: 1.68, // Apple optical line-height
-      letterSpacing: '-0.01em', // Slight negative for body text
+      lineHeight: 1.68,
+      letterSpacing: '-0.01em',
     },
-    // SF Pro Rounded for labels/badges
     rounded: {
       fontFamily:
         'ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     },
-    // Maximum content width to prevent awkward text stretching
-    maxContentWidth: 580, // px - optimal reading width
+    maxContentWidth: 580,
   },
-  // Graphite glass tint values
   tint: {
-    base: 'rgba(255, 255, 255, 0.05)', // Subtle white base
-    gradientTop: 'rgba(255, 255, 255, 0.07)', // Top gradient opacity
-    gradientBottom: 'rgba(255, 255, 255, 0.03)', // Bottom gradient opacity
+    base: 'rgba(255, 255, 255, 0.05)',
+    gradientTop: 'rgba(255, 255, 255, 0.07)',
+    gradientBottom: 'rgba(255, 255, 255, 0.03)',
   },
-  // Dual shadow system for depth
   shadow: {
-    ambient: '0 30px 60px rgba(0, 0, 0, 0.25)', // Soft wide ambient shadow
-    highlight: 'inset 0 3px 8px rgba(255, 255, 255, 0.08)', // Inner light
+    ambient: '0 30px 60px rgba(0, 0, 0, 0.25)',
+    highlight: 'inset 0 3px 8px rgba(255, 255, 255, 0.08)',
   },
-  // Apple-style floating plane shadow - luxurious, wide diffusion
   floatingShadow: {
-    // Single wide shadow for weightless floating effect
     active: '0 30px 60px rgba(0, 0, 0, 0.32), inset 0 3px 8px rgba(255, 255, 255, 0.08)',
     inactive: '0 20px 40px rgba(0, 0, 0, 0.18), inset 0 2px 6px rgba(255, 255, 255, 0.05)',
   },
-  // Side inner-glow for glass thickness simulation
   innerGlow: {
     sides: 'inset 1px 0 8px rgba(255, 255, 255, 0.04), inset -1px 0 8px rgba(255, 255, 255, 0.04)',
     top: 'inset 0 1px 12px rgba(255, 255, 255, 0.06)',
@@ -121,9 +106,6 @@ interface MessageBubbleProps {
   cascadeIndex?: number
 }
 
-/**
- * Speaker icons using react-icons
- */
 function SpeakerIcon({ type, className }: { type: string; className?: string }) {
   const iconClass = cn('w-3 h-3 flex-shrink-0', className)
 
@@ -139,10 +121,6 @@ function SpeakerIcon({ type, className }: { type: string; className?: string }) 
   }
 }
 
-/**
- * Smooth height expansion wrapper - prevents layout jumps during streaming
- * Uses CSS grid trick for smooth height animation from 0 to auto
- */
 function SmoothHeightWrapper({
   children,
   isExpanding,
@@ -153,7 +131,6 @@ function SmoothHeightWrapper({
   const contentRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState<number | 'auto'>('auto')
 
-  // Track content height changes for smooth expansion
   useEffect(() => {
     if (!contentRef.current || !isExpanding) return
 
@@ -168,7 +145,6 @@ function SmoothHeightWrapper({
     return () => observer.disconnect()
   }, [isExpanding])
 
-  // Once expansion is complete, switch to auto height
   useEffect(() => {
     if (!isExpanding) {
       setHeight('auto')
@@ -190,10 +166,6 @@ function SmoothHeightWrapper({
   )
 }
 
-/**
- * Content renderer with markdown support and editorial typography.
- * Uses chunked display for smooth, readable streaming.
- */
 function MessageContent({
   messageId,
   content,
@@ -213,7 +185,6 @@ function MessageContent({
 }) {
   const hasCalledComplete = useRef(false)
 
-  // Debaters get a "thinking" delay, moderator speaks immediately
   const initialDelayMs = speaker === 'moderator' ? 0 : ANIMATION_CONFIG.DEBATER_THINKING_DELAY_MS
 
   const { displayContent, isTyping, isRevealing, newContentStartIndex } = useSmoothReveal({
@@ -231,18 +202,15 @@ function MessageContent({
     },
   })
 
-  // Reset the ref when message changes
   useEffect(() => {
     hasCalledComplete.current = false
   }, [messageId])
 
-  // Determine if content is still expanding (streaming or revealing)
   const isExpanding = isStreaming || isRevealing
 
   return (
     <div className="prose prose-invert max-w-none">
       {isTyping ? (
-        // Show thinking indicator when API is streaming but we have no content yet
         <ThinkingIndicator speaker={speaker} />
       ) : (
         <SmoothHeightWrapper isExpanding={isExpanding}>
@@ -271,7 +239,6 @@ function MessageContent({
   )
 }
 
-// Depth filter values for desaturation effect
 const DEPTH_FILTERS = {
   active: 'none',
   adjacent: 'saturate(0.95) contrast(0.98)',

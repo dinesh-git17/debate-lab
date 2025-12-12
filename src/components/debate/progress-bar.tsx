@@ -1,4 +1,8 @@
 // src/components/debate/progress-bar.tsx
+/**
+ * Animated progress indicator displaying debate turn count and completion status.
+ * Features state-driven styling with smooth transitions between debate phases.
+ */
 
 'use client'
 
@@ -21,7 +25,6 @@ const STATUS_LABELS: Record<DebateViewStatus, string> = {
   error: 'Error',
 }
 
-// Apple-style gradient colors for progress bar
 const STATUS_GRADIENTS: Record<DebateViewStatus, string> = {
   ready: 'from-emerald-400/60 to-emerald-500/60',
   active: 'from-blue-400 to-blue-600',
@@ -30,7 +33,6 @@ const STATUS_GRADIENTS: Record<DebateViewStatus, string> = {
   error: 'from-red-400 to-red-500',
 }
 
-// Status badge colors for floating label
 const STATUS_BADGE_STYLES: Record<DebateViewStatus, { bg: string; text: string; glow: string }> = {
   ready: {
     bg: 'bg-emerald-500/15',
@@ -83,7 +85,6 @@ export function ProgressBar({ className }: ProgressBarProps) {
       aria-valuemax={100}
       aria-label="Debate progress"
     >
-      {/* Label row with floating badge */}
       <div className="mb-3 flex items-center justify-between">
         <AnimatePresence mode="wait">
           <motion.span
@@ -102,7 +103,6 @@ export function ProgressBar({ className }: ProgressBarProps) {
               badgeStyle.glow
             )}
           >
-            {/* Animated dot for ready state */}
             {isReady && (
               <motion.span
                 className="h-1.5 w-1.5 rounded-full bg-current"
@@ -131,7 +131,6 @@ export function ProgressBar({ className }: ProgressBarProps) {
         </motion.span>
       </div>
 
-      {/* Progress track with micro-animations */}
       <motion.div
         className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.06]"
         animate={
@@ -151,7 +150,6 @@ export function ProgressBar({ className }: ProgressBarProps) {
           ease: 'easeInOut',
         }}
       >
-        {/* Shimmer effect for ready state */}
         {isReady && (
           <motion.div
             className="absolute inset-0"
@@ -170,7 +168,6 @@ export function ProgressBar({ className }: ProgressBarProps) {
           />
         )}
 
-        {/* Pulsing edge glow for ready state */}
         {isReady && (
           <motion.div
             className="absolute inset-0 rounded-full"
@@ -189,12 +186,10 @@ export function ProgressBar({ className }: ProgressBarProps) {
           />
         )}
 
-        {/* Progress fill */}
         <motion.div
           className={cn(
             'h-full rounded-full bg-gradient-to-r',
             gradient,
-            // Add subtle inner glow
             'shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]'
           )}
           initial={{ width: 0 }}
@@ -204,7 +199,6 @@ export function ProgressBar({ className }: ProgressBarProps) {
           transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
         />
 
-        {/* Subtle highlight on top of track */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
       </motion.div>
     </div>

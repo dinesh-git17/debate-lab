@@ -1,4 +1,8 @@
 // src/components/debate/export-modal.tsx
+/**
+ * Modal dialog for exporting debate transcripts in various formats.
+ * Supports markdown, plain text, and JSON with configurable metadata options.
+ */
 
 'use client'
 
@@ -22,7 +26,6 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
   const [includeModeratorTurns, setIncludeModeratorTurns] = useState(true)
   const [mounted, setMounted] = useState(false)
 
-  // Ensure we only render portal on client
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -82,7 +85,6 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
     },
   ]
 
-  // Render via portal to escape parent positioning context
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center"
@@ -90,10 +92,8 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
       role="dialog"
       aria-modal="true"
     >
-      {/* Backdrop - strong blur to lock background */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
 
-      {/* Modal - dark glass styling */}
       <div
         className={cn(
           'animate-scale-in relative z-10 mx-4 w-full max-w-lg',
@@ -104,11 +104,9 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
         )}
       >
         <div className="p-6">
-          {/* Header */}
           <h2 className="mb-1 text-lg font-semibold text-white">Export Transcript</h2>
           <p className="mb-6 text-sm text-zinc-400">Choose format and options for your export</p>
 
-          {/* Format selection */}
           <div className="mb-6">
             <label className="mb-3 block text-sm font-medium text-zinc-300">Format</label>
             <div className="space-y-2">
@@ -139,7 +137,6 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
             </div>
           </div>
 
-          {/* Options */}
           <div className="mb-6">
             <label className="mb-3 block text-sm font-medium text-zinc-300">Options</label>
             <div className="space-y-3">
@@ -173,7 +170,6 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               onClick={onClose}

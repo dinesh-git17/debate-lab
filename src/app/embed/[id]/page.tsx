@@ -1,4 +1,8 @@
 // src/app/embed/[id]/page.tsx
+/**
+ * Server component entry point for embeddable debate widgets.
+ * Validates debate access and hydrates the client widget with session data.
+ */
 
 import { notFound } from 'next/navigation'
 
