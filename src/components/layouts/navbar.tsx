@@ -1,5 +1,8 @@
 // src/components/layouts/navbar.tsx
-// Premium pill-style floating navigation bar with FAANG-level polish
+/**
+ * Floating pill-style navigation bar with responsive mobile menu.
+ * Implements glassmorphic design with scroll-aware opacity transitions.
+ */
 
 'use client'
 
@@ -76,12 +79,10 @@ export function Navbar({ showCta = true }: NavbarProps) {
           ]
         )}
       >
-        {/* Left: Logo - negative margins allow logo to extend beyond navbar */}
         <div className="flex items-center -my-12 mr-8">
           <Logo size="md" />
         </div>
 
-        {/* Center: Nav Links */}
         <div className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 h-9">
           {NAV_LINKS.map((link) => (
             <Link
@@ -103,7 +104,6 @@ export function Navbar({ showCta = true }: NavbarProps) {
             >
               <span className="relative">
                 {link.label}
-                {/* Sleek underline - animates from center outward */}
                 <span
                   className={cn(
                     'absolute -bottom-1 left-1/2 h-[2px] rounded-full',
@@ -120,7 +120,6 @@ export function Navbar({ showCta = true }: NavbarProps) {
           ))}
         </div>
 
-        {/* Right: Theme Toggle + CTA */}
         <div className="flex items-center gap-2 md:gap-2.5 h-9">
           <ThemeToggle />
 
@@ -131,21 +130,16 @@ export function Navbar({ showCta = true }: NavbarProps) {
               className={cn(
                 'hidden sm:inline-flex items-center justify-center',
                 'relative overflow-hidden',
-                // Two-layer frost depth with micro gradient
                 'bg-gradient-to-b from-white/[0.08] via-white/[0.05] to-white/[0.02]',
                 'dark:from-white/[0.06] dark:via-white/[0.03] dark:to-white/[0.01]',
                 'backdrop-blur-md',
-                // Inner inset stroke + micro glow
                 'border-0',
                 'shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]',
                 'dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),0_0_14px_rgba(255,255,255,0.025)]',
-                // Typography - calm, confident
                 'text-neutral-700 dark:text-white/90 text-sm font-medium tracking-tight',
-                // Structured minimalism - pill shape for premium look
                 'rounded-full',
                 'px-4 py-1.5',
                 'transition-all duration-300 ease-out',
-                // Ultra-premium hover
                 'hover:bg-gradient-to-b hover:from-white/[0.12] hover:via-white/[0.08] hover:to-white/[0.04]',
                 'dark:hover:from-white/[0.08] dark:hover:via-white/[0.05] dark:hover:to-white/[0.02]',
                 'hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.06)]',
@@ -197,7 +191,6 @@ export function Navbar({ showCta = true }: NavbarProps) {
         </div>
       </nav>
 
-      {/* Mobile Menu Backdrop */}
       <div
         className={cn(
           'fixed inset-0 z-40',
@@ -210,12 +203,10 @@ export function Navbar({ showCta = true }: NavbarProps) {
         aria-hidden="true"
       />
 
-      {/* Mobile Sidebar Menu */}
       <div
         className={cn(
           'fixed top-0 right-0 z-50',
           'h-full w-[280px] max-w-[85vw]',
-          // Glassmorphic design matching navbar
           'bg-white/90 dark:bg-white/[0.04]',
           'backdrop-blur-[20px] backdrop-saturate-[1.8]',
           'border-l border-neutral-200 dark:border-white/[0.10]',
@@ -230,7 +221,6 @@ export function Navbar({ showCta = true }: NavbarProps) {
         role="menu"
         aria-label="Mobile navigation menu"
       >
-        {/* Sidebar Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-200 dark:border-white/[0.08]">
           <span className="text-sm font-semibold text-neutral-800 dark:text-white/80">Menu</span>
           <button
@@ -248,7 +238,6 @@ export function Navbar({ showCta = true }: NavbarProps) {
           </button>
         </div>
 
-        {/* Navigation Links */}
         <div className="flex flex-col gap-1 p-4">
           {NAV_LINKS.map((link) => (
             <Link
@@ -273,7 +262,6 @@ export function Navbar({ showCta = true }: NavbarProps) {
           ))}
         </div>
 
-        {/* CTA Button at bottom */}
         {showCta && (
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-neutral-200 dark:border-white/[0.08]">
             <Link

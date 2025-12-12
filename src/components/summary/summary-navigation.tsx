@@ -1,4 +1,8 @@
 // src/components/summary/summary-navigation.tsx
+/**
+ * Navigation component for the debate summary page.
+ * Provides breadcrumbs, topic header, and action buttons for related views.
+ */
 
 'use client'
 
@@ -17,7 +21,6 @@ export function SummaryNavigation({ className }: SummaryNavigationProps) {
 
   return (
     <nav className={cn('w-full', className)}>
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
         <Link href="/" className="hover:text-foreground transition-colors">
           Home
@@ -30,7 +33,6 @@ export function SummaryNavigation({ className }: SummaryNavigationProps) {
         <span className="text-foreground">Summary</span>
       </div>
 
-      {/* Topic header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
           <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase">
@@ -42,7 +44,6 @@ export function SummaryNavigation({ className }: SummaryNavigationProps) {
         </h1>
       </div>
 
-      {/* Action buttons */}
       <div className="flex flex-wrap items-center gap-4">
         <Link
           href={`/debate/${debateId}`}

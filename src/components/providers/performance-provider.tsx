@@ -1,5 +1,8 @@
 // src/components/providers/performance-provider.tsx
-// Performance monitoring and initialization provider
+/**
+ * Initializes client-side performance monitoring and optimizations.
+ * Configures Web Vitals reporting and link prefetching on mount.
+ */
 
 'use client'
 

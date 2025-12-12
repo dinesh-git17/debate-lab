@@ -1,4 +1,8 @@
 // src/components/judge/score-display.tsx
+/**
+ * Displays detailed scoring breakdown for a debate participant.
+ * Renders aggregate scores, category breakdowns, and qualitative feedback.
+ */
 
 'use client'
 

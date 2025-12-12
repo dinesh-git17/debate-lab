@@ -1,4 +1,9 @@
 // src/components/layouts/footer.tsx
+/**
+ * Site-wide footer component with navigation links and CTA.
+ * Implements theme-aware layered backgrounds for visual depth.
+ */
+
 'use client'
 
 import Link from 'next/link'
@@ -19,11 +24,9 @@ export function Footer() {
 
   return (
     <footer className="relative overflow-hidden">
-      {/* ========== LIGHT MODE BACKGROUND ========== */}
-      {/* Elevated panel background - soft neutral tint */}
+      {/* Light mode background */}
       <div className="absolute inset-0 bg-neutral-50/80 backdrop-blur-sm dark:bg-background dark:backdrop-blur-none" />
 
-      {/* Light mode: Ultra-soft ambient glow layer */}
       <div
         className="absolute inset-0 pointer-events-none dark:hidden"
         style={{
@@ -38,7 +41,6 @@ export function Footer() {
         }}
       />
 
-      {/* Light mode: Subtle bottom grounding shadow */}
       <div
         className="absolute inset-0 pointer-events-none dark:hidden"
         style={{
@@ -53,8 +55,7 @@ export function Footer() {
         }}
       />
 
-      {/* ========== DARK MODE BACKGROUND ========== */}
-      {/* Soft panel background - dark blue-black gradient */}
+      {/* Dark mode background */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -68,11 +69,9 @@ export function Footer() {
         }}
       />
 
-      {/* ========== TOP EDGE SEPARATOR ========== */}
-      {/* Light mode: Clean neutral divider */}
+      {/* Top edge separator */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-transparent dark:from-transparent dark:to-transparent" />
 
-      {/* Dark mode: Frosted top edge separator */}
       <div
         className="absolute top-0 left-0 right-0 h-px pointer-events-none dark:block hidden"
         style={{
@@ -81,8 +80,7 @@ export function Footer() {
         }}
       />
 
-      {/* ========== DARK MODE AMBIENT LIGHTING ========== */}
-      {/* Layer 1: Horizontal brightness band */}
+      {/* Dark mode ambient lighting layers */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -100,7 +98,6 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 2: Asymmetric diagonal warmth */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -118,7 +115,6 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 3: Counter-diagonal cool shift */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -136,7 +132,6 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 4: Soft top-to-bottom panel gradient */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -152,7 +147,6 @@ export function Footer() {
         }}
       />
 
-      {/* Layer 5: Edge darkening */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none"
         style={{
@@ -163,7 +157,6 @@ export function Footer() {
         }}
       />
 
-      {/* Noise texture - dark mode only */}
       <div
         className="absolute inset-0 dark:block hidden pointer-events-none opacity-[0.015]"
         style={{
@@ -172,10 +165,8 @@ export function Footer() {
         }}
       />
 
-      {/* ========== CONTENT ========== */}
       <Container className="relative z-10">
         <div className="pt-20 pb-12 md:pt-24 md:pb-14">
-          {/* CTA Section */}
           <div className="text-center mb-10 md:mb-12">
             <p className="text-neutral-900 dark:text-muted-foreground/60 text-sm font-medium mb-4 leading-relaxed">
               Experience AI-powered discourse
@@ -186,15 +177,12 @@ export function Footer() {
               size="lg"
               className={cn(
                 'group/cta h-11 md:h-12 rounded-full px-7 md:px-8',
-                // Light mode styling
                 'border-neutral-300 bg-white/80 text-neutral-700',
                 'hover:border-neutral-400 hover:bg-white hover:text-neutral-900',
                 'hover:shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
-                // Dark mode styling
                 'dark:border-white/[0.08] dark:bg-transparent dark:text-white/70',
                 'dark:hover:border-white/[0.15] dark:hover:bg-white/[0.03] dark:hover:text-white/90',
                 'dark:hover:shadow-[0_2px_16px_rgba(255,255,255,0.03)]',
-                // Shared transitions
                 'transition-all duration-500 ease-out',
                 'hover:-translate-y-[1px]',
                 'active:translate-y-0 active:duration-150'
@@ -214,7 +202,6 @@ export function Footer() {
             </Button>
           </div>
 
-          {/* Navigation Links */}
           <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-10">
             {footerLinks.map((link) => (
               <Link
@@ -222,11 +209,8 @@ export function Footer() {
                 href={link.href}
                 className={cn(
                   'text-sm leading-relaxed',
-                  // Light mode
                   'text-neutral-600 hover:text-[#0066cc]',
-                  // Dark mode
                   'dark:text-muted-foreground/50 dark:hover:text-muted-foreground/80',
-                  // Micro-interactions
                   'transition-all duration-[80ms] ease-out',
                   'hover:-translate-y-[1px]',
                   'relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px',
@@ -239,7 +223,6 @@ export function Footer() {
             ))}
           </nav>
 
-          {/* Copyright */}
           <div className="text-center">
             <p className="text-xs font-light tracking-wide text-neutral-500 dark:text-muted-foreground/40">
               &copy; {currentYear} Debate Lab. All rights reserved.

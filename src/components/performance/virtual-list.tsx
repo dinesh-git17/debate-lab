@@ -1,5 +1,8 @@
 // src/components/performance/virtual-list.tsx
-// Virtualized list component for long message lists
+/**
+ * Virtualized list component for efficient rendering of large datasets.
+ * Supports variable item heights, sticky scroll behavior, and infinite loading.
+ */
 
 'use client'
 

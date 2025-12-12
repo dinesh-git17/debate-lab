@@ -1,4 +1,8 @@
 // src/components/summary/share-section.tsx
+/**
+ * Social sharing interface for completed debates.
+ * Supports multiple platforms, URL copying, and embeddable iframe generation.
+ */
 
 'use client'
 
@@ -49,7 +53,7 @@ export function ShareSection({
           setShareUrl(data.settings.shareUrl)
         }
       } catch {
-        // Fall back to current URL
+        // Fallback handled by getFullUrl()
       }
     }
 
@@ -120,7 +124,7 @@ export function ShareSection({
                 url,
               })
             } catch {
-              // User cancelled or error
+              // User cancelled share dialog
             }
           }
           break
@@ -160,7 +164,6 @@ export function ShareSection({
 
   return (
     <section className={cn('w-full', className)}>
-      {/* Section header */}
       <div className="mb-6 text-center">
         <h2 className="text-2xl font-bold text-foreground mb-2">Share This Debate</h2>
         <p className="text-muted-foreground">
@@ -168,7 +171,6 @@ export function ShareSection({
         </p>
       </div>
 
-      {/* Share URL display */}
       <div className="max-w-lg mx-auto mb-6">
         <div className="flex items-center gap-2">
           <div className="flex-1 rounded-xl border border-border bg-muted/50 px-4 py-2.5 overflow-hidden">
@@ -221,9 +223,7 @@ export function ShareSection({
         )}
       </div>
 
-      {/* Social share buttons */}
       <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-        {/* Twitter/X */}
         <button
           onClick={() => handleShare('twitter')}
           className={cn(
@@ -239,7 +239,6 @@ export function ShareSection({
           <span className="font-medium">Share</span>
         </button>
 
-        {/* LinkedIn */}
         <button
           onClick={() => handleShare('linkedin')}
           className={cn(
@@ -255,7 +254,6 @@ export function ShareSection({
           <span className="font-medium">Share</span>
         </button>
 
-        {/* Facebook */}
         <button
           onClick={() => handleShare('facebook')}
           className={cn(
@@ -271,7 +269,6 @@ export function ShareSection({
           <span className="font-medium">Share</span>
         </button>
 
-        {/* Reddit */}
         <button
           onClick={() => handleShare('reddit')}
           className={cn(
@@ -287,7 +284,6 @@ export function ShareSection({
           <span className="font-medium">Share</span>
         </button>
 
-        {/* Native share (mobile) */}
         {canNativeShare && (
           <button
             onClick={() => handleShare('native')}
@@ -314,7 +310,6 @@ export function ShareSection({
         )}
       </div>
 
-      {/* Embed section */}
       <div className="max-w-lg mx-auto">
         <button
           onClick={() => setShowEmbed(!showEmbed)}
@@ -357,7 +352,6 @@ export function ShareSection({
         )}
       </div>
 
-      {/* Share preview */}
       <div className="mt-8 max-w-lg mx-auto">
         <p className="text-xs text-muted-foreground text-center mb-2">
           Preview how it will look when shared:

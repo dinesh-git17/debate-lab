@@ -1,4 +1,8 @@
 // src/components/summary/model-card.tsx
+/**
+ * Animated card component for revealing AI model identities.
+ * Implements a 3D flip animation transitioning from hidden to revealed state.
+ */
 
 'use client'
 
@@ -59,7 +63,6 @@ export function ModelCard({
 
   return (
     <div className={cn('relative w-full max-w-xs perspective-1000', className)}>
-      {/* Card container with flip animation */}
       <div
         className={cn(
           'relative w-full h-48 transition-transform duration-700 transform-style-preserve-3d',
@@ -67,7 +70,6 @@ export function ModelCard({
           isRevealed && 'rotate-y-180'
         )}
       >
-        {/* Front face - Hidden state */}
         <div
           className={cn(
             'absolute inset-0 w-full h-full backface-hidden rounded-xl border-2',
@@ -84,7 +86,6 @@ export function ModelCard({
           <div className="text-sm text-muted-foreground">Identity hidden</div>
         </div>
 
-        {/* Back face - Revealed state */}
         <div
           className={cn(
             'absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-xl',
@@ -104,7 +105,6 @@ export function ModelCard({
         </div>
       </div>
 
-      {/* Position indicator */}
       <div
         className={cn(
           'absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-semibold text-white',

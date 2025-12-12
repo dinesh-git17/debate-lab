@@ -1,4 +1,9 @@
 // src/components/layouts/main-layout.tsx
+/**
+ * Root layout wrapper for marketing and content pages.
+ * Composes navbar, main content area, and footer into a consistent page structure.
+ */
+
 import { Footer } from '@/components/layouts/footer'
 import { Navbar } from '@/components/layouts/navbar'
 

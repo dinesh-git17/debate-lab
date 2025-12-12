@@ -1,4 +1,8 @@
 // src/components/judge/educational-insights.tsx
+/**
+ * Renders educational takeaways from debate judge analysis.
+ * Surfaces strengths, improvement areas, and lessons to help users develop argumentation skills.
+ */
 
 'use client'
 

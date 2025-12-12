@@ -1,4 +1,8 @@
 // src/components/summary/statistics-dashboard.tsx
+/**
+ * Dashboard displaying debate session metrics and analytics.
+ * Shows turn counts, token usage, costs, and per-participant breakdowns.
+ */
 
 'use client'
 
@@ -83,13 +87,11 @@ export function StatisticsDashboard({ className }: StatisticsDashboardProps) {
 
   return (
     <section className={cn('w-full', className)}>
-      {/* Section header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-foreground mb-2">Debate Statistics</h2>
         <p className="text-muted-foreground">Key metrics from the debate session</p>
       </div>
 
-      {/* Main stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard icon="💬" label="Total Turns" value={statistics.totalTurns} />
         <StatCard
@@ -107,7 +109,6 @@ export function StatisticsDashboard({ className }: StatisticsDashboardProps) {
         <StatCard icon="⏱️" label="Duration" value={formattedDuration} subValue="minutes:seconds" />
       </div>
 
-      {/* Secondary stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <StatCard
           icon="📊"
@@ -124,7 +125,6 @@ export function StatisticsDashboard({ className }: StatisticsDashboardProps) {
         </div>
       </div>
 
-      {/* Tokens by participant */}
       {isRevealed && (
         <div className="mt-8 p-6 rounded-xl bg-muted/30 border border-border">
           <h3 className="text-lg font-semibold text-foreground mb-4">Tokens by Participant</h3>
@@ -151,7 +151,6 @@ export function StatisticsDashboard({ className }: StatisticsDashboardProps) {
         </div>
       )}
 
-      {/* Cost breakdown */}
       {isRevealed && statistics.costByProvider.length > 0 && (
         <div className="mt-6 p-6 rounded-xl bg-muted/30 border border-border">
           <h3 className="text-lg font-semibold text-foreground mb-4">Cost by Provider</h3>

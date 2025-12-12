@@ -1,4 +1,8 @@
 // src/components/judge/clash-analysis.tsx
+/**
+ * Displays key points of clash from judge analysis.
+ * Renders a side-by-side comparison of opposing positions with judicial commentary.
+ */
 
 'use client'
 

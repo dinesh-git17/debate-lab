@@ -1,12 +1,16 @@
 // src/components/providers/query-provider.tsx
+/**
+ * TanStack Query provider with SSR-safe client initialization.
+ * Configures default caching, retry behavior, and development tools.
+ */
+
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 
-// Only load devtools in development to avoid CSP issues with eval()
-// Using dynamic import ensures tree-shaking removes this from production bundle
+// Dynamic import excludes devtools from production bundle and avoids CSP eval() issues
 const ReactQueryDevtools = dynamic(
   () =>
     import('@tanstack/react-query-devtools').then((mod) => ({

@@ -1,5 +1,8 @@
 // src/components/performance/lazy-component.tsx
-// Dynamic import wrapper with loading states and error boundaries
+/**
+ * Dynamic import wrapper with integrated loading states and error boundaries.
+ * Provides SSR-safe lazy loading with automatic fallback handling.
+ */
 
 'use client'
 

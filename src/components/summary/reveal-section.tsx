@@ -1,4 +1,8 @@
 // src/components/summary/reveal-section.tsx
+/**
+ * Interactive reveal section for unveiling AI model identities post-debate.
+ * Manages reveal animation state and displays model cards side-by-side.
+ */
 
 'use client'
 
@@ -45,7 +49,6 @@ export function RevealSection({ className }: RevealSectionProps) {
 
   return (
     <section className={cn('w-full', className)}>
-      {/* Section header */}
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold text-foreground mb-2">
           {isRevealed ? 'The Models Behind the Debate' : 'Who Was Arguing?'}
@@ -57,7 +60,6 @@ export function RevealSection({ className }: RevealSectionProps) {
         </p>
       </div>
 
-      {/* Model cards */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-8">
         <ModelCard
           position="for"
@@ -66,7 +68,6 @@ export function RevealSection({ className }: RevealSectionProps) {
           isRevealing={isRevealing}
         />
 
-        {/* VS separator */}
         <div
           className={cn(
             'flex items-center justify-center w-16 h-16 rounded-full',
@@ -86,7 +87,6 @@ export function RevealSection({ className }: RevealSectionProps) {
         />
       </div>
 
-      {/* Reveal button */}
       {!isRevealed && (
         <div className="flex justify-center">
           <button
@@ -145,7 +145,6 @@ export function RevealSection({ className }: RevealSectionProps) {
         </div>
       )}
 
-      {/* Post-reveal message */}
       {isRevealed && (
         <div
           className={cn(

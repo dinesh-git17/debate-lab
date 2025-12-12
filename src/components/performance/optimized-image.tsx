@@ -1,5 +1,8 @@
 // src/components/performance/optimized-image.tsx
-// Wrapper around next/image with performance optimizations
+/**
+ * Performance-optimized image components wrapping next/image.
+ * Handles responsive sizing, priority loading, and blur placeholders.
+ */
 
 import Image from 'next/image'
 import React from 'react'

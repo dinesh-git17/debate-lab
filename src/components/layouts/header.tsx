@@ -1,4 +1,9 @@
 // src/components/layouts/header.tsx
+/**
+ * Legacy header component for standard page layouts.
+ * Provides site branding, navigation links, and theme controls.
+ */
+
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
