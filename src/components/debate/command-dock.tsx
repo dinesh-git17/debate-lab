@@ -335,8 +335,8 @@ export function CommandDock({ debateId }: CommandDockProps) {
         description: 'Export transcript',
       },
       {
-        key: 'n',
-        ctrl: true,
+        key: 'N',
+        shift: true,
         action: handleNewDebate,
         description: 'New debate',
       },

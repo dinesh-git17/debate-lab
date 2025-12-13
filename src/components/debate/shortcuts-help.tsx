@@ -16,7 +16,7 @@ import type { ShortcutConfig } from '@/hooks/use-keyboard-shortcuts'
 
 const SHORTCUTS: Omit<ShortcutConfig, 'action'>[] = [
   { key: 'e', ctrl: true, description: 'Export transcript' },
-  { key: 'n', ctrl: true, description: 'New debate' },
+  { key: 'N', shift: true, description: 'New debate' },
   { key: 'Escape', description: 'Close modal' },
 ]
 

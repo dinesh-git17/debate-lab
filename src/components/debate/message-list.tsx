@@ -6,7 +6,7 @@
 
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useIsMobile } from '@/hooks/use-media-query'
@@ -212,7 +212,7 @@ function EmptyState() {
       </motion.div>
 
       <motion.div
-        className="relative z-10 mt-7 group"
+        className="relative z-10 mt-7 flex items-center justify-center"
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{
@@ -220,23 +220,26 @@ function EmptyState() {
           duration: 0.5,
           ease: [0.22, 0.61, 0.36, 1],
         }}
+        style={{ minHeight: 52 }}
       >
+        {/* Button - fades out when loading */}
         <motion.button
           onClick={handleStart}
           disabled={isLoading}
           className={cn(
-            'relative px-8 py-4 overflow-hidden',
-            'text-sm font-semibold',
+            'absolute px-8 py-4',
+            'text-sm font-semibold whitespace-nowrap',
             'cursor-pointer',
-            'disabled:cursor-not-allowed'
+            'disabled:cursor-not-allowed disabled:pointer-events-none'
           )}
+          initial={false}
           animate={{
-            scale: isLoading ? 0.985 : 1,
-            background: isLoading
-              ? 'linear-gradient(to bottom, rgba(255,255,255,0.94) 0%, rgba(250,250,250,0.90) 100%)'
-              : 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(248,248,250,0.98) 100%)',
+            opacity: isLoading ? 0 : 1,
+            scale: isLoading ? 0.92 : 1,
           }}
           style={{
+            background:
+              'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(248,248,250,0.98) 100%)',
             color: 'rgba(0, 0, 0, 0.85)',
             borderRadius: '30px',
             letterSpacing: '-0.01em',
@@ -244,75 +247,42 @@ function EmptyState() {
             boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
           }}
           whileHover={
-            !isLoading
-              ? {
-                  scale: 1.012,
-                  y: -1.5,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.20)',
-                }
-              : {}
+            !isLoading ? { scale: 1.015, y: -1, boxShadow: '0 6px 20px rgba(0,0,0,0.18)' } : {}
           }
-          whileTap={!isLoading ? { scale: 0.985, y: 0 } : {}}
-          transition={{ type: 'tween', ease: [0.22, 0.61, 0.36, 1], duration: 0.2 }}
+          whileTap={!isLoading ? { scale: 0.98 } : {}}
+          transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
         >
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                key="spinner"
-                className="flex items-center justify-center"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.14, ease: [0.22, 0.61, 0.36, 1] }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  style={{ opacity: 0.7 }}
-                >
-                  <motion.circle
-                    cx="9"
-                    cy="9"
-                    r="7"
-                    stroke="rgba(0,0,0,0.25)"
-                    strokeWidth="1.5"
-                    fill="none"
-                  />
-                  <motion.circle
-                    cx="9"
-                    cy="9"
-                    r="7"
-                    stroke="rgba(0,0,0,0.82)"
-                    strokeWidth="1.5"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray="44"
-                    strokeDashoffset="33"
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: 'linear',
-                    }}
-                    style={{ transformOrigin: 'center' }}
-                  />
-                </svg>
-              </motion.div>
-            ) : (
-              <motion.span
-                key="text"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.12, ease: [0.22, 0.61, 0.36, 1] }}
-              >
-                Start Debate
-              </motion.span>
-            )}
-          </AnimatePresence>
+          Start Debate
         </motion.button>
+
+        {/* Standalone spinner - fades in when loading */}
+        <motion.div
+          className="absolute flex items-center justify-center"
+          initial={false}
+          animate={{
+            opacity: isLoading ? 1 : 0,
+            scale: isLoading ? 1 : 0.85,
+          }}
+          style={{ pointerEvents: 'none' }}
+          transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.12)" strokeWidth="2.5" />
+            <motion.circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="rgba(255,255,255,0.45)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="63"
+              strokeDashoffset="47"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              style={{ transformOrigin: 'center' }}
+            />
+          </svg>
+        </motion.div>
       </motion.div>
     </div>
   )
