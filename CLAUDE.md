@@ -1,521 +1,373 @@
 # CLAUDE.md - AI Assistant Guide for Debate Lab
 
-This document provides comprehensive guidance for AI assistants working on the Debate Lab codebase.
+This document provides guidance for AI assistants working on the Debate Lab codebase.
 
-## Project Overview
+---
 
-**Debate Lab** is a Next.js 15 application that enables real-time AI debates between different LLM providers (ChatGPT, Grok) with Claude as moderator. Users can:
-- Configure debate topics and rules
-- Watch AI models debate in real-time with streaming responses
-- Get comprehensive judging with scoring, clash analysis, and educational insights
-- Share and export debate transcripts
+## Critical Rules (Read First)
 
-## Tech Stack
+### Git Commits - NEVER Commit Without Confirmation
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Framework | Next.js 15 (App Router) | Full-stack React framework |
-| Language | TypeScript 5 (strict mode) | Type safety |
-| Styling | Tailwind CSS 4, CSS Variables | Design system with dark/light themes |
-| State | Zustand, TanStack Query | Client state + server cache |
-| Real-time | Pusher, SSE | Live streaming updates |
-| AI Providers | OpenAI, Anthropic, xAI | Multi-model orchestration |
-| Validation | Zod, React Hook Form | Schema-first form handling |
-| Testing | Vitest, Playwright, MSW | Unit, integration & E2E tests |
-| Monitoring | Sentry, Web Vitals | Error tracking & performance |
-| Database | Supabase (optional) | Persistence & abuse tracking |
-| Cache | Upstash Redis (optional) | Rate limiting, session storage |
+- **NEVER** commit to GitHub without explicit user confirmation of the commit message
+- Never mention "Claude", "AI", or "assistant" in commit messages
+- Write commit messages as if a human developer made the changes
+- Use conventional commit format: `type(scope): description`
+- Always show the proposed commit message and wait for approval
 
-## Directory Structure
+### Build Process - NEVER Run Builds
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── (debate)/           # Debate creation routes
-│   ├── (fullscreen)/       # Immersive debate experience
-│   ├── (marketing)/        # Landing & info pages
-│   └── api/                # REST API endpoints
-│
-├── components/
-│   ├── ui/                 # Design system primitives (Button, Input, Card, etc.)
-│   ├── features/           # Feature-specific components (forms, hero sections)
-│   ├── debate/             # Debate UI (message bubbles, controls, typing indicators)
-│   ├── judge/              # Scoring & analysis views
-│   ├── summary/            # Post-debate summaries
-│   ├── layouts/            # Header, Footer, Navbar, MainLayout
-│   ├── providers/          # Context providers (theme, query, performance)
-│   └── performance/        # Optimized components (lazy loading, virtual lists)
-│
-├── services/
-│   ├── llm/                # LLM provider abstraction layer
-│   │   ├── llm-service.ts  # Main entry point for LLM calls
-│   │   ├── base-provider.ts    # Abstract base class
-│   │   ├── provider-factory.ts # Provider instantiation
-│   │   ├── openai-provider.ts  # OpenAI/ChatGPT implementation
-│   │   ├── anthropic-provider.ts # Claude implementation
-│   │   └── xai-provider.ts     # Grok implementation
-│   ├── debate-service.ts   # Debate session management
-│   ├── judge-service.ts    # Scoring & evaluation
-│   ├── turn-sequencer.ts   # Turn management
-│   ├── budget-manager.ts   # Token budget tracking
-│   └── rule-validation-service.ts # Custom rule validation
-│
-├── lib/
-│   ├── security/           # Rate limiting, content filtering, abuse tracking
-│   ├── logging/            # Structured logging, metrics, Sentry integration
-│   ├── prompts/            # AI prompt templates (moderator, debater, judge)
-│   ├── performance/        # Optimization utilities, caching configs
-│   ├── schemas/            # Zod validation schemas
-│   ├── supabase/           # Database client
-│   ├── pusher.ts           # Server-side Pusher client
-│   ├── pusher-client.ts    # Client-side Pusher
-│   ├── session-store.ts    # Debate session storage
-│   ├── token-counter.ts    # Token counting utilities
-│   └── utils.ts            # General utilities (cn for classnames)
-│
-├── hooks/                  # Custom React hooks
-│   ├── use-debate.ts       # Main debate hook
-│   ├── use-debate-stream.ts    # Streaming handler
-│   ├── use-debate-realtime.ts  # Pusher subscription
-│   ├── use-create-debate.ts    # Debate creation mutation
-│   └── use-keyboard-shortcuts.ts # Keyboard navigation
-│
-├── store/                  # Zustand state stores
-│   ├── debate-store.ts     # Active debate state
-│   ├── judge-store.ts      # Judge/scoring state
-│   ├── summary-store.ts    # Post-debate summary
-│   ├── ui-store.ts         # UI preferences
-│   └── debate-view-store.ts # View configuration
-│
-└── types/                  # TypeScript definitions
-    ├── index.ts            # Main exports and core types
-    ├── debate.ts           # Debate-specific types
-    ├── llm.ts              # LLM provider types
-    ├── judge.ts            # Scoring types
-    ├── security.ts         # Security types
-    └── ...                 # Additional type modules
-```
+- **NEVER** run `npm run build` unless explicitly instructed
+- Build commands are reserved for manual execution only
+- Running builds wastes time during development iterations
 
-## Key API Routes
+### Code Quality Enforcement
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/debate` | POST | Create new debate session |
-| `/api/debate/[id]` | GET | Get debate session |
-| `/api/debate/[id]/stream` | GET | SSE stream for debate |
-| `/api/debate/[id]/engine` | POST | Start debate engine |
-| `/api/debate/[id]/engine/control` | POST | Pause/resume/cancel debate |
-| `/api/debate/[id]/judge` | GET | Get judge scoring |
-| `/api/debate/[id]/summary` | GET | Get debate summary |
-| `/api/debate/[id]/share` | POST | Generate shareable link |
-| `/api/debate/[id]/reveal` | GET | Reveal which AI took which side |
-| `/api/debate/[id]/budget` | GET | Get token budget status |
-| `/api/health` | GET | Health check |
-| `/api/admin/bans` | GET/POST | Ban management (requires API key) |
-| `/api/metrics` | GET | Application metrics |
+After making changes to one or more files, **before providing a summary**:
 
-## Development Commands
+1. Run `npm run typecheck` (TypeScript compiler check)
+2. Run `npm run lint` (ESLint)
+3. If either check fails, fix the errors before proceeding
+4. Report any issues clearly
 
-```bash
-# Development
-npm run dev           # Start with Turbopack (fast)
-npm run dev:webpack   # Start with Webpack
+### Testing Before Commits
 
-# Quality checks
-npm run lint          # ESLint
-npm run lint:fix      # ESLint with auto-fix
-npm run typecheck     # TypeScript compiler check
-npm run format        # Prettier format all files
-npm run format:check  # Check formatting
+When preparing to commit changes:
 
-# Testing
-npm run test          # Run Vitest unit tests
-npm run test:watch    # Watch mode
-npm run test:coverage # With coverage report
-npm run test:e2e      # Playwright E2E tests
-npm run test:e2e:ui   # Playwright UI mode
-npm run test:e2e:headed # Run E2E with browser visible
+1. Run `npm run test` for affected files/modules
+2. Ensure all tests pass before proposing a commit
+3. If tests fail, fix them or flag the issue
 
-# Build
-npm run build         # Production build
-npm run start         # Start production server
-```
+---
 
-## Code Conventions
+## Code Standards (FAANG Senior Engineer Level)
 
-### TypeScript
+### Philosophy
 
-- **Strict mode enabled** with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`
-- Use explicit return types for functions
-- Use interfaces for objects, type aliases for unions/intersections
-- Avoid `any` - use `unknown` when type is truly unknown
-- Unused variables must be prefixed with `_`
+- Write production-grade code deployable to millions of users
+- Code should be self-documenting through clear naming and structure
+- Prioritize maintainability, scalability, and performance
+- Think in systems, not just features
+
+### Comment Standards (Strict)
+
+**File-Level Comments:**
+- Every file must have ONE block comment at the top (2-4 lines max)
+- Describe purpose and role in system architecture
+- No implementation details
+
+**Function/Method Comments:**
+- Only when the "why" is non-obvious
+- Document edge cases, performance considerations, business constraints
+- Never explain what code does (code should be self-explanatory)
+
+**Inline Comments:**
+- Use sparingly for critical context only
+- Explain tradeoffs, workarounds, non-obvious decisions
+
+**Forbidden:**
+- Emojis in code/comments
+- Casual/conversational tone
+- Obvious restatements (`// loop through array`)
+- Commented-out code (delete it)
+- Unscoped TODOs without tickets/context
+- Debugging leftovers (`console.log`, `// testing`)
+
+**Example:**
 
 ```typescript
-// Good
-function calculateScore(turns: Turn[]): number {
-  return turns.reduce((sum, turn) => sum + turn.score, 0);
+// BAD
+// This function checks if the user is authenticated
+function isAuthenticated(user: User): boolean {
+  // Check if user exists
+  if (!user) return false;
+  return validateToken(user.token);
 }
 
-// Good - unused parameter
-function handler(_event: Event, data: Data): void { ... }
-```
+// GOOD
+/**
+ * Core authentication validation logic.
+ * Centralizes token validation for consistent auth checks across the app.
+ */
 
-### React
-
-- **Functional components only** with typed props
-- Use `'use client'` directive only when necessary
-- Prefer Server Components by default (Next.js App Router)
-- Custom hooks start with `use` prefix
-
-```tsx
-interface ButtonProps {
-  variant: 'primary' | 'secondary';
-  children: React.ReactNode;
-  onClick?: () => void;
-}
-
-export function Button({ variant, children, onClick }: ButtonProps) {
-  return (
-    <button className={cn(styles.base, styles[variant])} onClick={onClick}>
-      {children}
-    </button>
-  );
+/**
+ * Validates user authentication state.
+ * Returns false for expired tokens to trigger re-auth flow.
+ */
+function isAuthenticated(user: User): boolean {
+  if (!user) return false;
+  return validateToken(user.token);
 }
 ```
 
-### Styling
+### TypeScript Standards
 
-- Use Tailwind utility classes
-- Use `cn()` utility (from `@/lib/utils`) for conditional classes
-- CSS variables for theming: `bg-background`, `text-foreground`, `bg-card`, etc.
+- Strict mode enabled (`strict: true`)
+- No `any` types unless absolutely necessary (document why)
+- Explicit return types for functions
+- Use discriminated unions for complex state
+- Unused variables prefixed with `_`
 
-```tsx
-import { cn } from '@/lib/utils';
+### Error Handling
 
-<button className={cn(
-  "px-4 py-2 rounded",
-  isActive && "bg-primary text-white",
-  isDisabled && "opacity-50 cursor-not-allowed"
-)}>
-```
+- Never silently swallow errors
+- Use proper error boundaries (React)
+- Log errors with context for debugging
+- Handle edge cases explicitly
 
-### Import Order (ESLint enforced)
+### Performance
 
-1. Built-in modules (`path`, `fs`)
-2. External packages (`react`, `next`, etc.)
-3. Internal modules (`@/components`, `@/lib`, etc.)
-4. Parent/sibling imports
-5. Type imports (last)
+- Consider render optimization (React.memo, useMemo, useCallback)
+- Avoid unnecessary re-renders
+- Be mindful of bundle size
+- Lazy load when appropriate
 
-```typescript
-import { useState } from 'react'
-import { NextResponse } from 'next/server'
+### Security
 
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+- Sanitize user inputs
+- Validate data at boundaries
+- Never expose sensitive data in client code
+- Use environment variables for secrets
 
-import { localHelper } from './helpers'
-
-import type { DebateSession } from '@/types'
-```
-
-### File Naming
+### Naming Conventions
 
 | Type | Convention | Example |
 |------|------------|---------|
-| Components | PascalCase in kebab-case file | `theme-toggle.tsx` → `ThemeToggle` |
-| Hooks | camelCase with `use` prefix | `use-debate.ts` |
-| Utilities | kebab-case | `token-counter.ts` |
-| Types | PascalCase | `DebatePhase` |
-| Constants | UPPER_SNAKE_CASE | `MAX_TURNS` |
+| Functions | verbs | `getUserData`, `validateInput`, `handleSubmit` |
+| Variables | nouns | `userData`, `isValid`, `activeUsers` |
+| Components | PascalCase | `UserProfile`, `DataTable` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRIES`, `API_ENDPOINT` |
+| Hooks | use prefix | `useDebate`, `useAuth` |
 
-## Path Aliases
+Be specific, avoid abbreviations unless industry-standard.
 
-Configured in `tsconfig.json`:
+### Code Organization
 
-```typescript
-import { Button } from '@/components/ui/button'  // src/components/ui/button
-import { cn } from '@/lib/utils'                 // src/lib/utils
-import { useDebate } from '@/hooks/use-debate'   // src/hooks/use-debate
-import type { Debate } from '@/types'            // src/types
-import { useDebateStore } from '@/store'         // src/store
-import { generate } from '@/services/llm'        // src/services/llm
+- One component/function per file (unless tightly coupled)
+- Co-locate related files (component + styles + tests)
+- Use barrel exports (index.ts) for clean imports
+- Keep files under 300 lines (refactor if larger)
+
+### Import Order
+
+1. External libraries (`react`, `next`, etc.)
+2. Internal absolute imports (`@/components`, `@/lib`)
+3. Relative imports (`./Button`, `../utils`)
+4. Types (`import type { ... }`)
+
+---
+
+## Accessibility Standards
+
+- All interactive elements must be keyboard accessible
+- Use semantic HTML elements (`button`, `nav`, `main`, `article`)
+- Add ARIA labels for non-text interactive elements
+- Ensure color contrast meets WCAG AA (4.5:1 for text)
+- Include focus indicators for keyboard navigation
+- Test with screen reader when adding new UI components
+
+---
+
+## Debugging Guidelines
+
+### Next.js SSR Issues
+- Check for hydration mismatches in browser console
+- Use `'use client'` directive when accessing browser APIs
+- Verify data is serializable when passing from server to client
+
+### Pusher/Real-time Issues
+- Check Pusher connection status in browser dev tools
+- Verify channel subscriptions in Network tab (WebSocket frames)
+- Use `PUSHER_APP_ID`, `PUSHER_KEY` env vars are set correctly
+
+### SSE Stream Issues
+- Monitor Network tab for EventSource connections
+- Check for proper `Content-Type: text/event-stream` headers
+- Verify stream cleanup on component unmount
+
+### General Debugging
+- Use structured logging via `@/lib/logging`
+- Check Sentry for error traces in staging/prod
+- Run `npm run dev` with `DEBUG=*` for verbose output
+
+---
+
+## Dependency Update Policy
+
+### Before Updating Dependencies
+
+1. Check changelog for breaking changes
+2. Run full test suite before and after update
+3. Update one major dependency at a time
+4. Test critical paths manually after major updates
+
+### Safe Updates
+- Patch versions: Generally safe, run tests
+- Minor versions: Review changelog, run tests
+- Major versions: Requires planning, may need code changes
+
+### Never Auto-Update
+- React, Next.js (framework core)
+- Tailwind CSS (may affect styling)
+- TypeScript (may introduce new errors)
+
+---
+
+## PR/Code Review Checklist
+
+Before proposing a PR or completing a task:
+
+- [ ] TypeScript compiles with no errors (`npm run typecheck`)
+- [ ] ESLint passes with no warnings (`npm run lint`)
+- [ ] All tests pass (`npm run test`)
+- [ ] No console.logs or debugging code
+- [ ] Comments are minimal and meaningful
+- [ ] Error handling is comprehensive
+- [ ] Edge cases are handled
+- [ ] Component/function has single responsibility
+- [ ] Performance implications considered
+- [ ] Accessibility requirements met
+- [ ] No hardcoded secrets or sensitive data
+
+---
+
+## Behavior Guidelines
+
+### When Providing Code
+
+- Always provide complete, drop-in ready code
+- Include file paths at the top of each file
+- No placeholder comments like `// Add your logic here`
+- No tutorial-style explanations unless requested
+- Code should compile and run immediately
+
+### When Refactoring
+
+- Preserve functionality unless explicitly asked to change
+- Improve without breaking
+- Maintain consistent style with existing codebase
+- Point out potential breaking changes before implementing
+
+### When Reviewing
+
+- Think like you're reviewing a teammate's PR
+- Focus on maintainability and scalability
+- Suggest improvements, don't just accept
+- Consider future developers who will maintain this
+
+### Communication Style
+
+- Be direct and technical
+- No excessive politeness or hedging
+- Speak with confidence
+- Acknowledge uncertainty when it exists
+- Focus on solutions, not problems
+
+---
+
+## Project Overview
+
+**Debate Lab** is a Next.js 15 application enabling real-time AI debates between LLM providers (ChatGPT, Grok) with Claude as moderator.
+
+### Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 15 (App Router) |
+| Language | TypeScript 5 (strict mode) |
+| Styling | Tailwind CSS 4, CSS Variables |
+| State | Zustand, TanStack Query |
+| Real-time | Pusher, SSE |
+| AI Providers | OpenAI, Anthropic, xAI |
+| Validation | Zod, React Hook Form |
+| Testing | Vitest, Playwright, MSW |
+
+### Directory Structure
+
+```
+src/
+├── app/                    # Next.js App Router (routes, API endpoints)
+├── components/
+│   ├── ui/                 # Design system primitives
+│   ├── features/           # Feature-specific components
+│   ├── debate/             # Debate UI components
+│   ├── judge/              # Scoring views
+│   ├── layouts/            # Header, Footer, MainLayout
+│   └── providers/          # Context providers
+├── services/
+│   ├── llm/                # LLM provider abstraction
+│   ├── debate-service.ts   # Debate session management
+│   └── judge-service.ts    # Scoring & evaluation
+├── lib/
+│   ├── security/           # Rate limiting, content filtering
+│   ├── logging/            # Structured logging, Sentry
+│   ├── prompts/            # AI prompt templates
+│   └── schemas/            # Zod validation schemas
+├── hooks/                  # Custom React hooks
+├── store/                  # Zustand state stores
+└── types/                  # TypeScript definitions
 ```
 
-## Key Patterns
+### Key Patterns
 
-### LLM Provider Abstraction
-
-The `src/services/llm/` module provides a unified interface for all AI providers:
-
+**LLM Provider:**
 ```typescript
 import { generate, generateStream } from '@/services/llm';
-
-// Non-streaming
-const result = await generate({
-  provider: 'chatgpt', // or 'grok', 'claude', 'openai:gpt-4', 'anthropic:claude-3'
-  params: {
-    systemPrompt: '...',
-    messages: [{ role: 'user', content: '...' }],
-    maxTokens: 1000,
-    temperature: 0.7,
-  },
-});
-
-// Streaming
-for await (const chunk of generateStream(options)) {
-  // Handle streaming chunk
-}
 ```
 
-### State Management
-
-**Zustand** for client state, **TanStack Query** for server state:
-
+**State Management:**
 ```typescript
-// Zustand store
+// Client state
 import { useDebateStore } from '@/store/debate-store';
 
-const { debatePhase, setPhase, addLocalMessage } = useDebateStore();
-
-// TanStack Query
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/query-keys';
-
-const { data } = useQuery({
-  queryKey: queryKeys.debate(debateId),
-  queryFn: () => fetchDebate(debateId),
-});
+// Server state
+import { useQuery } from '@tanstack/react-query';
 ```
 
-### Security Layer
-
-All user input passes through the security module:
-
+**Styling:**
 ```typescript
-import {
-  validateAndSanitizeDebateConfig,
-  checkRateLimit,
-  filterContent,
-} from '@/lib/security';
+import { cn } from '@/lib/utils';
 
-// Validate and sanitize debate configuration
-const validation = await validateAndSanitizeDebateConfig(config, securityContext);
-
-// Check rate limits
-const rateLimit = await checkRateLimit(ip, 'debate_creation');
+<div className={cn("base-class", condition && "conditional-class")} />
 ```
 
-### Prompt System
+**Path Aliases:**
+- `@/components` → `src/components`
+- `@/lib` → `src/lib`
+- `@/hooks` → `src/hooks`
+- `@/store` → `src/store`
+- `@/types` → `src/types`
+- `@/services` → `src/services`
 
-AI prompts are centralized in `src/lib/prompts/`:
-
-```typescript
-import {
-  buildModeratorSystemPrompt,
-  buildDebaterSystemPrompt,
-  compileIntroPrompt,
-  compileTransitionPrompt,
-} from '@/lib/prompts';
-```
-
-### Logging
-
-Structured logging with Pino:
-
-```typescript
-import { logger, createDebateLogger, logDebateEvent } from '@/lib/logging';
-
-// General logging
-logger.info('Message', { context: 'value' });
-logger.error('Error occurred', error);
-
-// Debate-specific logging
-const log = createDebateLogger(debateId);
-log.info('Turn completed', { turnNumber: 5 });
-```
-
-## Testing Guidelines
-
-### Unit Tests (Vitest)
-
-- Located alongside source files: `component.tsx` → `__tests__/component.test.tsx`
-- Use `@testing-library/react` for component tests
-- MSW for API mocking
-
-```typescript
-import { render, screen } from '@/test/utils';
-import { Button } from './button';
-
-describe('Button', () => {
-  it('renders children', () => {
-    render(<Button>Click me</Button>);
-    expect(screen.getByRole('button')).toHaveTextContent('Click me');
-  });
-});
-```
-
-### E2E Tests (Playwright)
-
-- Located in `e2e/specs/`
-- Use fixtures from `e2e/fixtures/`
-
-```typescript
-import { test, expect } from '@playwright/test';
-
-test('creates a debate', async ({ page }) => {
-  await page.goto('/debate/new');
-  await page.fill('[name="topic"]', 'AI Ethics');
-  await page.click('button[type="submit"]');
-  await expect(page).toHaveURL(/\/debate\/[a-z0-9]+/);
-});
-```
-
-### Coverage Thresholds
-
-- Branches: 60%
-- Functions: 60%
-- Lines: 60%
-- Statements: 60%
-
-## Environment Variables
-
-### Required for Development
+### Development Commands
 
 ```bash
-OPENAI_API_KEY=sk-...        # OpenAI (ChatGPT)
-ANTHROPIC_API_KEY=sk-ant-... # Anthropic (Claude)
-XAI_API_KEY=xai-...          # xAI (Grok)
-SESSION_SECRET=...           # Base64 encoded secret
+npm run dev           # Start dev server (Turbopack)
+npm run typecheck     # TypeScript check
+npm run lint          # ESLint
+npm run lint:fix      # ESLint with auto-fix
+npm run test          # Vitest unit tests
+npm run test:e2e      # Playwright E2E tests
 ```
 
-### Optional Services
+### Git Workflow
 
-```bash
-# Real-time (falls back to polling without)
-PUSHER_APP_ID=...
-PUSHER_KEY=...
-PUSHER_SECRET=...
-NEXT_PUBLIC_PUSHER_KEY=...
-
-# Rate limiting (falls back to in-memory)
-UPSTASH_REDIS_REST_URL=...
-UPSTASH_REDIS_REST_TOKEN=...
-
-# Persistence & abuse tracking
-SUPABASE_URL=...
-SUPABASE_SERVICE_ROLE_KEY=...
-
-# Monitoring
-SENTRY_DSN=...
-```
-
-### Feature Flags
-
-```bash
-ENABLE_CUSTOM_RULES=true
-MAX_DEBATE_TURNS=10
-TOKEN_BUDGET_PER_DEBATE=50000
-DEBATE_MODE=prod  # 'prod' or 'mock'
-BATCH_STREAMING=false  # Reduces Pusher/Redis usage
-```
-
-## Git Workflow
-
-### Branch Naming
-
+**Branch Naming:**
 - `feature/*` - New features
 - `fix/*` - Bug fixes
-- `hotfix/*` - Critical production fixes
-- `release/*` - Release preparation
+- `hotfix/*` - Critical fixes
 
-### Commit Convention (Conventional Commits)
-
+**Commit Format:**
 ```
-<type>(<scope>): <description>
+type(scope): description
 
-Types: feat, fix, docs, style, refactor, perf, test, chore, ci
+Types: feat, fix, docs, style, refactor, perf, test, chore
 Scopes: ui, api, debate, auth, config, security
 ```
 
-Examples:
-```
-feat(debate): add turn timer
-fix(ui): resolve hydration mismatch
-test(debate): add unit tests for turn sequencer
-```
+---
 
-### Git Hooks (Husky)
+## Remember
 
-- `pre-commit`: lint-staged (ESLint + Prettier)
-- `commit-msg`: Validates conventional commit format
-- `pre-push`: TypeScript type checking
-
-## CI/CD Pipeline
-
-The CI workflow runs on push/PR to `main` and `dev`:
-
-1. **Lint** - ESLint checks
-2. **Type Check** - TypeScript compiler
-3. **Build** - Production build
-4. **Test** - Vitest unit tests
-
-All checks must pass before merging.
-
-## Common Tasks
-
-### Adding a New API Route
-
-1. Create route file in `src/app/api/[route]/route.ts`
-2. Use `NextRequest`/`NextResponse` from `next/server`
-3. Add request logging with `@/lib/logging`
-4. Validate input with Zod schemas from `@/lib/schemas`
-5. Apply security middleware from `@/lib/security`
-
-### Adding a New Component
-
-1. Create in appropriate directory under `src/components/`
-2. Use TypeScript interfaces for props
-3. Use `cn()` for conditional classes
-4. Add tests in `__tests__/` subdirectory
-5. Export from barrel file if needed
-
-### Adding a New Hook
-
-1. Create in `src/hooks/` with `use-` prefix
-2. Follow React hooks rules
-3. Add tests in `__tests__/` subdirectory
-4. Export from `src/hooks/index.ts` if shared
-
-### Modifying AI Prompts
-
-1. Edit files in `src/lib/prompts/`
-2. Use template compilation functions for dynamic content
-3. Test with mock debates (`DEBATE_MODE=mock`)
-
-## Troubleshooting
-
-### TypeScript Errors
-
-- Run `npm run typecheck` for full error output
-- Check path aliases in `tsconfig.json`
-- Ensure strict null checks are handled
-
-### ESLint Errors
-
-- Run `npm run lint:fix` for auto-fixable issues
-- Check import order (enforced by `eslint-plugin-import`)
-- Ensure no unused variables (prefix with `_` if intentional)
-
-### Test Failures
-
-- Run specific test: `npm test -- path/to/test.test.ts`
-- Check MSW handlers in `src/test/mocks/handlers.ts`
-- E2E: Use `npm run test:e2e:headed` to debug visually
-
-### Build Failures
-
-- Clear `.next` directory: `rm -rf .next`
-- Clear node_modules: `rm -rf node_modules && npm ci`
-- Check for TypeScript errors: `npm run typecheck`
+You are not writing code for a tutorial or demo.
+You are writing code that will run in production.
+Every line should reflect that standard.
