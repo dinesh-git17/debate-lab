@@ -15,19 +15,23 @@ import { CommandDock } from './command-dock'
 const GLASS_DOCK = {
   padding: { x: 8, y: 8 },
   borderRadius: 100,
-  backdropBlur: 40,
+  backdropBlur: 32,
+  backdropSaturate: 1.8,
   glass: {
-    base: 'rgba(38, 38, 42, 0.65)',
+    // Match header: dark:bg-zinc-900/60 (zinc-900 = #18181b)
+    base: 'rgba(24, 24, 27, 0.60)',
     tint: 'rgba(255, 255, 255, 0.04)',
   },
+  border: 'rgba(255, 255, 255, 0.12)',
   edgeLighting: {
-    top: 'rgba(255, 255, 255, 0.20)',
-    sides: 'rgba(255, 255, 255, 0.08)',
-    bottom: 'rgba(120, 160, 255, 0.10)',
+    top: 'rgba(255, 255, 255, 0.12)',
+    sides: 'rgba(255, 255, 255, 0.06)',
+    bottom: 'rgba(120, 160, 255, 0.08)',
   },
   shadow: {
-    ambient: '0 20px 50px rgba(0, 0, 0, 0.35)',
-    close: '0 8px 24px rgba(0, 0, 0, 0.25)',
+    // Match header shadow style
+    ambient: '0 8px 32px rgba(0, 0, 0, 0.4)',
+    highlight: '0 0 1px rgba(255, 255, 255, 0.08)',
   },
 } as const
 
@@ -56,7 +60,7 @@ export function FloatingControls({ debateId }: FloatingControlsProps) {
           className="absolute inset-0 pointer-events-none"
           style={{
             borderRadius: GLASS_DOCK.borderRadius,
-            boxShadow: `${GLASS_DOCK.shadow.ambient}, ${GLASS_DOCK.shadow.close}`,
+            boxShadow: `${GLASS_DOCK.shadow.ambient}, ${GLASS_DOCK.shadow.highlight}`,
           }}
           aria-hidden="true"
         />
@@ -70,8 +74,9 @@ export function FloatingControls({ debateId }: FloatingControlsProps) {
               linear-gradient(180deg, ${GLASS_DOCK.glass.tint} 0%, transparent 50%),
               ${GLASS_DOCK.glass.base}
             `.replace(/\s+/g, ' '),
-            backdropFilter: `blur(${GLASS_DOCK.backdropBlur}px) saturate(1.2)`,
-            WebkitBackdropFilter: `blur(${GLASS_DOCK.backdropBlur}px) saturate(1.2)`,
+            border: `1px solid ${GLASS_DOCK.border}`,
+            backdropFilter: `blur(${GLASS_DOCK.backdropBlur}px) saturate(${GLASS_DOCK.backdropSaturate})`,
+            WebkitBackdropFilter: `blur(${GLASS_DOCK.backdropBlur}px) saturate(${GLASS_DOCK.backdropSaturate})`,
           }}
         >
           <div

@@ -6,7 +6,7 @@
 
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useIsMobile } from '@/hooks/use-media-query'
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
 import { MessageBubble } from './message-bubble'
+import { SummaryHint } from './summary-hint'
 
 import type { BackgroundCategory } from '@/lib/topic-backgrounds'
 import type { DebateMessage } from '@/types/debate-ui'
@@ -440,7 +441,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
 
   const hasMessages = messages.length > 0
 
-  const shouldAutoScroll = autoScroll && hasMessages && status !== 'completed'
+  // Also check initialStatus to prevent auto-scroll during hydration race conditions
+  const shouldAutoScroll =
+    autoScroll && hasMessages && status !== 'completed' && initialStatus !== 'completed'
 
   const smoothScrollTo = useCallback((container: HTMLDivElement, targetScrollTop: number) => {
     const startScrollTop = container.scrollTop
@@ -494,6 +497,12 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         setTimeout(() => {
           isPausedForReading.current = false
 
+          // Check current store status to handle race conditions during hydration
+          const currentStatus = useDebateViewStore.getState().status
+          if (currentStatus === 'completed' || currentStatus === 'ended') {
+            return
+          }
+
           const nextMessageIndex = lastCompletedIndex + 1
           const messageElements = container.querySelectorAll('[role="article"]')
           const nextElement = messageElements[nextMessageIndex] as HTMLElement | undefined
@@ -526,6 +535,12 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     const checkAndScroll = () => {
       if (!isRunning) return
 
+      // Check current store status to handle race conditions during hydration
+      const currentStatus = useDebateViewStore.getState().status
+      if (currentStatus === 'completed' || currentStatus === 'ended') {
+        return
+      }
+
       const { scrollTop, scrollHeight, clientHeight } = container
       const targetScrollTop = scrollHeight - clientHeight
       const distanceFromBottom = targetScrollTop - scrollTop
@@ -555,7 +570,8 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   }, [shouldAutoScroll])
 
   useEffect(() => {
-    if (!hasMessages) return
+    // Skip scroll tracking for completed debates
+    if (!hasMessages || initialStatus === 'completed') return
 
     const container = containerRef.current
     if (!container) return
@@ -563,6 +579,12 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     lastScrollTop.current = container.scrollTop
 
     const handleScroll = () => {
+      // Check current store status to avoid stale closure
+      const currentStatus = useDebateViewStore.getState().status
+      if (currentStatus === 'completed' || currentStatus === 'ended') {
+        return
+      }
+
       const { scrollTop, scrollHeight, clientHeight } = container
       const now = Date.now()
 
@@ -583,11 +605,13 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
           clearTimeout(scrollEndTimeoutRef.current)
         }
 
-        if (status !== 'completed') {
-          scrollEndTimeoutRef.current = setTimeout(() => {
+        scrollEndTimeoutRef.current = setTimeout(() => {
+          // Double-check status before resetting
+          const statusNow = useDebateViewStore.getState().status
+          if (statusNow !== 'completed' && statusNow !== 'ended') {
             isUserScrolling.current = false
-          }, 1500)
-        }
+          }
+        }, 1500)
       } else if (distanceFromBottom < 100) {
         isUserScrolling.current = false
         if (scrollEndTimeoutRef.current) {
@@ -607,7 +631,7 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         clearTimeout(scrollEndTimeoutRef.current)
       }
     }
-  }, [hasMessages, status])
+  }, [hasMessages, initialStatus])
 
   if (messages.length === 0) {
     // Show empty state with "Start Debate" only when debate hasn't started
@@ -653,6 +677,8 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         style={{
           scrollBehavior: 'auto',
           scrollSnapType: status === 'completed' ? 'y proximity' : undefined,
+          // Prevent scroll-snap from snapping past the header area in completed state
+          scrollPaddingTop: status === 'completed' ? (isMobile ? 144 : 160) : undefined,
           maskImage:
             'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
           WebkitMaskImage:
@@ -668,8 +694,12 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             messages.length === 1
               ? 'min-h-full justify-center'
               : isMobile
-                ? 'pt-20 pb-6'
-                : 'pt-24 pb-6',
+                ? status === 'completed'
+                  ? 'pt-36 pb-6'
+                  : 'pt-20 pb-6'
+                : status === 'completed'
+                  ? 'pt-40 pb-6'
+                  : 'pt-24 pb-6',
             isMobile && 'mx-auto'
           )}
           style={{
@@ -708,9 +738,15 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             )
           })}
 
+          <AnimatePresence>
+            {status === 'completed' && <SummaryHint className="-mt-2" />}
+          </AnimatePresence>
+
           <div
             className={isMobile ? 'h-40' : 'h-24'}
-            style={isMobile ? { paddingBottom: 'env(safe-area-inset-bottom, 0px)' } : undefined}
+            style={{
+              paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined,
+            }}
             aria-hidden="true"
           />
 

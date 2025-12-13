@@ -21,6 +21,7 @@ const STATUS_LABELS: Record<DebateViewStatus, string> = {
   ready: 'Ready to start',
   active: 'In progress',
   completed: 'Complete',
+  ended: 'Ended',
   error: 'Error',
 }
 
@@ -28,6 +29,7 @@ const STATUS_GRADIENTS: Record<DebateViewStatus, string> = {
   ready: 'from-emerald-400/60 to-emerald-500/60',
   active: 'from-blue-400 to-blue-600',
   completed: 'from-emerald-400 to-emerald-600',
+  ended: 'from-zinc-400/60 to-zinc-500/60',
   error: 'from-red-400 to-red-500',
 }
 
@@ -46,6 +48,11 @@ const STATUS_BADGE_STYLES: Record<DebateViewStatus, { bg: string; text: string; 
     bg: 'bg-emerald-500/15',
     text: 'text-emerald-400',
     glow: 'shadow-emerald-500/20',
+  },
+  ended: {
+    bg: 'bg-zinc-500/15',
+    text: 'text-zinc-400',
+    glow: 'shadow-zinc-500/20',
   },
   error: {
     bg: 'bg-red-500/15',

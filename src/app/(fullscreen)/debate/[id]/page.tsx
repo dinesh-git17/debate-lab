@@ -6,6 +6,7 @@
 
 import { notFound } from 'next/navigation'
 
+import { getEngineState } from '@/lib/engine-store'
 import { isValidDebateId } from '@/lib/id-generator'
 import { getDebateSession } from '@/services/debate-service'
 
@@ -49,6 +50,10 @@ export default async function DebatePage({ params }: DebatePageProps) {
     notFound()
   }
 
+  // Check engine state to detect if debate was ended early (cancelled)
+  const engineState = await getEngineState(id)
+  const wasEndedEarly = engineState?.status === 'cancelled'
+
   return (
     <DebatePageClient
       debateId={id}
@@ -56,6 +61,7 @@ export default async function DebatePage({ params }: DebatePageProps) {
       initialFormat={session.format}
       initialStatus={session.status}
       initialBackgroundCategory={session.backgroundCategory}
+      wasEndedEarly={wasEndedEarly}
     />
   )
 }

@@ -186,13 +186,15 @@ interface PillLinkProps {
   href: string
   icon: React.ReactNode
   label?: string
+  highlighted?: boolean
 }
 
-function PillLink({ href, icon, label }: PillLinkProps) {
+function PillLink({ href, icon, label, highlighted = false }: PillLinkProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  const baseColor = 'rgba(255, 255, 255, 0.6)'
-  const hoverColor = 'rgba(255, 255, 255, 1)'
+  const baseColor = highlighted ? 'rgba(147, 197, 253, 0.9)' : 'rgba(255, 255, 255, 0.6)'
+  const hoverColor = highlighted ? 'rgba(191, 219, 254, 1)' : 'rgba(255, 255, 255, 1)'
+  const showExpanded = isHovered || highlighted
 
   return (
     <motion.div
@@ -200,11 +202,29 @@ function PillLink({ href, icon, label }: PillLinkProps) {
       onMouseLeave={() => setIsHovered(false)}
       whileTap={{ scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="rounded-full"
+      className="rounded-full relative"
+      initial={highlighted ? { scale: 0.95 } : false}
+      animate={highlighted ? { scale: 1 } : {}}
+      style={{
+        boxShadow: highlighted
+          ? '0 0 20px rgba(147, 197, 253, 0.15), 0 0 8px rgba(147, 197, 253, 0.1)'
+          : 'none',
+      }}
     >
+      {highlighted && (
+        <motion.div
+          className="absolute inset-0 rounded-full pointer-events-none"
+          style={{
+            background: 'rgba(147, 197, 253, 0.08)',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
       <Link
         href={href}
-        className="flex items-center justify-center rounded-full cursor-pointer"
+        className="flex items-center justify-center rounded-full cursor-pointer relative z-10"
         style={{
           height: BUTTON_CONFIG.height,
           paddingLeft: BUTTON_CONFIG.paddingX,
@@ -217,9 +237,9 @@ function PillLink({ href, icon, label }: PillLinkProps) {
         <motion.span
           initial={false}
           animate={{
-            width: isHovered && label ? 'auto' : 0,
-            marginLeft: isHovered && label ? BUTTON_CONFIG.gap : 0,
-            opacity: isHovered && label ? 1 : 0,
+            width: showExpanded && label ? 'auto' : 0,
+            marginLeft: showExpanded && label ? BUTTON_CONFIG.gap : 0,
+            opacity: showExpanded && label ? 1 : 0,
           }}
           transition={{
             type: 'spring',
@@ -249,6 +269,8 @@ export function CommandDock({ debateId }: CommandDockProps) {
   const topic = useDebateViewStore((s) => s.topic)
   const format = useDebateViewStore((s) => s.format)
   const messages = useDebateViewStore((s) => s.messages)
+  const showSummaryPrompt = useDebateViewStore((s) => s.showSummaryPrompt)
+  const isSummaryHintHovered = useDebateViewStore((s) => s.isSummaryHintHovered)
 
   const [isLoading, setIsLoading] = useState(false)
   const [showEndModal, setShowEndModal] = useState(false)
@@ -300,15 +322,19 @@ export function CommandDock({ debateId }: CommandDockProps) {
     }
   }
 
+  const setStatus = useDebateViewStore((s) => s.setStatus)
+
   const handleEndDebate = () => {
-    // Fire and forget - navigate immediately
+    // Fire and forget API call
     fetch(`/api/debate/${debateId}/engine/control`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
     }).catch(() => {})
 
-    router.push('/debate/new')
+    // Transition to ended state - UI will show exit card
+    setStatus('ended')
+    setShowEndModal(false)
   }
 
   const handleNewDebate = useCallback(() => {
@@ -409,6 +435,7 @@ export function CommandDock({ debateId }: CommandDockProps) {
             href={`/debate/${debateId}/summary`}
             icon={<FileText size={iconSize} strokeWidth={1.5} />}
             label="Summary"
+            highlighted={showSummaryPrompt || isSummaryHintHovered}
           />
           <Divider />
           <PillButton

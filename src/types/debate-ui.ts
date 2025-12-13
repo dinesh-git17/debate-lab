@@ -30,8 +30,9 @@ export type ViewConnectionStatus =
 
 /**
  * Debate viewing status
+ * - 'ended' represents premature termination by user (distinct from natural 'completed')
  */
-export type DebateViewStatus = 'ready' | 'active' | 'completed' | 'error'
+export type DebateViewStatus = 'ready' | 'active' | 'completed' | 'ended' | 'error'
 
 /**
  * Debate viewing state for the UI store

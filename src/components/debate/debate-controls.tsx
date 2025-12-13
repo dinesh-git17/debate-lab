@@ -87,15 +87,19 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     }
   }
 
+  const setStatus = useDebateViewStore((s) => s.setStatus)
+
   const handleEndDebate = () => {
-    // Fire and forget - navigate immediately for instant feedback
+    // Fire and forget API call
     fetch(`/api/debate/${debateId}/engine/control`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
     }).catch(() => {})
 
-    router.push('/debate/new')
+    // Transition to ended state - UI will show exit card
+    setStatus('ended')
+    setShowEndModal(false)
   }
 
   const handleNewDebate = useCallback(() => {

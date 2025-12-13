@@ -42,6 +42,12 @@ interface DebateViewActions {
   // Streaming speed control
   setSpeedMultiplier: (speed: SpeedMultiplier) => void
 
+  // Summary prompt control
+  setShowSummaryPrompt: (show: boolean) => void
+
+  // Summary hint hover state (for dock icon glow sync)
+  setIsSummaryHintHovered: (hovered: boolean) => void
+
   reset: () => void
 }
 
@@ -53,6 +59,10 @@ interface ExtendedDebateViewState extends DebateViewState {
   pendingCompletion: boolean
   // Streaming speed multiplier (0.5x to 2x)
   speedMultiplier: SpeedMultiplier
+  // Flag to show summary prompt after natural debate completion
+  showSummaryPrompt: boolean
+  // Flag to track if summary hint text is hovered (syncs dock icon glow)
+  isSummaryHintHovered: boolean
 }
 
 type DebateViewStore = ExtendedDebateViewState & DebateViewActions
@@ -74,6 +84,8 @@ const initialState: ExtendedDebateViewState = {
   displayedMessageIds: new Set(),
   pendingCompletion: false,
   speedMultiplier: 1,
+  showSummaryPrompt: false,
+  isSummaryHintHovered: false,
 }
 
 export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
@@ -193,6 +205,7 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
             displayedMessageIds: newSet,
             status: 'completed' as const,
             pendingCompletion: false,
+            showSummaryPrompt: true,
           }
         }
       }
@@ -226,9 +239,15 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
 
   setSpeedMultiplier: (speed) => set({ speedMultiplier: speed }),
 
+  setShowSummaryPrompt: (show) => set({ showSummaryPrompt: show }),
+
+  setIsSummaryHintHovered: (hovered) => set({ isSummaryHintHovered: hovered }),
+
   reset: () =>
     set({
       ...initialState,
       displayedMessageIds: new Set(),
+      showSummaryPrompt: false,
+      isSummaryHintHovered: false,
     }),
 }))
