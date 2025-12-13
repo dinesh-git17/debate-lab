@@ -21,7 +21,8 @@
   <a href="#-how-it-works">How It Works</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#%EF%B8%8F-tech-stack">Tech Stack</a> •
-  <a href="#-documentation">Documentation</a>
+  <a href="#-documentation">Documentation</a> •
+  <a href="#-ai-assisted-development">AI Development</a>
 </p>
 
 ---
@@ -268,6 +269,26 @@ git commit -m "feat(scope): description"
 # Push and create a PR
 git push -u origin feature/your-feature-name
 ```
+
+<br />
+
+## 🤖 AI-Assisted Development
+
+If you're using an AI assistant (Claude, ChatGPT, Cursor, Copilot, etc.) to work on this codebase, **have it read the guidelines first**:
+
+```
+Before making any changes, read CLAUDE.md in the project root.
+Follow all coding standards and rules defined there.
+```
+
+The `CLAUDE.md` file contains:
+- Critical rules (commit guidelines, build restrictions)
+- Code quality standards (FAANG-level expectations)
+- Comment standards and forbidden patterns
+- TypeScript, security, and accessibility requirements
+- Project architecture and key patterns
+
+This ensures consistent, production-quality contributions regardless of which AI tool you use.
 
 <br />
 
