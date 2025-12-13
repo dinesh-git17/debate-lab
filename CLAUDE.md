@@ -29,14 +29,6 @@ After making changes to one or more files, **before providing a summary**:
 3. If either check fails, fix the errors before proceeding
 4. Report any issues clearly
 
-### Testing Before Commits
-
-When preparing to commit changes:
-
-1. Run `npm run test` for affected files/modules
-2. Ensure all tests pass before proposing a commit
-3. If tests fail, fix them or flag the issue
-
 ---
 
 ## Code Standards (FAANG Senior Engineer Level)
@@ -51,20 +43,24 @@ When preparing to commit changes:
 ### Comment Standards (Strict)
 
 **File-Level Comments:**
+
 - Every file must have ONE block comment at the top (2-4 lines max)
 - Describe purpose and role in system architecture
 - No implementation details
 
 **Function/Method Comments:**
+
 - Only when the "why" is non-obvious
 - Document edge cases, performance considerations, business constraints
 - Never explain what code does (code should be self-explanatory)
 
 **Inline Comments:**
+
 - Use sparingly for critical context only
 - Explain tradeoffs, workarounds, non-obvious decisions
 
 **Forbidden:**
+
 - Emojis in code/comments
 - Casual/conversational tone
 - Obvious restatements (`// loop through array`)
@@ -79,8 +75,8 @@ When preparing to commit changes:
 // This function checks if the user is authenticated
 function isAuthenticated(user: User): boolean {
   // Check if user exists
-  if (!user) return false;
-  return validateToken(user.token);
+  if (!user) return false
+  return validateToken(user.token)
 }
 
 // GOOD
@@ -94,8 +90,8 @@ function isAuthenticated(user: User): boolean {
  * Returns false for expired tokens to trigger re-auth flow.
  */
 function isAuthenticated(user: User): boolean {
-  if (!user) return false;
-  return validateToken(user.token);
+  if (!user) return false
+  return validateToken(user.token)
 }
 ```
 
@@ -130,13 +126,13 @@ function isAuthenticated(user: User): boolean {
 
 ### Naming Conventions
 
-| Type | Convention | Example |
-|------|------------|---------|
-| Functions | verbs | `getUserData`, `validateInput`, `handleSubmit` |
-| Variables | nouns | `userData`, `isValid`, `activeUsers` |
-| Components | PascalCase | `UserProfile`, `DataTable` |
-| Constants | UPPER_SNAKE_CASE | `MAX_RETRIES`, `API_ENDPOINT` |
-| Hooks | use prefix | `useDebate`, `useAuth` |
+| Type       | Convention       | Example                                        |
+| ---------- | ---------------- | ---------------------------------------------- |
+| Functions  | verbs            | `getUserData`, `validateInput`, `handleSubmit` |
+| Variables  | nouns            | `userData`, `isValid`, `activeUsers`           |
+| Components | PascalCase       | `UserProfile`, `DataTable`                     |
+| Constants  | UPPER_SNAKE_CASE | `MAX_RETRIES`, `API_ENDPOINT`                  |
+| Hooks      | use prefix       | `useDebate`, `useAuth`                         |
 
 Be specific, avoid abbreviations unless industry-standard.
 
@@ -170,21 +166,25 @@ Be specific, avoid abbreviations unless industry-standard.
 ## Debugging Guidelines
 
 ### Next.js SSR Issues
+
 - Check for hydration mismatches in browser console
 - Use `'use client'` directive when accessing browser APIs
 - Verify data is serializable when passing from server to client
 
 ### Pusher/Real-time Issues
+
 - Check Pusher connection status in browser dev tools
 - Verify channel subscriptions in Network tab (WebSocket frames)
 - Use `PUSHER_APP_ID`, `PUSHER_KEY` env vars are set correctly
 
 ### SSE Stream Issues
+
 - Monitor Network tab for EventSource connections
 - Check for proper `Content-Type: text/event-stream` headers
 - Verify stream cleanup on component unmount
 
 ### General Debugging
+
 - Use structured logging via `@/lib/logging`
 - Check Sentry for error traces in staging/prod
 - Run `npm run dev` with `DEBUG=*` for verbose output
@@ -201,11 +201,13 @@ Be specific, avoid abbreviations unless industry-standard.
 4. Test critical paths manually after major updates
 
 ### Safe Updates
+
 - Patch versions: Generally safe, run tests
 - Minor versions: Review changelog, run tests
 - Major versions: Requires planning, may need code changes
 
 ### Never Auto-Update
+
 - React, Next.js (framework core)
 - Tailwind CSS (may affect styling)
 - TypeScript (may introduce new errors)
@@ -254,13 +256,42 @@ Before proposing a PR or completing a task:
 - Suggest improvements, don't just accept
 - Consider future developers who will maintain this
 
-### Communication Style
+# Communication Style — Tech-Bro Mode
 
-- Be direct and technical
-- No excessive politeness or hedging
-- Speak with confidence
-- Acknowledge uncertainty when it exists
-- Focus on solutions, not problems
+- Sound like a sharp senior engineer teammate
+- High-energy, confident, momentum-driven
+- Friendly, direct, zero fluff
+- Precise and production-minded
+
+### Tone Rules
+
+- Call out wins clearly (“This is clean”, “Good call”)
+- Flag risks immediately
+- Push forward (“Let’s ship”, “Next move”)
+- No corporate politeness, no academic tone
+
+### Allowed
+
+- Light tech slang (sparingly)
+- Short affirmations
+- Decisive statements
+
+### Not Allowed
+
+- Cringe slang
+- Over-explaining
+- Talking down to the user
+- Emojis in code contexts
+
+### Example
+
+**Instead of:**  
+“This implementation appears correct but may have edge cases.”
+
+**Say:**  
+“This is solid. No obvious footguns.”
+
+Bias toward shipping. Think prod. Let’s build.
 
 ---
 
@@ -270,16 +301,16 @@ Before proposing a PR or completing a task:
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 15 (App Router) |
-| Language | TypeScript 5 (strict mode) |
-| Styling | Tailwind CSS 4, CSS Variables |
-| State | Zustand, TanStack Query |
-| Real-time | Pusher, SSE |
-| AI Providers | OpenAI, Anthropic, xAI |
-| Validation | Zod, React Hook Form |
-| Testing | Vitest, Playwright, MSW |
+| Layer        | Technology                    |
+| ------------ | ----------------------------- |
+| Framework    | Next.js 15 (App Router)       |
+| Language     | TypeScript 5 (strict mode)    |
+| Styling      | Tailwind CSS 4, CSS Variables |
+| State        | Zustand, TanStack Query       |
+| Real-time    | Pusher, SSE                   |
+| AI Providers | OpenAI, Anthropic, xAI        |
+| Validation   | Zod, React Hook Form          |
+| Testing      | Vitest, Playwright, MSW       |
 
 ### Directory Structure
 
@@ -310,20 +341,23 @@ src/
 ### Key Patterns
 
 **LLM Provider:**
+
 ```typescript
-import { generate, generateStream } from '@/services/llm';
+import { generate, generateStream } from '@/services/llm'
 ```
 
 **State Management:**
+
 ```typescript
 // Client state
-import { useDebateStore } from '@/store/debate-store';
+import { useDebateStore } from '@/store/debate-store'
 
 // Server state
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 ```
 
 **Styling:**
+
 ```typescript
 import { cn } from '@/lib/utils';
 
@@ -331,6 +365,7 @@ import { cn } from '@/lib/utils';
 ```
 
 **Path Aliases:**
+
 - `@/components` → `src/components`
 - `@/lib` → `src/lib`
 - `@/hooks` → `src/hooks`
@@ -352,11 +387,13 @@ npm run test:e2e      # Playwright E2E tests
 ### Git Workflow
 
 **Branch Naming:**
+
 - `feature/*` - New features
 - `fix/*` - Bug fixes
 - `hotfix/*` - Critical fixes
 
 **Commit Format:**
+
 ```
 type(scope): description
 
