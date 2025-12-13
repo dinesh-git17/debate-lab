@@ -722,7 +722,11 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             )
           })}
 
-          <div className="h-24" aria-hidden="true" />
+          <div
+            className={isMobile ? 'h-40' : 'h-24'}
+            style={isMobile ? { paddingBottom: 'env(safe-area-inset-bottom, 0px)' } : undefined}
+            aria-hidden="true"
+          />
 
           <div id="scroll-anchor" aria-hidden="true" />
         </div>

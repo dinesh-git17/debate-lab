@@ -477,25 +477,6 @@ export const MessageBubble = memo(function MessageBubble({
         />
       )}
 
-      {/* String going DOWN to connect to next card (only during streaming, desktop only) */}
-      {!message.isComplete && !isMobile && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-30"
-          style={{
-            bottom: -responsiveCardGap + 4,
-            height: responsiveCardGap - 8,
-            width: 1,
-            background: `linear-gradient(180deg,
-              ${APPLE_COLORS[message.speaker].rgba(0.3)} 0%,
-              ${APPLE_COLORS[message.speaker].rgba(0.12)} 100%)`,
-            // Fade out on hover, fade in when not hovered
-            opacity: isHovered ? 0 : 0.6,
-            transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-          aria-hidden="true"
-        />
-      )}
-
       {/* Ghost Glass Card - Perspective container for 3D tilt effect */}
       <div
         ref={cardRef}

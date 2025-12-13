@@ -15,6 +15,7 @@ import { FloatingControls } from '@/components/debate/floating-controls'
 import { MessageList } from '@/components/debate/message-list'
 import { ShortcutsHelp } from '@/components/debate/shortcuts-help'
 import { useDebateRealtime } from '@/hooks/use-debate-realtime'
+import { useIsMobile } from '@/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
@@ -59,6 +60,7 @@ export function DebatePageClient({
 }: DebatePageClientProps) {
   const { setDebateInfo, setStatus, setProgress, hydrateMessages, reset } = useDebateViewStore()
   const status = useDebateViewStore((s) => s.status)
+  const isMobile = useIsMobile()
 
   const hasAutoStarted = useRef(false)
   const hasHydrated = useRef(false)
@@ -154,14 +156,16 @@ export function DebatePageClient({
           initialStatus={mapPhaseToViewStatus(initialStatus)}
         />
 
-        <motion.div
-          className="absolute bottom-4 right-4 z-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.8, ease: 'easeOut' }}
-        >
-          <ShortcutsHelp />
-        </motion.div>
+        {!isMobile && (
+          <motion.div
+            className="absolute bottom-4 right-4 z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8, ease: 'easeOut' }}
+          >
+            <ShortcutsHelp />
+          </motion.div>
+        )}
       </main>
 
       {(status === 'active' || status === 'paused' || status === 'completed') && (
