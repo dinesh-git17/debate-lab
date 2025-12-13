@@ -22,3 +22,4 @@ export {
 } from './use-intersection-observer'
 export { useInView } from './use-in-view'
 export { useAnimatedText, useIsAnimating } from './use-animated-text'
+export { useMediaQuery, useIsMobile } from './use-media-query'

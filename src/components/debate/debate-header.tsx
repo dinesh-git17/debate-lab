@@ -37,10 +37,10 @@ export function DebateHeader({ className }: DebateHeaderProps) {
       role="navigation"
       aria-label="Debate navigation"
       className={cn(
-        'fixed top-5 left-1/2 -translate-x-1/2 z-50',
-        'max-w-[1100px] w-[90%]',
+        'fixed top-3 md:top-5 left-1/2 -translate-x-1/2 z-50',
+        'max-w-[1100px] w-[calc(100%-24px)] md:w-[90%]',
         'rounded-full',
-        'px-5 md:px-6 lg:px-8 py-3',
+        'px-3 md:px-6 lg:px-8 py-2 md:py-3',
         'bg-white/90 dark:bg-zinc-900/95',
         'backdrop-blur-[28px] backdrop-saturate-[1.9]',
         'border border-neutral-200/60 dark:border-white/[0.15]',
@@ -54,11 +54,11 @@ export function DebateHeader({ className }: DebateHeaderProps) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
     >
-      <div className="flex items-center -my-12 mr-8">
+      <div className="flex items-center -my-12 mr-4 md:mr-8">
         <Logo size="md" />
       </div>
 
-      <div className="absolute left-1/2 -translate-x-1/2 h-9 flex items-center">
+      <div className="absolute right-16 md:left-1/2 md:-translate-x-1/2 md:right-auto h-9 flex items-center">
         <motion.div
           className={cn(
             'group inline-flex items-center gap-2 px-4 h-9',
@@ -137,7 +137,7 @@ export function DebateHeader({ className }: DebateHeaderProps) {
             )}
           >
             <Plus className="h-4 w-4" strokeWidth={2} />
-            <span>New</span>
+            <span className="hidden sm:inline">New</span>
           </Link>
         </motion.div>
       </div>

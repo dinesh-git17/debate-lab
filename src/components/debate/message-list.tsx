@@ -9,6 +9,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { useIsMobile } from '@/hooks/use-media-query'
 import { ANIMATION_CONFIG } from '@/lib/animation-config'
 import { clientLogger } from '@/lib/client-logger'
 import { sanitizeTopic } from '@/lib/sanitize-topic'
@@ -371,6 +372,8 @@ interface MessageListProps {
 }
 
 export function MessageList({ className, autoScroll = true, initialStatus }: MessageListProps) {
+  const isMobile = useIsMobile()
+
   // Subscribe to messages, displayedMessageIds, and status to trigger re-renders
   const allMessages = useDebateViewStore((s) => s.messages)
   const displayedIds = useDebateViewStore((s) => s.displayedMessageIds)
@@ -651,13 +654,19 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     }
   }
 
+  // Use dvh for dynamic viewport height on mobile (prevents browser chrome jump)
+  const heightStyle = isMobile
+    ? { height: '100dvh', minHeight: '100vh' } // dvh with vh fallback
+    : undefined
+
   return (
-    <div className={cn('relative h-full', className)}>
+    <div className={cn('relative', !isMobile && 'h-full', className)} style={heightStyle}>
       <div
         ref={containerRef}
         className="overflow-y-auto px-4 h-full"
         style={{
           scrollBehavior: 'auto',
+          scrollSnapType: 'y proximity',
           maskImage:
             'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
           WebkitMaskImage:
@@ -670,12 +679,18 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         <div
           className={cn(
             'relative flex flex-col',
-            messages.length === 1 ? 'min-h-full justify-center' : 'pt-24 pb-6'
+            messages.length === 1
+              ? 'min-h-full justify-center'
+              : isMobile
+                ? 'pt-20 pb-6'
+                : 'pt-24 pb-6',
+            isMobile && 'mx-auto'
           )}
           style={{
-            maxWidth: 'clamp(480px, 55vw, 680px)',
-            marginLeft: '48.5%',
-            transform: 'translateX(-50%)',
+            width: isMobile ? 'calc(100vw - 32px)' : undefined,
+            maxWidth: isMobile ? 'calc(100vw - 32px)' : 'clamp(480px, 55vw, 680px)',
+            marginLeft: isMobile ? undefined : '48.5%',
+            transform: isMobile ? undefined : 'translateX(-50%)',
           }}
         >
           {messages.map((message, index) => {
