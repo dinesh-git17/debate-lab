@@ -1,12 +1,12 @@
-// src/lib/prompts/violation-detection.ts
+// violation-detection.ts
+/**
+ * Rule violation detection prompt and response parsing.
+ * Identifies personal attacks, off-topic content, and other debate rule breaches.
+ */
 
 import { logger } from '@/lib/logging'
 
 import type { InterventionTrigger, ViolationDetectionResult } from '@/types/prompts'
-
-/**
- * System prompt for violation detection
- */
 export const VIOLATION_DETECTION_SYSTEM = `You are a debate rule compliance checker. Analyze debater responses for rule violations.
 
 You must identify:

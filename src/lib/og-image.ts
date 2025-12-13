@@ -1,10 +1,11 @@
-// src/lib/og-image.ts
+// og-image.ts
+/**
+ * Open Graph image URL generation for social sharing.
+ * Builds share metadata for debate pages.
+ */
 
 import type { OGImageParams } from '@/types/share'
 
-/**
- * Generate OG image URL with parameters
- */
 export function getOGImageUrl(params: OGImageParams, baseUrl?: string): string {
   const base = baseUrl ?? process.env.NEXT_PUBLIC_BASE_URL ?? ''
   const searchParams = new URLSearchParams()
@@ -20,9 +21,6 @@ export function getOGImageUrl(params: OGImageParams, baseUrl?: string): string {
   return `${base}/api/og?${searchParams.toString()}`
 }
 
-/**
- * Build share metadata for a debate
- */
 export function buildShareMetadata(
   debateId: string,
   topic: string,

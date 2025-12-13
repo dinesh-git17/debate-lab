@@ -1,5 +1,8 @@
-// src/lib/security/abuse-logger.ts
-// Abuse logging service for security event tracking
+// abuse-logger.ts
+/**
+ * Abuse logging service for security event tracking.
+ * Records rate limits, content filter violations, CSRF attempts, and injection attacks.
+ */
 
 import { nanoid } from 'nanoid'
 

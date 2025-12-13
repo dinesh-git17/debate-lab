@@ -1,12 +1,12 @@
-// src/lib/prompts/intro-prompt.ts
+// intro-prompt.ts
+/**
+ * Debate introduction prompt template with Apple keynote-style energy.
+ * Generates punchy, modern openings that set the stage for debate.
+ */
 
 import { buildModeratorSystemPrompt } from './moderator-system'
 
 import type { CompiledPrompt, ModeratorContext } from '@/types/prompts'
-
-/**
- * Template for debate introduction — premium, keynote-style
- */
 export const INTRO_PROMPT_TEMPLATE = `Generate a short, punchy debate introduction. This is the first thing users see — make it count.
 
 ## Style

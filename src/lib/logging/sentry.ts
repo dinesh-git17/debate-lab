@@ -1,5 +1,8 @@
-// src/lib/logging/sentry.ts
-// Sentry integration utilities for error tracking and performance monitoring
+// sentry.ts
+/**
+ * Sentry integration for error tracking and performance monitoring.
+ * Provides debate-aware context tagging and transaction tracing.
+ */
 
 import * as Sentry from '@sentry/nextjs'
 

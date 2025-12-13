@@ -1,10 +1,8 @@
-// src/lib/security/moderation-stack.ts
-// 5-Layer Safety Stack for Debate Lab
-// Layer 1: Keyword Scanner (risk flag only)
-// Layer 2: Semantic Category Classifier (GPT-4o-mini)
-// Layer 3: Embedding Similarity Filter (catches euphemistic harmful content)
-// Layer 4: OpenAI Moderation API (final gate)
-// Layer 5: Custom Business Rules
+// moderation-stack.ts
+/**
+ * 5-layer safety stack orchestrating keyword scanning, semantic classification,
+ * embedding similarity, OpenAI moderation, and business rules for content filtering.
+ */
 
 import { logger } from '@/lib/logging'
 

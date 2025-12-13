@@ -1,4 +1,7 @@
-// src/lib/prompts/index.ts
+// index.ts
+/**
+ * Prompt module exports for moderator, debater, judge, and violation detection.
+ */
 
 export {
   buildModeratorSystemPrompt,

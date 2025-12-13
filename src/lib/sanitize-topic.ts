@@ -1,4 +1,8 @@
-// src/lib/sanitize-topic.ts
+// sanitize-topic.ts
+/**
+ * Topic text normalization with sentence case and question detection.
+ * Ensures consistent formatting for debate topics.
+ */
 
 const QUESTION_WORDS = [
   'is',
@@ -17,15 +21,12 @@ const QUESTION_WORDS = [
 ]
 
 export function sanitizeTopic(topic: string): string {
-  // Trim whitespace
   let result = topic.trim()
 
   if (!result) return result
 
-  // Convert to sentence case: capitalize first letter, lowercase the rest
   result = result.charAt(0).toUpperCase() + result.slice(1).toLowerCase()
 
-  // Check if starts with a question word and missing question mark
   const firstWord = result.split(/\s+/)[0]?.toLowerCase() ?? ''
   const startsWithQuestionWord = QUESTION_WORDS.includes(firstWord)
   const endsWithQuestionMark = result.endsWith('?')

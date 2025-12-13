@@ -1,4 +1,8 @@
-// src/lib/retry.ts
+// retry.ts
+/**
+ * Exponential backoff retry utility for LLM API calls.
+ * Supports configurable delays, jitter, and provider-specific retry hints.
+ */
 
 import { LLMError } from '@/types/llm'
 
@@ -18,16 +22,10 @@ const DEFAULT_OPTIONS: RetryOptions = {
   retryableErrors: ['rate_limit', 'server_error', 'network_error', 'timeout'],
 }
 
-/**
- * Sleep for a given duration
- */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/**
- * Calculate delay for retry attempt with exponential backoff and jitter
- */
 function calculateDelay(attempt: number, options: RetryOptions, retryAfterMs?: number): number {
   if (retryAfterMs) {
     return Math.min(retryAfterMs, options.maxDelayMs)
@@ -39,9 +37,6 @@ function calculateDelay(attempt: number, options: RetryOptions, retryAfterMs?: n
   return Math.min(delay + jitter, options.maxDelayMs)
 }
 
-/**
- * Execute a function with retry logic
- */
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options: Partial<RetryOptions> = {}
@@ -74,9 +69,6 @@ export async function withRetry<T>(
   throw lastError
 }
 
-/**
- * Create a retry wrapper with pre-configured options
- */
 export function createRetryWrapper(options: Partial<RetryOptions> = {}) {
   const opts = { ...DEFAULT_OPTIONS, ...options }
   return <T>(fn: () => Promise<T>) => withRetry(fn, opts)

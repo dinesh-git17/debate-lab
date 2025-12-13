@@ -1,6 +1,8 @@
-// src/lib/security/ip-hash.ts
-// IP hashing utilities for privacy-preserving tracking
-// Uses Web Crypto API for Edge Runtime compatibility
+// ip-hash.ts
+/**
+ * Privacy-preserving IP hashing using Web Crypto API.
+ * Edge Runtime compatible for use in middleware and server functions.
+ */
 
 const IP_HASH_SALT = process.env.IP_HASH_SALT
 

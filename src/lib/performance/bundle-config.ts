@@ -1,5 +1,8 @@
-// src/lib/performance/bundle-config.ts
-// Bundle optimization configuration and utilities
+// bundle-config.ts
+/**
+ * Bundle optimization configuration and utilities.
+ * Defines performance budgets, dynamic import paths, and chunk analysis.
+ */
 
 import type { PerformanceBudget } from '@/types/performance'
 

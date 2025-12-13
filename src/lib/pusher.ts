@@ -1,4 +1,8 @@
-// src/lib/pusher.ts
+// pusher.ts
+/**
+ * Server-side Pusher client for publishing real-time events.
+ * Handles channel management and batch event publishing.
+ */
 
 import Pusher from 'pusher'
 
@@ -6,12 +10,8 @@ import { logger } from '@/lib/logging'
 
 import type { SSEEvent } from '@/types/execution'
 
-// Pusher server-side client - initialized lazily
 let pusherClient: Pusher | null = null
 
-/**
- * Check if Pusher is configured with required environment variables.
- */
 export function isPusherConfigured(): boolean {
   return !!(
     process.env.PUSHER_APP_ID &&
@@ -21,10 +21,6 @@ export function isPusherConfigured(): boolean {
   )
 }
 
-/**
- * Get the Pusher server-side client.
- * Returns null if Pusher is not configured.
- */
 function getPusherClient(): Pusher | null {
   if (pusherClient) return pusherClient
 
@@ -43,24 +39,15 @@ function getPusherClient(): Pusher | null {
   return pusherClient
 }
 
-/**
- * Get the channel name for a debate.
- */
 export function getDebateChannelName(debateId: string): string {
   return `debate-${debateId}`
 }
 
-/**
- * Publish an event to a debate's Pusher channel.
- * Returns true if the event was published successfully.
- */
 export async function publishEvent(debateId: string, event: SSEEvent): Promise<boolean> {
   const pusher = getPusherClient()
 
   if (!pusher) {
-    // Pusher not configured - log and continue (allows local dev without Pusher)
     if (process.env.NODE_ENV === 'development') {
-      // Silent in dev without Pusher
       return false
     }
     logger.warn('Pusher not configured, skipping event publish', {
@@ -73,7 +60,6 @@ export async function publishEvent(debateId: string, event: SSEEvent): Promise<b
   try {
     const channel = getDebateChannelName(debateId)
 
-    // Pusher event names match the SSE event types
     await pusher.trigger(channel, event.type, event)
 
     return true
@@ -86,11 +72,6 @@ export async function publishEvent(debateId: string, event: SSEEvent): Promise<b
   }
 }
 
-/**
- * Batch publish multiple events to a debate's Pusher channel.
- * Uses Pusher's batch trigger for efficiency.
- * Returns the number of events successfully published.
- */
 export async function publishEvents(debateId: string, events: SSEEvent[]): Promise<number> {
   const pusher = getPusherClient()
 
@@ -101,7 +82,6 @@ export async function publishEvents(debateId: string, events: SSEEvent[]): Promi
   try {
     const channel = getDebateChannelName(debateId)
 
-    // Pusher batch API supports up to 10 events at a time
     const batchSize = 10
     let publishedCount = 0
 
@@ -132,16 +112,10 @@ export async function publishEvents(debateId: string, events: SSEEvent[]): Promi
   }
 }
 
-/**
- * Get the public Pusher key for client-side use.
- */
 export function getPusherPublicKey(): string | null {
   return process.env.NEXT_PUBLIC_PUSHER_KEY ?? null
 }
 
-/**
- * Get the Pusher cluster for client-side use.
- */
 export function getPusherCluster(): string | null {
   return process.env.NEXT_PUBLIC_PUSHER_CLUSTER ?? null
 }

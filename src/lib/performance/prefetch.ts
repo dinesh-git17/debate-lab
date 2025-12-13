@@ -1,5 +1,8 @@
-// src/lib/performance/prefetch.ts
-// Route and component prefetching utilities
+// prefetch.ts
+/**
+ * Route and resource prefetching utilities.
+ * Implements idle-time prefetching, preconnect hints, and hover-triggered loading.
+ */
 
 import { PREFETCH_ROUTES } from './bundle-config'
 

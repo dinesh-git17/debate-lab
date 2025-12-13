@@ -1,5 +1,8 @@
-// src/lib/security/content-filter.ts
-// Content filtering for profanity, prompt injection, and harmful content detection
+// content-filter.ts
+/**
+ * Pattern-based content filtering for profanity, prompt injection, and harmful content.
+ * Includes extensive regex patterns for sensitive topics and manipulation detection.
+ */
 
 import type {
   ContentFilterConfig,

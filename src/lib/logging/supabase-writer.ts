@@ -1,5 +1,8 @@
-// src/lib/logging/supabase-writer.ts
-// Async log writer that persists logs to Supabase
+// supabase-writer.ts
+/**
+ * Async batch log writer for Supabase persistence.
+ * Queues logs, LLM requests, debate events, and alerts with automatic flushing.
+ */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
@@ -99,7 +102,6 @@ class SupabaseLogWriter {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      // Logging to Supabase is optional - silently disable if not configured
       this.isEnabled = false
       return
     }
@@ -246,7 +248,6 @@ class SupabaseLogWriter {
 
     this.alertQueue.push(row)
 
-    // Alerts are important - flush immediately
     void this.flushAlerts()
   }
 
@@ -280,9 +281,7 @@ class SupabaseLogWriter {
 
     try {
       await this.client.from('metrics_snapshots').insert(row)
-    } catch {
-      // Silently fail - metrics persistence is best-effort
-    }
+    } catch {}
   }
 
   private async flushLogs(): Promise<void> {
@@ -293,7 +292,6 @@ class SupabaseLogWriter {
     try {
       await this.client.from('logs').insert(batch)
     } catch {
-      // Re-queue failed logs (with limit to prevent memory issues)
       if (this.logQueue.length < 1000) {
         this.logQueue.unshift(...batch)
       }
@@ -336,7 +334,6 @@ class SupabaseLogWriter {
     try {
       await this.client.from('alerts').insert(batch)
     } catch {
-      // Alerts are critical - log to console if Supabase fails
       // eslint-disable-next-line no-console
       console.error('[SupabaseLogWriter] Failed to persist alerts:', batch)
     }
@@ -375,5 +372,4 @@ class SupabaseLogWriter {
   }
 }
 
-// Singleton instance
 export const supabaseLogWriter = new SupabaseLogWriter()

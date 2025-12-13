@@ -1,4 +1,9 @@
-// src/lib/query-keys.ts
+// query-keys.ts
+/**
+ * TanStack Query key factory for type-safe cache management.
+ * Provides hierarchical keys for debates, rules, and share data.
+ */
+
 import type { DebateFilters } from '@/types'
 
 export const queryKeys = {

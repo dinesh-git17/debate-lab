@@ -1,38 +1,29 @@
-// src/lib/budget-config.ts
+// budget-config.ts
+/**
+ * Token budget configuration for debate sessions.
+ * Manages limits, thresholds, and cost controls for LLM API usage.
+ */
 
 import type { BudgetConfig } from '@/types/budget'
 
-/**
- * Default budget configuration
- * Note: Token budget must account for both input (context) and output tokens.
- * Budget scales with turn count - see calculateBudgetForTurns().
- */
 export const DEFAULT_BUDGET_CONFIG: BudgetConfig = {
-  maxTokensPerDebate: 250000, // Default for max turns (10); scaled down for fewer turns
-  maxTokensPerTurn: 15000, // Input context + output (context grows as debate progresses)
+  maxTokensPerDebate: 250000,
+  maxTokensPerTurn: 15000,
   warningThresholdPercent: 80,
   hardLimitEnabled: true,
   costLimitUsd: undefined,
 }
 
 /**
- * Calculate appropriate token budget based on turn count.
- * More turns = more context accumulation = more tokens needed.
+ * Calculates token budget based on turn count.
+ * Accounts for context growth as debate progresses plus moderator overhead.
  */
 export function calculateBudgetForTurns(turnCount: number): number {
-  // Base: ~20k tokens per debater turn (input context grows + output)
-  // Plus moderator overhead: ~5k per moderator turn
-  // Formula: debaterTurns * 20k + moderatorTurns * 5k + 20k buffer
-  const moderatorTurns = turnCount + 2 // intro + transitions + summary
+  const moderatorTurns = turnCount + 2
   const estimatedTokens = turnCount * 20000 + moderatorTurns * 5000 + 20000
-
-  // Minimum 100k, maximum 300k
   return Math.min(300000, Math.max(100000, estimatedTokens))
 }
 
-/**
- * Get budget config with environment overrides
- */
 export function getBudgetConfig(): BudgetConfig {
   return {
     maxTokensPerDebate: parseInt(process.env.TOKEN_BUDGET_PER_DEBATE ?? '150000', 10),
@@ -43,9 +34,6 @@ export function getBudgetConfig(): BudgetConfig {
   }
 }
 
-/**
- * Validate budget config values
- */
 export function validateBudgetConfig(config: BudgetConfig): string[] {
   const errors: string[] = []
 
@@ -76,9 +64,6 @@ export function validateBudgetConfig(config: BudgetConfig): string[] {
   return errors
 }
 
-/**
- * Get budget config with validation
- */
 export function getValidatedBudgetConfig(): { config: BudgetConfig; errors: string[] } {
   const config = getBudgetConfig()
   const errors = validateBudgetConfig(config)

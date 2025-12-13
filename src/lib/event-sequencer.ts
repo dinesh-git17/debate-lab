@@ -1,15 +1,13 @@
-// src/lib/event-sequencer.ts
-
+// event-sequencer.ts
 /**
- * Atomic sequence number generator using Redis INCR.
- * Each debate gets its own monotonically increasing sequence.
+ * Atomic sequence number generator for event ordering.
+ * Uses Redis INCR for distributed consistency with in-memory fallback.
  */
 
 import { Redis } from '@upstash/redis'
 
 import { logger } from '@/lib/logging'
 
-// Redis client - initialized lazily
 let redisClient: Redis | null = null
 
 function getRedisClient(): Redis | null {
@@ -26,7 +24,6 @@ function getRedisClient(): Redis | null {
   return null
 }
 
-// In-memory fallback for local development (with HMR-safe global)
 const globalForSeq = globalThis as unknown as {
   seqCounters: Map<string, number> | undefined
 }
@@ -37,10 +34,6 @@ if (process.env.NODE_ENV === 'development') {
 
 const SEQ_KEY_PREFIX = 'debate:seq:'
 
-/**
- * Get next sequence number for a debate (atomic increment).
- * This is guaranteed to be unique and monotonically increasing.
- */
 export async function getNextSeq(debateId: string): Promise<number> {
   const redis = getRedisClient()
 
@@ -58,14 +51,12 @@ export async function getNextSeq(debateId: string): Promise<number> {
         error instanceof Error ? error : null,
         { debateId }
       )
-      // Fall back to memory counter on error
       const current = memorySeqCounters.get(debateId) ?? 0
       const next = current + 1
       memorySeqCounters.set(debateId, next)
       return next
     }
   } else {
-    // Memory fallback for local development
     const current = memorySeqCounters.get(debateId) ?? 0
     const next = current + 1
     memorySeqCounters.set(debateId, next)
@@ -73,10 +64,6 @@ export async function getNextSeq(debateId: string): Promise<number> {
   }
 }
 
-/**
- * Get current sequence number without incrementing.
- * Useful for clients to know the latest seq for gap detection.
- */
 export async function getCurrentSeq(debateId: string): Promise<number> {
   const redis = getRedisClient()
 
@@ -98,9 +85,6 @@ export async function getCurrentSeq(debateId: string): Promise<number> {
   }
 }
 
-/**
- * Reset sequence for a debate (use only for cleanup/testing).
- */
 export async function resetSeq(debateId: string): Promise<void> {
   const redis = getRedisClient()
 
@@ -118,10 +102,6 @@ export async function resetSeq(debateId: string): Promise<void> {
   memorySeqCounters.delete(debateId)
 }
 
-/**
- * Clear all sequence counters (for testing only).
- * Note: Only clears memory store. Does not clear Redis.
- */
 export function clearAllSeqCounters(): void {
   memorySeqCounters.clear()
 }

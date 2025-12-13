@@ -1,4 +1,7 @@
-// src/lib/utils.ts
+// utils.ts
+/**
+ * Common utility functions including Tailwind class merging.
+ */
 
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'

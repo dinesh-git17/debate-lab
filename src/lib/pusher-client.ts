@@ -1,4 +1,8 @@
-// src/lib/pusher-client.ts
+// pusher-client.ts
+/**
+ * Client-side Pusher integration for real-time debate updates.
+ * Manages WebSocket connections and channel subscriptions.
+ */
 
 'use client'
 
@@ -6,20 +10,12 @@ import Pusher from 'pusher-js'
 
 import type { SSEEvent, SSEEventType } from '@/types/execution'
 
-// Singleton Pusher client instance
 let pusherClient: Pusher | null = null
 
-/**
- * Check if Pusher client is configured with required environment variables.
- */
 export function isPusherClientConfigured(): boolean {
   return !!(process.env.NEXT_PUBLIC_PUSHER_KEY && process.env.NEXT_PUBLIC_PUSHER_CLUSTER)
 }
 
-/**
- * Get or create the Pusher client instance.
- * Returns null if Pusher is not configured.
- */
 export function getPusherClient(): Pusher | null {
   if (typeof window === 'undefined') {
     return null
@@ -41,9 +37,6 @@ export function getPusherClient(): Pusher | null {
   return pusherClient
 }
 
-/**
- * Disconnect and cleanup the Pusher client.
- */
 export function disconnectPusher(): void {
   if (pusherClient) {
     pusherClient.disconnect()
@@ -51,16 +44,10 @@ export function disconnectPusher(): void {
   }
 }
 
-/**
- * Get the channel name for a debate.
- */
 export function getDebateChannelName(debateId: string): string {
   return `debate-${debateId}`
 }
 
-/**
- * Connection state for Pusher client
- */
 export type PusherConnectionState =
   | 'initialized'
   | 'connecting'
@@ -69,16 +56,8 @@ export type PusherConnectionState =
   | 'failed'
   | 'disconnected'
 
-/**
- * Event handler type for debate events
- * Events now include seq numbers from the server for ordering
- */
 export type DebateEventHandler = (event: SSEEvent) => void
 
-/**
- * Subscribe to a debate channel.
- * Returns an unsubscribe function.
- */
 export function subscribeToDebate(
   debateId: string,
   onEvent: DebateEventHandler,
@@ -97,7 +76,6 @@ export function subscribeToDebate(
   const channelName = getDebateChannelName(debateId)
   const channel = client.subscribe(channelName)
 
-  // All event types we want to listen for
   const eventTypes: SSEEventType[] = [
     'debate_started',
     'turn_started',
@@ -117,15 +95,12 @@ export function subscribeToDebate(
     'heartbeat',
   ]
 
-  // Bind to all event types
-  // Events now include seq numbers from the server for ordering/deduplication
   for (const eventType of eventTypes) {
     channel.bind(eventType, (data: SSEEvent) => {
       onEvent(data)
     })
   }
 
-  // Handle subscription errors
   channel.bind('pusher:subscription_error', (error: unknown) => {
     if (onError) {
       onError(
@@ -134,7 +109,6 @@ export function subscribeToDebate(
     }
   })
 
-  // Handle connection state changes
   if (onConnectionChange) {
     const handleStateChange = (states: { current: string; previous: string }) => {
       onConnectionChange(states.current as PusherConnectionState)
@@ -142,7 +116,6 @@ export function subscribeToDebate(
 
     client.connection.bind('state_change', handleStateChange)
 
-    // Return enhanced cleanup
     return () => {
       client.connection.unbind('state_change', handleStateChange)
       channel.unbind_all()
@@ -150,16 +123,12 @@ export function subscribeToDebate(
     }
   }
 
-  // Return cleanup function
   return () => {
     channel.unbind_all()
     client.unsubscribe(channelName)
   }
 }
 
-/**
- * Get current Pusher connection state.
- */
 export function getConnectionState(): PusherConnectionState {
   const client = getPusherClient()
 
@@ -170,10 +139,6 @@ export function getConnectionState(): PusherConnectionState {
   return client.connection.state as PusherConnectionState
 }
 
-/**
- * Bind to Pusher connection state changes.
- * Returns an unbind function.
- */
 export function bindConnectionState(callback: (state: PusherConnectionState) => void): () => void {
   const client = getPusherClient()
 
@@ -192,9 +157,6 @@ export function bindConnectionState(callback: (state: PusherConnectionState) => 
   }
 }
 
-/**
- * Force reconnect the Pusher client.
- */
 export function reconnectPusher(): void {
   const client = getPusherClient()
 

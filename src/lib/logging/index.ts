@@ -1,5 +1,7 @@
-// src/lib/logging/index.ts
-// Logging module barrel export
+// index.ts
+/**
+ * Logging module exports including structured logging, metrics, and Sentry integration.
+ */
 
 export {
   logger,

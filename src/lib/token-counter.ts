@@ -1,20 +1,18 @@
-// src/lib/token-counter.ts
+// token-counter.ts
+/**
+ * Token counting utilities using provider-specific tokenizers.
+ * Handles context limit checking and text truncation for LLM calls.
+ */
 
 import { getProvider } from '@/services/llm/provider-factory'
 
 import type { LLMMessage, LLMProviderType } from '@/types/llm'
 
-/**
- * Count tokens in text using provider-specific tokenizer
- */
 export function countTokens(text: string, provider: LLMProviderType = 'openai'): number {
   const providerInstance = getProvider(provider)
   return providerInstance.countTokens(text)
 }
 
-/**
- * Count tokens in a message array
- */
 export function countMessagesTokens(
   systemPrompt: string,
   messages: LLMMessage[],
@@ -24,9 +22,6 @@ export function countMessagesTokens(
   return providerInstance.countMessagesTokens(systemPrompt, messages)
 }
 
-/**
- * Estimate input tokens for a debate turn
- */
 export function estimateTurnInputTokens(
   systemPrompt: string,
   debateContext: string,
@@ -37,9 +32,6 @@ export function estimateTurnInputTokens(
   return countTokens(totalText, provider)
 }
 
-/**
- * Truncate text to fit within token limit
- */
 export function truncateToTokenLimit(
   text: string,
   maxTokens: number,
@@ -75,9 +67,6 @@ export function truncateToTokenLimit(
   return truncated + '...'
 }
 
-/**
- * Check if debate context fits within provider limits
- */
 export function checkContextFits(
   systemPrompt: string,
   debateContext: string,
@@ -103,25 +92,16 @@ export function checkContextFits(
   }
 }
 
-/**
- * Get maximum output tokens for a provider
- */
 export function getMaxOutputTokens(provider: LLMProviderType = 'openai'): number {
   const providerInstance = getProvider(provider)
   return providerInstance.info.maxOutputTokens
 }
 
-/**
- * Get maximum context tokens for a provider
- */
 export function getMaxContextTokens(provider: LLMProviderType = 'openai'): number {
   const providerInstance = getProvider(provider)
   return providerInstance.info.maxContextTokens
 }
 
-/**
- * Calculate available tokens for output given input
- */
 export function getAvailableOutputTokens(
   inputTokens: number,
   provider: LLMProviderType = 'openai'

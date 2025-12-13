@@ -1,4 +1,8 @@
-// src/lib/prompts/rule-validation-prompt.ts
+// rule-validation-prompt.ts
+/**
+ * Custom rule validation prompt for user-submitted debate rules.
+ * Ensures rules are professional, enforceable, fair, and safe.
+ */
 
 export function buildRuleValidationPrompt(rules: string[], defaultRules: string[]): string {
   return `You are the debate moderator for Debate Lab. Your task is to validate custom debate rules submitted by users.

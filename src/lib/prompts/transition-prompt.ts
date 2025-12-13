@@ -1,13 +1,13 @@
-// src/lib/prompts/transition-prompt.ts
+// transition-prompt.ts
+/**
+ * Turn transition prompt templates with ESPN-style handoff energy.
+ * Matches acknowledgment and handoff phrases to debate energy level.
+ */
 
 import { buildModeratorSystemPrompt } from './moderator-system'
 
 import type { CompiledPrompt, ModeratorContext } from '@/types/prompts'
 import type { TurnType } from '@/types/turn'
-
-/**
- * Template for turn transitions - punchy, ESPN-style handoffs
- */
 export const TRANSITION_PROMPT_TEMPLATE = `Generate a punchy, formatted transition with sports-announcer energy.
 
 ## Formula

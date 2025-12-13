@@ -1,4 +1,8 @@
-// src/lib/usage-store.ts
+// usage-store.ts
+/**
+ * Token usage and cost tracking for debate sessions.
+ * Provides per-debate tracking, cost breakdowns, and aggregate statistics.
+ */
 
 import { calculateBudgetForTurns, getBudgetConfig } from './budget-config'
 
@@ -11,15 +15,9 @@ let aggregateStatsCache: UsageStats | null = null
 let aggregateStatsCacheTimestamp: number = 0
 const STATS_CACHE_TTL = 60000
 
-/**
- * Initialize usage tracking for a debate
- * @param debateId - Unique identifier for the debate
- * @param turnCount - Number of debater turns (used to calculate appropriate budget)
- */
 export function initializeUsage(debateId: string, turnCount?: number): DebateUsage {
   const config = getBudgetConfig()
 
-  // Calculate budget based on turn count if provided, otherwise use default
   const budgetTokens = turnCount ? calculateBudgetForTurns(turnCount) : config.maxTokensPerDebate
 
   const usage: DebateUsage = {
@@ -40,16 +38,10 @@ export function initializeUsage(debateId: string, turnCount?: number): DebateUsa
   return usage
 }
 
-/**
- * Get usage for a debate
- */
 export function getUsage(debateId: string): DebateUsage | null {
   return usageStore.get(debateId) ?? null
 }
 
-/**
- * Record token usage for a turn
- */
 export function recordTurnUsage(debateId: string, turnUsage: TurnUsage): DebateUsage {
   let usage = usageStore.get(debateId)
 
@@ -76,9 +68,6 @@ export function recordTurnUsage(debateId: string, turnUsage: TurnUsage): DebateU
   return usage
 }
 
-/**
- * Get cost breakdown by provider for a debate
- */
 export function getCostBreakdown(debateId: string): CostBreakdown[] {
   const usage = usageStore.get(debateId)
   if (!usage) return []
@@ -106,16 +95,10 @@ export function getCostBreakdown(debateId: string): CostBreakdown[] {
   return Array.from(byProvider.values())
 }
 
-/**
- * Get all debates usage (for analytics)
- */
 export function getAllUsage(): DebateUsage[] {
   return Array.from(usageStore.values())
 }
 
-/**
- * Calculate aggregate statistics
- */
 export function getAggregateStats(period: 'hour' | 'day' | 'week' | 'month' = 'day'): UsageStats {
   const now = Date.now()
 
@@ -179,32 +162,20 @@ export function getAggregateStats(period: 'hour' | 'day' | 'week' | 'month' = 'd
   return aggregateStatsCache
 }
 
-/**
- * Delete usage data for a debate
- */
 export function deleteUsage(debateId: string): boolean {
   aggregateStatsCache = null
   return usageStore.delete(debateId)
 }
 
-/**
- * Clear all usage data (for testing)
- */
 export function clearAllUsage(): void {
   usageStore.clear()
   aggregateStatsCache = null
 }
 
-/**
- * Check if usage exists for a debate
- */
 export function hasUsage(debateId: string): boolean {
   return usageStore.has(debateId)
 }
 
-/**
- * Get total active debates being tracked
- */
 export function getActiveDebateCount(): number {
   return usageStore.size
 }

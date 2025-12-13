@@ -1,5 +1,8 @@
-// src/lib/performance/cache-config.ts
-// Caching configuration for React Query and HTTP responses
+// cache-config.ts
+/**
+ * Caching configuration for React Query and HTTP responses.
+ * Provides query cache presets, HTTP Cache-Control headers, and ISR revalidation times.
+ */
 
 import type { CacheConfig } from '@/types/performance'
 

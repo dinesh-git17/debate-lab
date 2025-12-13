@@ -1,22 +1,13 @@
+// speaker-config.ts
 /**
- * src/lib/speaker-config.ts
- * Apple Thematic Luminosity Color System for speaker differentiation
- * Inspired by VisionOS panels, Apple TV+ atmospheric glow, and Siri waveforms
+ * Apple-inspired luminosity color system for debate speaker differentiation.
+ * FOR uses aqua/cyan tones, AGAINST uses lavender/violet, MODERATOR uses silver/indigo.
  */
 
 import type { SpeakerConfig } from '@/types/debate-ui'
 import type { TurnSpeaker } from '@/types/turn'
 
-/**
- * Apple Thematic Luminosity Colors
- * These are NOT flat colors - they represent "light" emanating from the interface
- *
- * FOR: Aqua/Cyan - Siri-inspired, calm affirmation
- * AGAINST: Lavender/Violet - Apple Music gradient, passionate opposition
- * MODERATOR: Silver/Indigo - neutral authority, cool professionalism
- */
 export const APPLE_COLORS = {
-  // Aqua/Cyan - inspired by Siri waveforms and macOS accent colors
   for: {
     primary: 'hsl(187, 72%, 58%)', // Core aqua
     secondary: 'hsl(195, 85%, 48%)', // Deeper cyan
@@ -24,10 +15,8 @@ export const APPLE_COLORS = {
     hsl: 'hsl(187, 72%, 58%)',
     rgb: 'rgb(64, 196, 210)',
     rgba: (alpha: number) => `rgba(64, 196, 210, ${alpha})`,
-    // Secondary color for gradients
     rgba2: (alpha: number) => `rgba(32, 164, 210, ${alpha})`,
   },
-  // Lavender/Violet - inspired by Apple Music and VisionOS purples
   against: {
     primary: 'hsl(270, 60%, 65%)', // Core lavender
     secondary: 'hsl(285, 70%, 55%)', // Electric violet
@@ -35,10 +24,8 @@ export const APPLE_COLORS = {
     hsl: 'hsl(270, 60%, 65%)',
     rgb: 'rgb(168, 128, 212)',
     rgba: (alpha: number) => `rgba(168, 128, 212, ${alpha})`,
-    // Secondary color for gradients
     rgba2: (alpha: number) => `rgba(190, 100, 210, ${alpha})`,
   },
-  // Silver/Indigo - neutral authority
   moderator: {
     primary: 'hsl(225, 25%, 62%)', // Cool silver-blue
     secondary: 'hsl(230, 30%, 52%)', // Deeper indigo
@@ -46,7 +33,6 @@ export const APPLE_COLORS = {
     hsl: 'hsl(225, 25%, 62%)',
     rgb: 'rgb(128, 138, 172)',
     rgba: (alpha: number) => `rgba(128, 138, 172, ${alpha})`,
-    // Secondary color for gradients
     rgba2: (alpha: number) => `rgba(108, 118, 162, ${alpha})`,
   },
 } as const
@@ -90,18 +76,7 @@ export const SPEAKER_CONFIGS: Record<TurnSpeaker, SpeakerConfig> = {
   },
 }
 
-/**
- * Atmospheric Ambient Glow - thematic radial gradient behind the card
- * Each speaker has a subtle identity gradient that tells their story:
- * - FOR: Deep charcoal → midnight blue (analytical, logical)
- * - AGAINST: Deep charcoal → subtle plum/rose (passionate, challenging)
- * - MODERATOR: Deep charcoal → warm amber (balanced, wise)
- *
- * Anti-banding: Uses many intermediate stops for smooth transitions.
- * Combined with blur(60px) in message-bubble.tsx for soft edges.
- */
 export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
-  // FOR: Midnight blue undertone - smooth multi-stop gradient
   for: `radial-gradient(
     ellipse 140% 120% at 50% 0%,
     rgba(80, 110, 160, 0.08) 0%,
@@ -113,7 +88,6 @@ export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
     rgba(20, 30, 50, 0.01) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
-  // AGAINST: Plum/rose undertone - smooth multi-stop gradient
   against: `radial-gradient(
     ellipse 140% 120% at 50% 0%,
     rgba(140, 90, 115, 0.08) 0%,
@@ -125,7 +99,6 @@ export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
     rgba(40, 28, 38, 0.01) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
-  // MODERATOR: Warm amber undertone - smooth multi-stop gradient
   moderator: `radial-gradient(
     ellipse 140% 120% at 50% 0%,
     rgba(140, 125, 90, 0.07) 0%,
@@ -139,12 +112,6 @@ export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
   )`.replace(/\s+/g, ' '),
 }
 
-/**
- * Thematic Luminosity Background - multi-layer gradient system
- * Layer 1: Top highlight (luminous rim)
- * Layer 2: Vertical atmospheric gradient
- * Layer 3: Role-colored tint wash
- */
 export const SPEAKER_LUMINOSITY_BACKGROUND: Record<TurnSpeaker, string> = {
   for: `
     linear-gradient(180deg,
@@ -196,10 +163,6 @@ export const SPEAKER_LUMINOSITY_BACKGROUND: Record<TurnSpeaker, string> = {
   `.replace(/\s+/g, ' '),
 }
 
-/**
- * Specular Edge Rim Light - inner inset shadow creating "device bezel" effect
- * 0.5-1px inset with role color at 25-35% opacity
- */
 export const SPEAKER_RIM_LIGHT: Record<TurnSpeaker, string> = {
   for: `
     inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.25)},
@@ -218,34 +181,24 @@ export const SPEAKER_RIM_LIGHT: Record<TurnSpeaker, string> = {
   `.replace(/\s+/g, ' '),
 }
 
-// Legacy gradient for side glow bleed effect
 export const SPEAKER_GRADIENTS: Record<TurnSpeaker, string> = {
   for: `linear-gradient(90deg, ${APPLE_COLORS.for.rgba(0.08)} 0%, transparent 150px)`,
   against: `linear-gradient(90deg, ${APPLE_COLORS.against.rgba(0.08)} 0%, transparent 150px)`,
   moderator: `linear-gradient(90deg, ${APPLE_COLORS.moderator.rgba(0.06)} 0%, transparent 150px)`,
 }
 
-// Border colors for role badges
 export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
   for: `text-[hsl(187,72%,68%)] border-[hsl(187,72%,58%)]/35 bg-[hsl(187,72%,58%)]/10`,
   against: `text-[hsl(270,60%,75%)] border-[hsl(270,60%,65%)]/35 bg-[hsl(270,60%,65%)]/10`,
   moderator: `text-[hsl(225,25%,72%)] border-[hsl(225,25%,62%)]/35 bg-[hsl(225,25%,62%)]/10`,
 }
 
-/**
- * 3D floating card shadows with role-colored atmospheric glow
- * Enhanced with thematic luminosity
- */
 export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
   for: [
-    // Specular rim light
     `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.3)}`,
     'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
-    // Inner depth
     'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
-    // Contact shadow
     '0 1px 2px rgba(0, 0, 0, 0.18)',
-    // Elevation shadows
     '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
     '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
   ].join(', '),
@@ -267,17 +220,12 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
   ].join(', '),
 }
 
-// Inactive card shadows
 export const SPEAKER_INACTIVE_SHADOWS = [
   'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
   'inset 0 -32px 48px -16px rgba(0, 0, 0, 0.2)',
   '0 8px 24px -4px rgba(0, 0, 0, 0.2)',
 ].join(', ')
 
-/**
- * Luminous pill badge styles - Vision Pro floating label aesthetic
- * Inner glow + translucent luminous background
- */
 export const SPEAKER_PILL_STYLES: Record<
   TurnSpeaker,
   {
@@ -323,7 +271,6 @@ export const SPEAKER_PILL_STYLES: Record<
   },
 }
 
-// Phase/section chip styles with luminous tint
 export const SPEAKER_PHASE_CHIP_STYLES: Record<
   TurnSpeaker,
   {
@@ -349,7 +296,6 @@ export const SPEAKER_PHASE_CHIP_STYLES: Record<
   },
 }
 
-// Card surface tint - luminous wash over the frosted glass
 export const SPEAKER_SURFACE_TINT: Record<
   TurnSpeaker,
   {
@@ -371,7 +317,6 @@ export const SPEAKER_SURFACE_TINT: Record<
   },
 }
 
-// Enhanced gradient for active state with exponential luminosity decay
 export const SPEAKER_ACTIVE_GRADIENTS: Record<TurnSpeaker, string> = {
   for: `linear-gradient(90deg,
     ${APPLE_COLORS.for.rgba(0.14)} 0%,
@@ -415,7 +360,6 @@ const TURN_TYPE_LABELS: Record<string, string> = {
   moderator_summary: 'Summary',
 }
 
-// Short labels for data chips
 const TURN_TYPE_SHORT_LABELS: Record<string, string> = {
   opening: 'OPENING',
   constructive: 'CONSTRUCTIVE',

@@ -1,17 +1,14 @@
-// src/lib/debate-assignment.ts
+// debate-assignment.ts
+/**
+ * Random assignment of AI models to debate positions.
+ * Uses cryptographic randomness to ensure unbiased FOR/AGAINST allocation.
+ */
+
 import { randomInt } from 'crypto'
 
 import type { DebateAssignment, DebatePosition, LLMProvider } from '@/types/debate'
 
-/**
- * Generates a cryptographically random debate assignment.
- * Uses Node.js crypto.randomInt for true randomness (not Math.random).
- *
- * @returns DebateAssignment with random FOR/AGAINST positions
- */
 export function generateDebateAssignment(): DebateAssignment {
-  // 0 = ChatGPT argues FOR, Grok argues AGAINST
-  // 1 = Grok argues FOR, ChatGPT argues AGAINST
   const coinFlip = randomInt(0, 2)
 
   if (coinFlip === 0) {
@@ -27,9 +24,6 @@ export function generateDebateAssignment(): DebateAssignment {
   }
 }
 
-/**
- * Gets the provider for a given position in a debate.
- */
 export function getProviderForPosition(
   assignment: DebateAssignment,
   position: DebatePosition
@@ -37,9 +31,6 @@ export function getProviderForPosition(
   return position === 'for' ? assignment.forPosition : assignment.againstPosition
 }
 
-/**
- * Gets the position for a given provider in a debate.
- */
 export function getPositionForProvider(
   assignment: DebateAssignment,
   provider: LLMProvider

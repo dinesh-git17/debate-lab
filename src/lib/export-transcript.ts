@@ -1,11 +1,12 @@
-// src/lib/export-transcript.ts
+// export-transcript.ts
+/**
+ * Debate transcript export utilities.
+ * Supports Markdown, plain text, and JSON formats with configurable content options.
+ */
 
 import type { DebateMessage } from '@/types/debate-ui'
 import type { ExportConfig, ExportedTranscript, ExportedTurn } from '@/types/export'
 
-/**
- * Generate filename for export
- */
 export function generateFilename(topic: string, format: 'markdown' | 'text' | 'json'): string {
   const slug = topic
     .toLowerCase()
@@ -19,9 +20,6 @@ export function generateFilename(topic: string, format: 'markdown' | 'text' | 'j
   return `debate-${slug}-${date}.${extension}`
 }
 
-/**
- * Export as Markdown format
- */
 export function exportAsMarkdown(
   topic: string,
   format: string,
@@ -81,9 +79,6 @@ export function exportAsMarkdown(
   return lines.join('\n')
 }
 
-/**
- * Export as plain text format
- */
 export function exportAsText(
   topic: string,
   format: string,
@@ -140,9 +135,6 @@ export function exportAsText(
   return lines.join('\n')
 }
 
-/**
- * Export as JSON format
- */
 export function exportAsJSON(
   debateId: string,
   topic: string,
@@ -193,9 +185,6 @@ export function exportAsJSON(
   return JSON.stringify(exported, null, 2)
 }
 
-/**
- * Trigger file download
- */
 export function downloadFile(content: string, filename: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType })
   const url = URL.createObjectURL(blob)
@@ -210,9 +199,6 @@ export function downloadFile(content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url)
 }
 
-/**
- * Main export function
- */
 export function exportTranscript(
   debateId: string,
   topic: string,

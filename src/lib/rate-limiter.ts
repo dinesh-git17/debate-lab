@@ -1,4 +1,8 @@
-// src/lib/rate-limiter.ts
+// rate-limiter.ts
+/**
+ * Token bucket rate limiter for LLM API calls.
+ * Enforces per-provider request and token limits with automatic refill.
+ */
 
 import type { LLMProviderType } from '@/types/llm'
 
@@ -30,9 +34,6 @@ const PROVIDER_LIMITS: Record<LLMProviderType, RateLimitConfig> = {
 
 const buckets = new Map<LLMProviderType, RateLimitBucket>()
 
-/**
- * Get or create a rate limit bucket for a provider
- */
 function getBucket(provider: LLMProviderType): RateLimitBucket {
   const existing = buckets.get(provider)
   if (existing) {
@@ -49,9 +50,6 @@ function getBucket(provider: LLMProviderType): RateLimitBucket {
   return bucket
 }
 
-/**
- * Refill buckets based on elapsed time
- */
 function refillBucket(provider: LLMProviderType): void {
   const bucket = getBucket(provider)
   const limits = PROVIDER_LIMITS[provider]
@@ -76,9 +74,6 @@ function refillBucket(provider: LLMProviderType): void {
   }
 }
 
-/**
- * Check if a request can proceed
- */
 export function canMakeRequest(provider: LLMProviderType, estimatedTokens: number): boolean {
   refillBucket(provider)
   const bucket = getBucket(provider)
@@ -86,27 +81,18 @@ export function canMakeRequest(provider: LLMProviderType, estimatedTokens: numbe
   return bucket.requests >= 1 && bucket.tokens >= estimatedTokens
 }
 
-/**
- * Consume rate limit capacity
- */
 export function consumeCapacity(provider: LLMProviderType, tokens: number): void {
   const bucket = getBucket(provider)
   bucket.requests -= 1
   bucket.tokens -= tokens
 }
 
-/**
- * Get time until rate limit resets (ms)
- */
 export function getResetTime(provider: LLMProviderType): number {
   const bucket = getBucket(provider)
   const elapsed = Date.now() - bucket.lastRefill
   return Math.max(0, 60000 - elapsed)
 }
 
-/**
- * Get current rate limit state
- */
 export function getRateLimitState(provider: LLMProviderType) {
   refillBucket(provider)
   const bucket = getBucket(provider)
@@ -121,9 +107,6 @@ export function getRateLimitState(provider: LLMProviderType) {
   }
 }
 
-/**
- * Wait until rate limit allows request
- */
 export async function waitForCapacity(
   provider: LLMProviderType,
   estimatedTokens: number
@@ -136,9 +119,6 @@ export async function waitForCapacity(
   }
 }
 
-/**
- * Reset rate limits (for testing)
- */
 export function resetRateLimits(): void {
   buckets.clear()
 }

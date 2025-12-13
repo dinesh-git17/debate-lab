@@ -1,5 +1,8 @@
-// src/lib/performance/image-config.ts
-// Image optimization configuration for next/image
+// image-config.ts
+/**
+ * Image optimization configuration for next/image.
+ * Defines responsive sizes, blur placeholders, and loading priority strategies.
+ */
 
 import type { ImageOptimizationConfig } from '@/types/performance'
 

@@ -1,12 +1,12 @@
-// src/lib/prompts/summary-prompt.ts
+// summary-prompt.ts
+/**
+ * Final debate summary prompt with premium podcast-style wrap-up.
+ * Generates quick recaps with heat indicators and vibe lines.
+ */
 
 import { buildModeratorSystemPrompt } from './moderator-system'
 
 import type { CompiledPrompt, DebateHistoryEntry, ModeratorContext } from '@/types/prompts'
-
-/**
- * Template for final debate summary - premium podcast-style wrap-up
- */
 export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a quick, premium recap — NOT an academic analysis.
 
 ## Your Voice

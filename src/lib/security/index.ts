@@ -1,5 +1,8 @@
-// src/lib/security/index.ts
-// Security module barrel export
+// index.ts
+/**
+ * Security module barrel export.
+ * Aggregates sanitization, filtering, rate limiting, headers, and abuse tracking.
+ */
 
 export {
   sanitize,

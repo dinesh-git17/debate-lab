@@ -1,6 +1,8 @@
-// src/lib/security/semantic-filter.ts
-// Semantic safety layer using embeddings to catch euphemistic harmful content
-// This catches content that evades regex patterns and OpenAI moderation
+// semantic-filter.ts
+/**
+ * Embedding-based semantic safety filter using cosine similarity.
+ * Catches euphemistic harmful content that evades regex and OpenAI moderation.
+ */
 
 import { logger } from '@/lib/logging'
 

@@ -1,5 +1,8 @@
-// src/lib/logging/alerts.ts
-// Alert detection and notification system
+// alerts.ts
+/**
+ * Alert detection and webhook notification system.
+ * Monitors error rates, latency, and LLM failures with configurable thresholds.
+ */
 
 import { nanoid } from 'nanoid'
 

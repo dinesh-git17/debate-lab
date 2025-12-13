@@ -1,5 +1,8 @@
-// src/lib/client-logger.ts
-// Lightweight browser-compatible logger for client components
+// client-logger.ts
+/**
+ * Browser-compatible logger for client components.
+ * Outputs to console in development only; production errors routed to Sentry.
+ */
 /* eslint-disable no-console */
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -29,7 +32,5 @@ export const clientLogger = {
     if (isDev) {
       console.error(`[ERROR] ${message}`, error ?? '', context ?? '')
     }
-    // In production, errors could be sent to an error tracking service
-    // This is handled by the error boundary and Sentry integration
   },
 }

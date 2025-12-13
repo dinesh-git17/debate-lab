@@ -1,5 +1,8 @@
-// src/lib/security/openai-moderation.ts
-// OpenAI Moderation API client for secondary content filtering
+// openai-moderation.ts
+/**
+ * OpenAI Moderation API client with custom score thresholds.
+ * Provides secondary content filtering with category-specific blocking.
+ */
 
 import { logger } from '@/lib/logging'
 

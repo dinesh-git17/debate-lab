@@ -1,11 +1,10 @@
-// src/lib/scoring-rubric.ts
+// scoring-rubric.ts
+/**
+ * Debate scoring rubrics based on academic judging criteria.
+ * Defines weighted categories and utility functions for score calculations.
+ */
 
 import type { DebateQualityRating, ScoringCategory, ScoringRubric } from '@/types/judge'
-
-/**
- * Scoring rubric for debate evaluation.
- * Based on standard academic debate judging criteria.
- */
 export const SCORING_RUBRICS: ScoringRubric[] = [
   {
     category: 'argument_quality',
@@ -74,21 +73,12 @@ export const SCORING_RUBRICS: ScoringRubric[] = [
   },
 ]
 
-/**
- * Maximum possible total score across all categories
- */
 export const MAX_TOTAL_SCORE = SCORING_RUBRICS.reduce((sum, r) => sum + r.maxScore, 0)
 
-/**
- * Get rubric configuration by category
- */
 export function getRubric(category: ScoringCategory): ScoringRubric | undefined {
   return SCORING_RUBRICS.find((r) => r.category === category)
 }
 
-/**
- * Calculate weighted score from category scores
- */
 export function calculateWeightedScore(
   scores: { category: ScoringCategory; score: number }[]
 ): number {
@@ -107,9 +97,6 @@ export function calculateWeightedScore(
   return totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0
 }
 
-/**
- * Get quality rating from percentage score
- */
 export function getQualityRating(percentage: number): DebateQualityRating {
   if (percentage >= 85) return 'excellent'
   if (percentage >= 70) return 'good'
@@ -117,9 +104,6 @@ export function getQualityRating(percentage: number): DebateQualityRating {
   return 'developing'
 }
 
-/**
- * Get descriptive text for quality rating
- */
 export function getQualityDescription(rating: DebateQualityRating): string {
   const descriptions: Record<DebateQualityRating, string> = {
     excellent:
@@ -131,18 +115,12 @@ export function getQualityDescription(rating: DebateQualityRating): string {
   return descriptions[rating]
 }
 
-/**
- * Validate that a score is within valid range for its category
- */
 export function validateCategoryScore(category: ScoringCategory, score: number): number {
   const rubric = getRubric(category)
   if (!rubric) return 0
   return Math.min(Math.max(score, 0), rubric.maxScore)
 }
 
-/**
- * Calculate total score from category scores
- */
 export function calculateTotalScore(
   categoryScores: { category: ScoringCategory; score: number }[]
 ): number {
@@ -151,18 +129,12 @@ export function calculateTotalScore(
   }, 0)
 }
 
-/**
- * Get score color class based on percentage
- */
 export function getScoreColorClass(percentage: number): string {
   if (percentage >= 80) return 'text-green-600 dark:text-green-400'
   if (percentage >= 60) return 'text-yellow-600 dark:text-yellow-400'
   return 'text-red-600 dark:text-red-400'
 }
 
-/**
- * Get progress bar color class based on percentage
- */
 export function getBarColorClass(percentage: number): string {
   if (percentage >= 80) return 'bg-green-500'
   if (percentage >= 60) return 'bg-yellow-500'

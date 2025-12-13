@@ -1,4 +1,9 @@
-// src/lib/validation-cache.ts
+// validation-cache.ts
+/**
+ * TTL-based cache for custom rule validation results.
+ * Reduces redundant AI validation calls for repeated rules.
+ */
+
 import type { ValidationResult } from '@/types/validation'
 
 interface CacheEntry {

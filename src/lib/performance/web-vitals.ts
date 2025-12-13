@@ -1,5 +1,8 @@
-// src/lib/performance/web-vitals.ts
-// Web Vitals monitoring and reporting
+// web-vitals.ts
+/**
+ * Web Vitals monitoring and reporting using Google's web-vitals library.
+ * Buffers metrics for batch reporting with automatic threshold-based ratings.
+ */
 
 import type { WebVitalsMetric, PerformanceReport } from '@/types/performance'
 

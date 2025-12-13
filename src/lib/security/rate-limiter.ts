@@ -1,5 +1,8 @@
-// src/lib/security/rate-limiter.ts
-// Rate limiting implementation with in-memory store and Redis adapter interface
+// rate-limiter.ts
+/**
+ * Rate limiting with pluggable store interface.
+ * Provides IP, session, debate creation, and API rate limits with active debate tracking.
+ */
 
 import type {
   RateLimitConfig,

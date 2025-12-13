@@ -1,5 +1,8 @@
-// src/lib/security/headers.ts
-// Security headers configuration for Next.js middleware
+// headers.ts
+/**
+ * Security headers configuration for Next.js middleware.
+ * Configures CSP, CORS, Permissions-Policy, and other HTTP security headers.
+ */
 
 import type { SecurityHeaders } from '@/types/security'
 

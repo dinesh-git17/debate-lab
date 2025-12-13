@@ -1,11 +1,11 @@
-// src/lib/provider-pricing.ts
+// provider-pricing.ts
+/**
+ * LLM provider cost calculation utilities.
+ * Pricing per 1,000 tokens - update when provider pricing changes.
+ */
 
 import type { LLMProviderType } from '@/types/llm'
 
-/**
- * Pricing per 1,000 tokens (USD)
- * Keep in sync with provider pricing pages
- */
 export const PROVIDER_PRICING: Record<LLMProviderType, { input: number; output: number }> = {
   openai: {
     input: 0.01,
@@ -21,9 +21,6 @@ export const PROVIDER_PRICING: Record<LLMProviderType, { input: number; output: 
   },
 }
 
-/**
- * Calculate cost for token usage
- */
 export function calculateCost(
   provider: LLMProviderType,
   inputTokens: number,
@@ -41,9 +38,6 @@ export function calculateCost(
   }
 }
 
-/**
- * Estimate cost for a planned request
- */
 export function estimateCost(
   provider: LLMProviderType,
   estimatedInputTokens: number,
@@ -53,9 +47,6 @@ export function estimateCost(
   return totalCost
 }
 
-/**
- * Format cost as currency string
- */
 export function formatCost(costUsd: number): string {
   if (costUsd < 0.01) {
     return `$${costUsd.toFixed(4)}`
@@ -63,9 +54,6 @@ export function formatCost(costUsd: number): string {
   return `$${costUsd.toFixed(2)}`
 }
 
-/**
- * Get provider display name for cost reports
- */
 export function getProviderDisplayName(provider: LLMProviderType | 'claude'): string {
   const names: Record<string, string> = {
     openai: 'ChatGPT (GPT-4 Turbo)',
@@ -76,9 +64,6 @@ export function getProviderDisplayName(provider: LLMProviderType | 'claude'): st
   return names[provider] ?? provider
 }
 
-/**
- * Map debate role to LLM provider type for cost calculation
- */
 export function mapProviderForCost(provider: LLMProviderType | 'claude'): LLMProviderType {
   return provider === 'claude' ? 'anthropic' : provider
 }

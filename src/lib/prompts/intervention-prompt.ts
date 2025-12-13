@@ -1,12 +1,12 @@
-// src/lib/prompts/intervention-prompt.ts
+// intervention-prompt.ts
+/**
+ * Moderator intervention prompt templates for rule violations.
+ * Provides severity-based guidance and violation type descriptions.
+ */
 
 import { buildModeratorSystemPrompt } from './moderator-system'
 
 import type { CompiledPrompt, ModeratorContext, ViolationRecord } from '@/types/prompts'
-
-/**
- * Template for moderator interventions
- */
 export const INTERVENTION_PROMPT_TEMPLATE = `You must intervene in the debate due to a rule violation or issue that needs addressing.
 
 ## Intervention Context

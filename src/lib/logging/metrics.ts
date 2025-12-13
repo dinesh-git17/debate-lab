@@ -1,5 +1,8 @@
-// src/lib/logging/metrics.ts
-// In-memory metrics collection with aggregation support
+// metrics.ts
+/**
+ * In-memory metrics collection with Prometheus-compatible export.
+ * Tracks debates, LLM requests, and HTTP performance with histogram support.
+ */
 
 import type {
   HistogramBuckets,

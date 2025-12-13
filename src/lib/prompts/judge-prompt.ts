@@ -1,12 +1,12 @@
-// src/lib/prompts/judge-prompt.ts
+// judge-prompt.ts
+/**
+ * Judge prompt templates for Claude as debate evaluator.
+ * Defines scoring rubrics, analysis structure, and educational feedback guidelines.
+ */
 
 import { MAX_TOTAL_SCORE, SCORING_RUBRICS } from '@/lib/scoring-rubric'
 
 import type { DebateHistoryEntry } from '@/types/prompts'
-
-/**
- * System prompt for Claude acting as debate judge
- */
 export const JUDGE_SYSTEM_PROMPT = `You are an expert debate judge providing educational analysis of an AI debate. Your role is to evaluate argument quality, provide constructive feedback, and offer insights that help understand effective argumentation.
 
 ## Your Role as Judge

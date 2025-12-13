@@ -1,4 +1,8 @@
-// src/lib/prompts/debater-prompt.ts
+// debater-prompt.ts
+/**
+ * Debater AI prompt construction for ChatGPT and Grok.
+ * Defines persona, formatting rules, turn-specific instructions, and rhetorical toolkits.
+ */
 
 import { TARGET_WORD_COUNTS } from '@/lib/debate-formats'
 

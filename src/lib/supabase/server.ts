@@ -1,5 +1,8 @@
-// src/lib/supabase/server.ts
-// Supabase server client for backend operations
+// server.ts
+/**
+ * Supabase admin client singleton for server-side operations.
+ * Uses service role key for elevated privileges in abuse tracking and persistence.
+ */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 

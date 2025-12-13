@@ -1,6 +1,8 @@
-// src/lib/security/validate-input.ts
-// Unified input validation combining sanitization and 4-layer moderation stack
-// Layers: (1) Keyword Scanner → (2) Semantic Classifier → (3) OpenAI Moderation → (4) Business Rules
+// validate-input.ts
+/**
+ * Unified input validation combining sanitization and 5-layer moderation.
+ * Entry point for validating debate topics and custom rules with abuse tracking.
+ */
 
 import { logger } from '@/lib/logging'
 

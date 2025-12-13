@@ -1,4 +1,8 @@
-// src/lib/event-store.ts
+// event-store.ts
+/**
+ * Persistent event storage using Redis Streams.
+ * Enables replay, catch-up sync, and gap filling for debate events.
+ */
 
 import { Redis } from '@upstash/redis'
 
@@ -6,7 +10,6 @@ import { logger } from '@/lib/logging'
 
 import type { SSEEvent } from '@/types/execution'
 
-// Redis client - initialized lazily
 let redisClient: Redis | null = null
 
 function getRedisClient(): Redis | null {
@@ -23,7 +26,6 @@ function getRedisClient(): Redis | null {
   return null
 }
 
-// In-memory fallback for local development (with HMR-safe global)
 const globalForStore = globalThis as unknown as {
   eventStore: Map<string, SSEEvent[]> | undefined
 }
@@ -33,31 +35,22 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const REDIS_STREAM_PREFIX = 'debate:events:'
-const EVENT_TTL_SECONDS = 24 * 60 * 60 // 24 hours
+const EVENT_TTL_SECONDS = 24 * 60 * 60
 
-/**
- * Stored event with Redis Stream ID
- */
 export interface StoredEvent {
-  id: string // Redis Stream ID (e.g., "1234567890123-0")
+  id: string
   event: SSEEvent
 }
 
-/**
- * Parse Redis stream entries to StoredEvent array.
- * Handles various formats that Upstash Redis might return.
- */
 function parseStreamEntries(entries: unknown): StoredEvent[] {
   if (!entries) {
     return []
   }
 
-  // Handle empty array (common case - no events)
   if (Array.isArray(entries) && entries.length === 0) {
     return []
   }
 
-  // Handle empty object (Upstash may return {} for empty streams)
   if (
     typeof entries === 'object' &&
     entries !== null &&
@@ -75,7 +68,6 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
 
   const results: StoredEvent[] = []
 
-  // Handle array format (expected from XRANGE)
   if (Array.isArray(entries)) {
     for (const entry of entries) {
       const parsed = parseSingleEntry(entry)
@@ -84,18 +76,15 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
     return results
   }
 
-  // Handle object format - Upstash might return { id: fields } or similar
   if (typeof entries === 'object' && entries !== null) {
     const entriesObj = entries as Record<string, unknown>
 
-    // Check if it's a single entry with 'id' field
     if ('id' in entriesObj) {
       const parsed = parseSingleEntry(entriesObj)
       if (parsed) results.push(parsed)
       return results
     }
 
-    // Check if it's a map of id -> fields
     for (const [key, value] of Object.entries(entriesObj)) {
       logger.debug('Processing entry', {
         key,
@@ -104,12 +93,10 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
         valueSample: JSON.stringify(value).slice(0, 300),
       })
 
-      // Format: { "stream-id": { type: "...", data: "..." or {...} } }
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         const valueObj = value as Record<string, unknown>
         if ('data' in valueObj) {
           try {
-            // Handle both string (needs parsing) and object (already parsed by Upstash)
             const eventData =
               typeof valueObj.data === 'string'
                 ? (JSON.parse(valueObj.data) as SSEEvent)
@@ -126,7 +113,6 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
         }
       }
 
-      // Format: { "stream-id": ["field1", "value1", "field2", "value2"] }
       if (Array.isArray(value)) {
         for (let i = 0; i < value.length - 1; i += 2) {
           if (value[i] === 'data' && typeof value[i + 1] === 'string') {
@@ -156,16 +142,12 @@ function parseStreamEntries(entries: unknown): StoredEvent[] {
   return results
 }
 
-/**
- * Parse a single stream entry in various possible formats.
- */
 function parseSingleEntry(entry: unknown): StoredEvent | null {
   if (!entry || typeof entry !== 'object') return null
 
   try {
     const entryObj = entry as Record<string, unknown>
 
-    // Format 1: { id: string, data: string }
     if ('id' in entryObj && 'data' in entryObj) {
       const id = String(entryObj.id)
       const data = entryObj.data
@@ -178,11 +160,9 @@ function parseSingleEntry(entry: unknown): StoredEvent | null {
       }
     }
 
-    // Format 2: [id, [field1, value1, field2, value2, ...]] (raw Redis format)
     if (Array.isArray(entry) && entry.length === 2) {
       const [id, fields] = entry
       if (typeof id === 'string' && Array.isArray(fields)) {
-        // Find 'data' field in the array
         for (let i = 0; i < fields.length - 1; i += 2) {
           if (fields[i] === 'data' && typeof fields[i + 1] === 'string') {
             return {
@@ -194,7 +174,6 @@ function parseSingleEntry(entry: unknown): StoredEvent | null {
       }
     }
 
-    // Format 3: { id: string, fieldName: value, ... } where we need to find data
     if ('id' in entryObj) {
       const id = String(entryObj.id)
       for (const [key, value] of Object.entries(entryObj)) {
@@ -217,20 +196,8 @@ function parseSingleEntry(entry: unknown): StoredEvent | null {
   return null
 }
 
-/**
- * Tracks streams that have had their TTL set this session.
- * Used to avoid redundant EXPIRE calls on every event.
- */
 const streamsWithTTL = new Set<string>()
 
-/**
- * Append an event to the Redis Stream for a debate.
- * Returns the event ID assigned by Redis.
- *
- * Optimization: Only sets EXPIRE on first event to avoid redundant Redis calls.
- * The TTL is refreshed when the stream is accessed, which is sufficient for
- * debates that complete within 24 hours.
- */
 export async function appendEvent(debateId: string, event: SSEEvent): Promise<string | null> {
   const redis = getRedisClient()
 
@@ -238,15 +205,11 @@ export async function appendEvent(debateId: string, event: SSEEvent): Promise<st
     try {
       const streamKey = `${REDIS_STREAM_PREFIX}${debateId}`
 
-      // XADD to append event to stream
-      // Use * for auto-generated ID
       const eventId = await redis.xadd(streamKey, '*', {
         type: event.type,
         data: JSON.stringify(event),
       })
 
-      // Only set TTL once per stream per server process
-      // This eliminates ~97% of EXPIRE calls (one per debate instead of one per event)
       if (!streamsWithTTL.has(streamKey)) {
         await redis.expire(streamKey, EVENT_TTL_SECONDS)
         streamsWithTTL.add(streamKey)
@@ -276,7 +239,6 @@ export async function appendEvent(debateId: string, event: SSEEvent): Promise<st
       return null
     }
   } else {
-    // Memory fallback for local development
     const events = memoryStore.get(debateId) ?? []
     events.push(event)
     memoryStore.set(debateId, events)
@@ -284,9 +246,6 @@ export async function appendEvent(debateId: string, event: SSEEvent): Promise<st
   }
 }
 
-/**
- * Get all events for a debate from Redis Stream.
- */
 export async function getAllEvents(debateId: string): Promise<StoredEvent[]> {
   const redis = getRedisClient()
 
@@ -294,7 +253,6 @@ export async function getAllEvents(debateId: string): Promise<StoredEvent[]> {
     try {
       const streamKey = `${REDIS_STREAM_PREFIX}${debateId}`
 
-      // XRANGE to get all events from beginning to end
       const entries = await redis.xrange(streamKey, '-', '+')
 
       const parsed = parseStreamEntries(entries)
@@ -326,10 +284,6 @@ export async function getAllEvents(debateId: string): Promise<StoredEvent[]> {
   }
 }
 
-/**
- * Get events since a specific event ID (exclusive).
- * Useful for catching up after reconnection.
- */
 export async function getEventsSince(debateId: string, sinceId: string): Promise<StoredEvent[]> {
   const redis = getRedisClient()
 
@@ -337,8 +291,6 @@ export async function getEventsSince(debateId: string, sinceId: string): Promise
     try {
       const streamKey = `${REDIS_STREAM_PREFIX}${debateId}`
 
-      // XRANGE from (sinceId, +inf]
-      // We use the exclusive range by using (sinceId
       const entries = await redis.xrange(streamKey, `(${sinceId}`, '+')
 
       return parseStreamEntries(entries)
@@ -354,7 +306,6 @@ export async function getEventsSince(debateId: string, sinceId: string): Promise
       return []
     }
   } else {
-    // Memory fallback - parse index from memory ID
     const events = memoryStore.get(debateId) ?? []
     const parts = sinceId.split('-')
     const lastPart = parts[parts.length - 1]
@@ -374,10 +325,6 @@ export async function getEventsSince(debateId: string, sinceId: string): Promise
   }
 }
 
-/**
- * Get events after a specific timestamp.
- * Useful for hydration when only timestamp is known.
- */
 export async function getEventsAfterTimestamp(
   debateId: string,
   afterTimestamp: string
@@ -388,9 +335,6 @@ export async function getEventsAfterTimestamp(
   return allEvents.filter((stored) => new Date(stored.event.timestamp) > afterDate)
 }
 
-/**
- * Get the last N events for a debate.
- */
 export async function getLastEvents(debateId: string, count: number): Promise<StoredEvent[]> {
   const redis = getRedisClient()
 
@@ -398,10 +342,8 @@ export async function getLastEvents(debateId: string, count: number): Promise<St
     try {
       const streamKey = `${REDIS_STREAM_PREFIX}${debateId}`
 
-      // XREVRANGE to get last N events (in reverse order)
       const entries = await redis.xrevrange(streamKey, '+', '-', count)
 
-      // Reverse back to chronological order
       const parsed = parseStreamEntries(entries)
       return parsed.reverse()
     } catch (error) {
@@ -416,7 +358,6 @@ export async function getLastEvents(debateId: string, count: number): Promise<St
       return []
     }
   } else {
-    // Memory fallback
     const events = memoryStore.get(debateId) ?? []
     const lastEvents = events.slice(-count)
     const startIndex = Math.max(0, events.length - count)
@@ -428,9 +369,6 @@ export async function getLastEvents(debateId: string, count: number): Promise<St
   }
 }
 
-/**
- * Get event count for a debate.
- */
 export async function getEventCount(debateId: string): Promise<number> {
   const redis = getRedisClient()
 
@@ -455,10 +393,6 @@ export async function getEventCount(debateId: string): Promise<number> {
   }
 }
 
-/**
- * Delete all events for a debate.
- * Useful for cleanup or testing.
- */
 export async function deleteEvents(debateId: string): Promise<boolean> {
   const redis = getRedisClient()
 
@@ -483,18 +417,11 @@ export async function deleteEvents(debateId: string): Promise<boolean> {
   }
 }
 
-/**
- * Check if events exist for a debate.
- */
 export async function hasEvents(debateId: string): Promise<boolean> {
   const count = await getEventCount(debateId)
   return count > 0
 }
 
-/**
- * Get the last event ID for a debate.
- * Useful for clients to track their position in the stream.
- */
 export async function getLastEventId(debateId: string): Promise<string | null> {
   const lastEvents = await getLastEvents(debateId, 1)
   if (lastEvents.length > 0 && lastEvents[0]) {
@@ -503,36 +430,23 @@ export async function getLastEventId(debateId: string): Promise<string | null> {
   return null
 }
 
-/**
- * Clear all event stores (for testing only).
- * Note: Only clears memory store. Does not clear Redis.
- */
 export function clearAllEventStores(): void {
   memoryStore.clear()
 }
 
-/**
- * Get events after a specific sequence number.
- * Used by clients for initial sync and gap filling.
- * Events are filtered by their seq field (included in event data).
- */
 export async function getEventsAfterSeq(
   debateId: string,
   afterSeq: number,
   limit: number = 100
 ): Promise<StoredEvent[]> {
-  // Get all events and filter by seq
   const allEvents = await getAllEvents(debateId)
 
-  // Filter to events with seq > afterSeq
   const filtered = allEvents
     .filter(({ event }) => {
-      // Handle events that may not have seq (backwards compatibility)
       const eventSeq = (event as SSEEvent & { seq?: number }).seq
       return eventSeq !== undefined && eventSeq > afterSeq
     })
     .sort((a, b) => {
-      // Sort by seq to ensure proper ordering
       const seqA = (a.event as SSEEvent & { seq?: number }).seq ?? 0
       const seqB = (b.event as SSEEvent & { seq?: number }).seq ?? 0
       return seqA - seqB

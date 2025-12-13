@@ -1,5 +1,8 @@
-// src/lib/security/sanitizer.ts
-// Input sanitization utilities for XSS prevention and text cleaning
+// sanitizer.ts
+/**
+ * Input sanitization for XSS prevention and LLM prompt safety.
+ * Strips dangerous patterns, HTML, and control characters from user input.
+ */
 
 import sanitizeHtml from 'sanitize-html'
 

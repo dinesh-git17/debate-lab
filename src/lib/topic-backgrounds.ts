@@ -1,7 +1,9 @@
-// src/lib/topic-backgrounds.ts
-// Maps debate topics to background categories and images
+// topic-backgrounds.ts
+/**
+ * Topic-to-category classification for dynamic debate backgrounds.
+ * Uses keyword matching with GPT-4o-mini semantic fallback.
+ */
 
-// Server-side logging helper (only logs when running on server)
 const serverLog = {
   info: (msg: string, data?: Record<string, unknown>) => {
     if (typeof window === 'undefined') {
@@ -23,7 +25,6 @@ const serverLog = {
   },
 }
 
-// In-memory cache for topic classifications (server-side only)
 const classificationCache = new Map<string, BackgroundCategory>()
 
 export type BackgroundCategory =
@@ -48,7 +49,6 @@ export type BackgroundCategory =
   | 'humor'
   | 'default'
 
-// Keywords that map to each category
 const CATEGORY_KEYWORDS: Record<BackgroundCategory, string[]> = {
   ai: [
     'ai',
@@ -416,7 +416,6 @@ const CATEGORY_KEYWORDS: Record<BackgroundCategory, string[]> = {
   default: [],
 }
 
-// Gradient backgrounds for each category (used as fallback or primary)
 export const CATEGORY_GRADIENTS: Record<BackgroundCategory, string> = {
   ai: `
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
@@ -519,7 +518,6 @@ export const CATEGORY_GRADIENTS: Record<BackgroundCategory, string> = {
   `,
 }
 
-// Image paths for each category (add actual images to public/backgrounds/)
 export const CATEGORY_IMAGES: Record<BackgroundCategory, string | null> = {
   ai: '/backgrounds/ai.jpg',
   technology: '/backgrounds/technology.jpg',
@@ -543,13 +541,9 @@ export const CATEGORY_IMAGES: Record<BackgroundCategory, string | null> = {
   default: null,
 }
 
-/**
- * Determines the background category based on debate topic keywords
- */
 export function getTopicCategory(topic: string): BackgroundCategory {
   const normalizedTopic = topic.toLowerCase()
 
-  // Check each category's keywords
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     if (category === 'default') continue
 
@@ -563,23 +557,16 @@ export function getTopicCategory(topic: string): BackgroundCategory {
   return 'default'
 }
 
-/**
- * Gets the background gradient for a topic
- */
 export function getTopicGradient(topic: string): string {
   const category = getTopicCategory(topic)
   return CATEGORY_GRADIENTS[category]
 }
 
-/**
- * Gets the background image path for a topic (if available)
- */
 export function getTopicImagePath(topic: string): string | null {
   const category = getTopicCategory(topic)
   return CATEGORY_IMAGES[category]
 }
 
-// Valid categories for semantic classification (excluding 'default')
 const VALID_CATEGORIES = [
   'ai',
   'technology',
@@ -602,11 +589,6 @@ const VALID_CATEGORIES = [
   'humor',
 ] as const
 
-/**
- * Uses GPT-4o-mini to semantically classify a topic into a category.
- * This is a server-side only function - do not call from client components.
- * Returns 'default' if classification fails or is uncertain.
- */
 export async function classifyTopicSemantically(topic: string): Promise<BackgroundCategory> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
@@ -695,15 +677,9 @@ Categories explained:
   }
 }
 
-/**
- * Gets the topic category using GPT-4o-mini semantic classification with caching.
- * This is async and should only be used server-side.
- */
 export async function getTopicCategoryWithFallback(topic: string): Promise<BackgroundCategory> {
-  // Normalize topic for cache key
   const cacheKey = topic.toLowerCase().trim()
 
-  // Check cache first
   const cached = classificationCache.get(cacheKey)
   if (cached) {
     serverLog.info('Cache hit', { topic, category: cached })
@@ -712,10 +688,8 @@ export async function getTopicCategoryWithFallback(topic: string): Promise<Backg
 
   serverLog.info('Classifying topic via API', { topic })
 
-  // Use semantic classification
   const category = await classifyTopicSemantically(topic)
 
-  // Cache the result
   classificationCache.set(cacheKey, category)
 
   serverLog.info('Classification result', { topic, category })

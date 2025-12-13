@@ -1,5 +1,8 @@
-// src/lib/logging/logger.ts
-// Structured JSON logger using pino with redaction and context support
+// logger.ts
+/**
+ * Structured JSON logger using Pino with automatic PII redaction.
+ * Supports child loggers, request context, and Supabase persistence.
+ */
 
 import crypto from 'crypto'
 
@@ -107,7 +110,6 @@ class Logger {
 
     baseLogger[level](logObject, message)
 
-    // Also write to Supabase for persistence
     supabaseLogWriter.writeLog(level, message, mergedContext, errorData)
   }
 
@@ -192,7 +194,6 @@ export function logDebateEvent(event: string, debateId: string, context?: LogCon
     ...context,
   })
 
-  // Also write to debate_events table
   supabaseLogWriter.writeDebateEvent(
     debateId,
     event,
@@ -230,7 +231,6 @@ export function logLLMRequest(
     logger.error(`LLM request failed`, error, context)
   }
 
-  // Also write to llm_requests table
   supabaseLogWriter.writeLLMRequest(
     provider,
     debateId,

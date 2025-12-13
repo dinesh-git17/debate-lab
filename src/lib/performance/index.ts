@@ -1,5 +1,7 @@
-// src/lib/performance/index.ts
-// Performance module barrel export
+// index.ts
+/**
+ * Performance module exports including Web Vitals, caching, and prefetching utilities.
+ */
 
 export {
   initWebVitals,

@@ -1,4 +1,9 @@
-// src/lib/schemas/debate-schema.ts
+// debate-schema.ts
+/**
+ * Zod validation schema for debate creation form.
+ * Defines topic, turn count, format, and custom rule constraints.
+ */
+
 import { z } from 'zod'
 
 export const debateFormSchema = z.object({

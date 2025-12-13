@@ -1,6 +1,9 @@
-// src/lib/security/abuse-tracker.ts
-// Core abuse tracking logic with Supabase integration
-// NOTE: This file is imported by middleware (Edge Runtime) - do NOT use Node.js-only imports like pino
+// abuse-tracker.ts
+/**
+ * Core abuse tracking with Supabase integration.
+ * Edge Runtime compatible - cannot use Node.js-only imports (e.g., pino).
+ * Handles IP tracking, bans, flagging, and abuse event logging.
+ */
 
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
 
