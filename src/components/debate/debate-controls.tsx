@@ -109,19 +109,56 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
 
   const handleResume = async () => {
     setIsLoading(true)
+    const store = useDebateViewStore.getState()
+
     try {
-      const response = await fetch(`/api/debate/${debateId}/engine/control`, {
+      // First, update the engine state to 'in_progress'
+      const controlResponse = await fetch(`/api/debate/${debateId}/engine/control`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'resume' }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
+      if (!controlResponse.ok) {
+        const data = await controlResponse.json()
         throw new Error(data.error ?? 'Failed to resume debate')
       }
+
+      // Then restart the debate loop by calling the engine endpoint
+      const engineResponse = await fetch(`/api/debate/${debateId}/engine`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!engineResponse.ok) {
+        const text = await engineResponse.text()
+        try {
+          const data = JSON.parse(text)
+          throw new Error(data.error ?? 'Failed to restart debate engine')
+        } catch {
+          throw new Error(text || 'Failed to restart debate engine')
+        }
+      }
+
+      // Consume stream to keep connection alive; events handled by useDebateStream hook
+      const reader = engineResponse.body?.getReader()
+      if (reader) {
+        void (async () => {
+          try {
+            while (true) {
+              const { done } = await reader.read()
+              if (done) break
+            }
+          } catch {
+            // Stream closed
+          }
+        })()
+      }
+
+      store.setStatus('active')
     } catch (error) {
       clientLogger.error('Debate resume failed', error)
+      store.setError(error instanceof Error ? error.message : 'Failed to resume debate')
     } finally {
       setIsLoading(false)
     }
@@ -681,7 +718,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           isOpen={showEndModal}
           onClose={() => setShowEndModal(false)}
           title="End Debate Early?"
-          description="Are you sure you want to end this debate? Claude will provide a summary of the progress so far. This action cannot be undone."
+          description="Are you sure you want to end this debate? The debate will stop immediately. This action cannot be undone."
           confirmLabel="End Debate"
           cancelLabel="Continue Debate"
           variant="destructive"
@@ -1015,7 +1052,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         isOpen={showEndModal}
         onClose={() => setShowEndModal(false)}
         title="End Debate Early?"
-        description="Are you sure you want to end this debate? Claude will provide a summary of the progress so far. This action cannot be undone."
+        description="Are you sure you want to end this debate? The debate will stop immediately. This action cannot be undone."
         confirmLabel="End Debate"
         cancelLabel="Continue Debate"
         variant="destructive"

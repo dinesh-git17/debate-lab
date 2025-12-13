@@ -713,6 +713,10 @@ export async function executeNextTurn(debateId: string): Promise<{
       },
     })
 
+    // Track whether streaming was interrupted by pause/end
+    let wasInterrupted = false
+    let interruptReason: 'paused' | 'cancelled' | null = null
+
     if (BATCH_STREAMING_ENABLED) {
       // Batched streaming: buffer tokens and emit in batches (200ms window)
       // Reduces Pusher messages by ~90% while maintaining smooth UX via client-side animation
@@ -730,9 +734,28 @@ export async function executeNextTurn(debateId: string): Promise<{
         maxBatchSize: 150,
       })
 
+      let chunkCount = 0
+      const CHECK_INTERVAL = 10 // Check engine state every N chunks
+
       for await (const chunk of stream) {
         fullContent += chunk.content
         await batcher.addChunk(chunk.content)
+        chunkCount++
+
+        // Periodically check if debate was paused or ended
+        if (chunkCount % CHECK_INTERVAL === 0) {
+          const currentState = await getEngineState(debateId)
+          if (currentState?.status === 'paused') {
+            wasInterrupted = true
+            interruptReason = 'paused'
+            break
+          }
+          if (currentState?.status === 'cancelled') {
+            wasInterrupted = true
+            interruptReason = 'cancelled'
+            break
+          }
+        }
       }
 
       // Flush any remaining content before completing the turn
@@ -740,16 +763,58 @@ export async function executeNextTurn(debateId: string): Promise<{
     } else {
       // Legacy streaming: emit every token individually
       let accumulatedLength = 0
+      let chunkCount = 0
+      const CHECK_INTERVAL = 10
 
       for await (const chunk of stream) {
         fullContent += chunk.content
         accumulatedLength += chunk.content.length
+        chunkCount++
+
         // CRITICAL: Must await to ensure seq numbers are assigned in order
         await debateEvents.emitEvent(debateId, 'turn_streaming', {
           turnId,
           chunk: chunk.content,
           accumulatedLength,
         })
+
+        // Periodically check if debate was paused or ended
+        if (chunkCount % CHECK_INTERVAL === 0) {
+          const currentState = await getEngineState(debateId)
+          if (currentState?.status === 'paused') {
+            wasInterrupted = true
+            interruptReason = 'paused'
+            break
+          }
+          if (currentState?.status === 'cancelled') {
+            wasInterrupted = true
+            interruptReason = 'cancelled'
+            break
+          }
+        }
+      }
+    }
+
+    // Handle interrupted streaming
+    if (wasInterrupted) {
+      // Emit turn completed with partial content
+      const durationMs = Date.now() - startTime
+      await debateEvents.emitEvent(debateId, 'turn_completed', {
+        turnId,
+        content: fullContent,
+        tokenCount: Math.ceil(fullContent.length / 4),
+        durationMs,
+        interrupted: true,
+      })
+
+      if (interruptReason === 'paused') {
+        // Don't record the partial turn - user can resume later
+        return { success: true, isComplete: false }
+      }
+
+      if (interruptReason === 'cancelled') {
+        // Debate was ended - return completion
+        return { success: true, isComplete: true }
       }
     }
 
@@ -901,6 +966,15 @@ export async function runDebateLoop(debateId: string): Promise<{
     }
 
     if (result.isComplete) {
+      // Re-fetch state to check if this was a cancellation (end early)
+      const updatedContext = await initializeEngine(debateId)
+      const currentStatus = updatedContext?.sequencer.getStatus()
+
+      // If cancelled, don't emit completion or generate analysis - those already happened via endDebateEarly
+      if (currentStatus === 'cancelled') {
+        return { success: true }
+      }
+
       const finalTurnCount = turnCount + 1
       const finalDurationMs = Date.now() - loopStartTime
       const budgetStatus = getBudgetStatus(debateId)
