@@ -65,17 +65,26 @@ export async function POST(_request: NextRequest, { params }: RouteParams): Prom
     return NextResponse.json({ error: 'Invalid debate ID' }, { status: 400 })
   }
 
-  const { canStart, reason } = await canStartDebate(id)
+  // Check if this is a resume (engine status is in_progress after control/resume)
+  const existingState = await getDebateEngineState(id)
+  const isResume = existingState?.status === 'in_progress'
 
-  if (!canStart) {
-    logger.warn('Cannot start debate', { debateId: id, reason })
-    return NextResponse.json({ error: reason }, { status: 400 })
-  }
+  if (!isResume) {
+    // Normal start flow
+    const { canStart, reason } = await canStartDebate(id)
 
-  const result = await startDebate(id)
+    if (!canStart) {
+      logger.warn('Cannot start debate', { debateId: id, reason })
+      return NextResponse.json({ error: reason }, { status: 400 })
+    }
 
-  if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 500 })
+    const result = await startDebate(id)
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 })
+    }
+  } else {
+    logger.info('Resuming debate loop', { debateId: id })
   }
 
   const encoder = new TextEncoder()

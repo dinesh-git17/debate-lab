@@ -81,6 +81,8 @@ export function subscribeToDebate(
     'turn_started',
     'turn_streaming',
     'turn_completed',
+    'turn_interrupted',
+    'turn_resumed',
     'turn_error',
     'violation_detected',
     'intervention',

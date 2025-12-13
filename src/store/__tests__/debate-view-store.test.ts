@@ -109,7 +109,7 @@ describe('debate-view-store', () => {
     })
 
     it('should transition through non-completed status states', () => {
-      const statuses = ['ready', 'active', 'paused', 'error'] as const
+      const statuses = ['ready', 'active', 'error'] as const
 
       for (const status of statuses) {
         act(() => {

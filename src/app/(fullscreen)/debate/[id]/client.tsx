@@ -39,9 +39,8 @@ function mapPhaseToViewStatus(phase: DebatePhase): DebateViewStatus {
     case 'ready':
       return 'ready'
     case 'active':
-      return 'active'
     case 'paused':
-      return 'paused'
+      return 'active'
     case 'completed':
       return 'completed'
     case 'error':
@@ -104,8 +103,13 @@ export function DebatePageClient({
   }, [debateId, hydrateMessages, setProgress])
 
   useEffect(() => {
-    // Reset only on debate ID change to preserve state during navigation
-    if (previousDebateId.current && previousDebateId.current !== debateId) {
+    // Reset on debate ID change or if store has stale data from a different debate
+    const storeDebateId = useDebateViewStore.getState().debateId
+    const shouldReset =
+      (previousDebateId.current && previousDebateId.current !== debateId) ||
+      (storeDebateId && storeDebateId !== debateId)
+
+    if (shouldReset) {
       reset()
       hasAutoStarted.current = false
       hasHydrated.current = false
@@ -147,7 +151,7 @@ export function DebatePageClient({
     >
       <AppleBackground className="z-0" />
 
-      <DebateHeader debateId={debateId} className="relative z-10" />
+      <DebateHeader debateId={debateId} />
 
       <main className="relative z-10 min-h-0 flex-1">
         <MessageList
@@ -168,7 +172,7 @@ export function DebatePageClient({
         )}
       </main>
 
-      {(status === 'active' || status === 'paused' || status === 'completed') && (
+      {(status === 'active' || status === 'completed') && (
         <div className="relative z-10">
           <FloatingControls debateId={debateId} />
         </div>

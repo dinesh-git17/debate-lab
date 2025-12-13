@@ -72,6 +72,15 @@ export async function getJudgeAnalysis(
     }
   }
 
+  // Skip judge analysis for debates that were ended early (cancelled)
+  if (engineState.status === 'cancelled') {
+    return {
+      success: false,
+      error: 'Judge analysis not available for debates ended early',
+      cached: false,
+    }
+  }
+
   const debateHistory: DebateHistoryEntry[] = engineState.completedTurns.map((turn, index) => ({
     speaker: turn.speaker,
     speakerLabel: turn.speaker === 'moderator' ? 'MODERATOR' : turn.speaker.toUpperCase(),

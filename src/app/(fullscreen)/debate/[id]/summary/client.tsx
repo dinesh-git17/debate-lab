@@ -61,7 +61,11 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
 
   useEffect(() => {
     useSummaryStore.getState().loadSummary(initialData)
-    fetchClaudeSummary()
+
+    // Skip judge analysis for debates that were ended early (cancelled)
+    if (initialData.status !== 'cancelled') {
+      fetchClaudeSummary()
+    }
 
     return () => {
       useSummaryStore.getState().reset()

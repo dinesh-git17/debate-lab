@@ -35,6 +35,7 @@ const FORMAT_DISPLAY_NAMES: Record<string, string> = {
 
 function EmptyState() {
   const [isLoading, setIsLoading] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
   const debateId = useDebateViewStore((s) => s.debateId)
   const topic = useDebateViewStore((s) => s.topic)
   const format = useDebateViewStore((s) => s.format)
@@ -49,6 +50,19 @@ function EmptyState() {
     ? (CATEGORY_GRADIENTS[category] ?? getTopicGradient(topic))
     : getTopicGradient(topic)
   const topicImage = category ? CATEGORY_IMAGES[category] : null
+
+  // Preload background image
+  useEffect(() => {
+    if (!topicImage) {
+      setImageLoaded(true)
+      return
+    }
+
+    const img = new Image()
+    img.onload = () => setImageLoaded(true)
+    img.onerror = () => setImageLoaded(true) // Show gradient anyway on error
+    img.src = topicImage
+  }, [topicImage])
 
   const handleStart = async () => {
     if (!debateId || isLoading) return
@@ -114,7 +128,7 @@ function EmptyState() {
         <div
           className="pointer-events-none fixed inset-0 z-[1]"
           style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%)',
           }}
         />
       )}
@@ -122,10 +136,12 @@ function EmptyState() {
       <motion.div
         className="pointer-events-none fixed inset-0 z-[2]"
         initial={{ opacity: 0, scale: 1.1 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.8, delay: topicImage ? 0.2 : 0, ease: [0.22, 0.61, 0.36, 1] }}
+        animate={imageLoaded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.1 }}
+        transition={{ duration: 1.8, delay: topicImage ? 0.8 : 0, ease: [0.22, 0.61, 0.36, 1] }}
         style={{
           background: topicGradient,
+          backdropFilter: topicImage ? 'blur(8px) saturate(1.2)' : undefined,
+          WebkitBackdropFilter: topicImage ? 'blur(8px) saturate(1.2)' : undefined,
         }}
       />
 
@@ -133,7 +149,7 @@ function EmptyState() {
         className="relative z-10"
         style={{
           marginBottom: '8px',
-          marginTop: '-72px', // Optical centering - shifts content up for visual balance (24px additional lift)
+          marginTop: '-24px', // Optical centering - accounts for fixed header (~60px) above content
         }}
         initial={{ opacity: 0, y: 12, filter: 'blur(8px)' }}
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -338,7 +354,7 @@ interface MessageListProps {
   className?: string
   autoScroll?: boolean
   /** Initial status from server - used as fallback before store is hydrated */
-  initialStatus?: 'ready' | 'active' | 'paused' | 'completed' | 'error'
+  initialStatus?: 'ready' | 'active' | 'completed' | 'error'
 }
 
 export function MessageList({ className, autoScroll = true, initialStatus }: MessageListProps) {
@@ -608,9 +624,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
       )
     }
 
-    // Show waiting state when debate is active/paused/completed but messages haven't loaded yet
+    // Show waiting state when debate is active/completed but messages haven't loaded yet
     // This handles the case where page is refreshed - messages are being hydrated from server
-    if (status === 'active' || status === 'paused' || status === 'completed') {
+    if (status === 'active' || status === 'completed') {
       return (
         <div
           className={cn('h-full', className)}

@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { ANIMATION_CONFIG } from '@/lib/animation-config'
+import { useDebateViewStore } from '@/store/debate-view-store'
 
 interface UseSmoothRevealOptions {
   messageId: string
@@ -30,10 +31,14 @@ interface UseSmoothRevealReturn {
 }
 
 /**
- * Calculates reveal speed based on buffer size.
+ * Calculates reveal speed based on buffer size and user speed preference.
  * Accelerates when behind, decelerates when catching up to network.
  */
-function getAdaptiveCharsPerSecond(bufferSize: number, isComplete: boolean): number {
+function getAdaptiveCharsPerSecond(
+  bufferSize: number,
+  isComplete: boolean,
+  speedMultiplier: number
+): number {
   const {
     HIGH_BUFFER_THRESHOLD,
     LOW_BUFFER_THRESHOLD,
@@ -42,26 +47,27 @@ function getAdaptiveCharsPerSecond(bufferSize: number, isComplete: boolean): num
     CHARS_PER_SECOND,
   } = ANIMATION_CONFIG
 
+  let baseSpeed: number
+
   if (isComplete) {
     if (bufferSize > HIGH_BUFFER_THRESHOLD) {
-      return MAX_CHARS_PER_SECOND
+      baseSpeed = MAX_CHARS_PER_SECOND
+    } else {
+      baseSpeed = CHARS_PER_SECOND
     }
-    return CHARS_PER_SECOND
-  }
-
-  if (bufferSize < LOW_BUFFER_THRESHOLD) {
+  } else if (bufferSize < LOW_BUFFER_THRESHOLD) {
     const ratio = bufferSize / LOW_BUFFER_THRESHOLD
-    return MIN_CHARS_PER_SECOND + ratio * (CHARS_PER_SECOND - MIN_CHARS_PER_SECOND)
-  }
-
-  if (bufferSize > HIGH_BUFFER_THRESHOLD) {
+    baseSpeed = MIN_CHARS_PER_SECOND + ratio * (CHARS_PER_SECOND - MIN_CHARS_PER_SECOND)
+  } else if (bufferSize > HIGH_BUFFER_THRESHOLD) {
     const excess = bufferSize - HIGH_BUFFER_THRESHOLD
     const maxExcess = 200
     const ratio = Math.min(excess / maxExcess, 1)
-    return CHARS_PER_SECOND + ratio * (MAX_CHARS_PER_SECOND - CHARS_PER_SECOND)
+    baseSpeed = CHARS_PER_SECOND + ratio * (MAX_CHARS_PER_SECOND - CHARS_PER_SECOND)
+  } else {
+    baseSpeed = CHARS_PER_SECOND
   }
 
-  return CHARS_PER_SECOND
+  return baseSpeed * speedMultiplier
 }
 
 export function useSmoothReveal(options: UseSmoothRevealOptions): UseSmoothRevealReturn {
@@ -74,6 +80,8 @@ export function useSmoothReveal(options: UseSmoothRevealOptions): UseSmoothRevea
     skipAnimation,
     initialDelayMs = 0,
   } = options
+
+  const speedMultiplier = useDebateViewStore((s) => s.speedMultiplier)
 
   const [revealedLength, setRevealedLength] = useState(skipAnimation ? rawContent.length : 0)
   const [isRevealing, setIsRevealing] = useState(false)
@@ -92,6 +100,7 @@ export function useSmoothReveal(options: UseSmoothRevealOptions): UseSmoothRevea
   const hasCalledCompleteRef = useRef(false)
   const lastMessageIdRef = useRef<string | null>(null)
   const previousRevealedRef = useRef(0)
+  const speedMultiplierRef = useRef(speedMultiplier)
 
   useEffect(() => {
     rawContentRef.current = rawContent
@@ -104,6 +113,10 @@ export function useSmoothReveal(options: UseSmoothRevealOptions): UseSmoothRevea
   useEffect(() => {
     onRevealCompleteRef.current = onRevealComplete
   }, [onRevealComplete])
+
+  useEffect(() => {
+    speedMultiplierRef.current = speedMultiplier
+  }, [speedMultiplier])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -191,6 +204,18 @@ export function useSmoothReveal(options: UseSmoothRevealOptions): UseSmoothRevea
     }
   }, [skipAnimation, onRevealComplete])
 
+  // When streaming stops but isComplete is false (interrupted), freeze immediately
+  useEffect(() => {
+    if (!isStreaming && !isComplete && rawContent.length > 0 && !skipAnimation) {
+      // Interrupted - freeze at current position, don't reveal remaining buffered content
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      setIsRevealing(false)
+    }
+  }, [isStreaming, isComplete, rawContent.length, skipAnimation])
+
   useEffect(() => {
     if (skipAnimation || prefersReducedMotion) return
     if (!isDelayComplete) return
@@ -226,7 +251,11 @@ export function useSmoothReveal(options: UseSmoothRevealOptions): UseSmoothRevea
         return
       }
 
-      const charsPerSecond = getAdaptiveCharsPerSecond(bufferSize, isCompleteRef.current)
+      const charsPerSecond = getAdaptiveCharsPerSecond(
+        bufferSize,
+        isCompleteRef.current,
+        speedMultiplierRef.current
+      )
       const charsThisFrame = (charsPerSecond * deltaTime) / 1000
 
       fractionalCharsRef.current += charsThisFrame

@@ -157,6 +157,34 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
         }
         break
 
+      case 'turn_interrupted':
+        // eslint-disable-next-line no-console
+        console.log('[Realtime] Received turn_interrupted event', {
+          turnId: data.turnId,
+          reason: data.reason,
+        })
+        if (data.turnId) {
+          // Stop streaming animation with partial content
+          store.interruptMessage(
+            data.turnId,
+            (data as { partialContent?: string }).partialContent ?? ''
+          )
+          store.setCurrentTurn(null)
+          clientLogger.info('Turn interrupted', { turnId: data.turnId, reason: data.reason })
+          // eslint-disable-next-line no-console
+          console.log('[Realtime] Called interruptMessage, isStreaming should now be false')
+        }
+        break
+
+      case 'turn_resumed':
+        if (data.turnId) {
+          // Resume streaming for a previously interrupted turn
+          store.updateMessage(data.turnId, { isStreaming: true })
+          store.setCurrentTurn(data.turnId)
+          clientLogger.info('Turn resumed', { turnId: data.turnId })
+        }
+        break
+
       case 'turn_error': {
         const errorMsg = `Turn failed: ${data.error ?? 'Unknown error'}`
         store.setError(errorMsg)
@@ -212,14 +240,6 @@ export function useDebateRealtime(options: UseDebateStreamOptions): UseDebateStr
           unsubscribeRef.current = null
         }
         onDebateCompleteRef.current?.()
-        break
-
-      case 'debate_paused':
-        store.setStatus('paused')
-        break
-
-      case 'debate_resumed':
-        store.setStatus('active')
         break
 
       case 'debate_cancelled':

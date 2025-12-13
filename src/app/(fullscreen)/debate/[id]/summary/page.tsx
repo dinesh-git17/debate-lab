@@ -142,11 +142,14 @@ export default async function SummaryPage({ params }: SummaryPageProps) {
 
   const assignment = session.status === 'completed' ? await revealAssignment(id) : null
 
+  // Use engine status to determine if debate was ended early (cancelled vs completed naturally)
+  const wasEndedEarly = engineState?.status === 'cancelled'
+
   const summaryData: SummaryResponse = {
     debateId: id,
     topic: session.topic,
     format: session.format,
-    status: 'completed',
+    status: wasEndedEarly ? 'cancelled' : 'completed',
     completedAt: session.updatedAt.toISOString(),
     turns,
     statistics,

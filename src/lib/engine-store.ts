@@ -68,6 +68,9 @@ function serializeState(state: DebateEngineState): string {
   if (state.completedAt) {
     serialized.completedAt = state.completedAt.toISOString()
   }
+  if (state.partialTurnContent) {
+    serialized.partialTurnContent = state.partialTurnContent
+  }
 
   return JSON.stringify(serialized)
 }
@@ -98,6 +101,9 @@ function deserializeState(json: string): DebateEngineState {
   }
   if (parsed.completedAt) {
     state.completedAt = new Date(parsed.completedAt)
+  }
+  if (parsed.partialTurnContent) {
+    state.partialTurnContent = parsed.partialTurnContent
   }
 
   return state

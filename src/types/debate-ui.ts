@@ -31,7 +31,7 @@ export type ViewConnectionStatus =
 /**
  * Debate viewing status
  */
-export type DebateViewStatus = 'ready' | 'active' | 'paused' | 'completed' | 'error'
+export type DebateViewStatus = 'ready' | 'active' | 'completed' | 'error'
 
 /**
  * Debate viewing state for the UI store
@@ -82,8 +82,6 @@ export interface SpeakerConfig {
  */
 export interface DebateControls {
   canStart: boolean
-  canPause: boolean
-  canResume: boolean
   canCancel: boolean
   isLoading: boolean
 }

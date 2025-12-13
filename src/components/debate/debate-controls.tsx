@@ -1,7 +1,7 @@
 // src/components/debate/debate-controls.tsx
 /**
  * Primary control interface for debate lifecycle management.
- * Handles start/pause/resume/end actions with responsive mobile and desktop variants.
+ * Handles start/end actions with responsive mobile and desktop variants.
  */
 
 'use client'
@@ -41,7 +41,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
   const [showExportModal, setShowExportModal] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
 
-  const isActive = status === 'active' || status === 'paused'
+  const isActive = status === 'active'
 
   const handleStart = async () => {
     setIsLoading(true)
@@ -87,64 +87,15 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     }
   }
 
-  const handlePause = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/debate/${debateId}/engine/control`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'pause' }),
-      })
+  const handleEndDebate = () => {
+    // Fire and forget - navigate immediately for instant feedback
+    fetch(`/api/debate/${debateId}/engine/control`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
+    }).catch(() => {})
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error ?? 'Failed to pause debate')
-      }
-    } catch (error) {
-      clientLogger.error('Debate pause failed', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleResume = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/debate/${debateId}/engine/control`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resume' }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error ?? 'Failed to resume debate')
-      }
-    } catch (error) {
-      clientLogger.error('Debate resume failed', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleEndDebate = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/debate/${debateId}/engine/control`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error ?? 'Failed to end debate')
-      }
-    } catch (error) {
-      clientLogger.error('Debate end failed', error)
-    } finally {
-      setIsLoading(false)
-    }
+    router.push('/debate/new')
   }
 
   const handleNewDebate = useCallback(() => {
@@ -155,9 +106,14 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
     }
   }, [isActive, router])
 
-  const handleConfirmNew = async () => {
+  const handleConfirmNew = () => {
     if (isActive) {
-      await handleEndDebate()
+      // Fire and forget - navigate immediately
+      fetch(`/api/debate/${debateId}/engine/control`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
+      }).catch(() => {})
     }
     router.push('/debate/new')
   }
@@ -411,95 +367,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           {status === 'active' && (
             <>
               <button
-                onClick={handlePause}
-                disabled={isLoading}
-                className={cn(
-                  dockPrimaryButtonStyles,
-                  'bg-white/[0.12] text-foreground',
-                  'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.06)]',
-                  'hover:bg-white/[0.15] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.1)]'
-                )}
-              >
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  aria-hidden="true"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.75 3a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0V3.75A.75.75 0 015.75 3zm8.5 0a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0V3.75a.75.75 0 01.75-.75z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>{isLoading ? 'Pausing...' : 'Pause'}</span>
-              </button>
-
-              <button
-                onClick={() => setShowEndModal(true)}
-                disabled={isLoading}
-                className={dockEndButtonStyles}
-              >
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.75}
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>End</span>
-              </button>
-
-              <div className="h-5 w-px bg-white/[0.06]" />
-
-              <button
-                onClick={handleNewDebate}
-                className={dockNewButtonStyles}
-                aria-label="New debate"
-              >
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                <span>New</span>
-              </button>
-            </>
-          )}
-
-          {status === 'paused' && (
-            <>
-              <button
-                onClick={handleResume}
-                disabled={isLoading}
-                className={cn(
-                  dockPrimaryButtonStyles,
-                  'bg-gradient-to-b from-amber-400/90 to-amber-500/90 text-white',
-                  'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.25),0_0_14px_rgba(245,158,11,0.15)]',
-                  'hover:from-amber-400 hover:to-amber-500',
-                  'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.3),0_0_18px_rgba(245,158,11,0.2)]'
-                )}
-              >
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  aria-hidden="true"
-                >
-                  <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-                <span>{isLoading ? 'Resuming...' : 'Resume'}</span>
-              </button>
-
-              <button
                 onClick={() => setShowEndModal(true)}
                 disabled={isLoading}
                 className={dockEndButtonStyles}
@@ -681,7 +548,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
           isOpen={showEndModal}
           onClose={() => setShowEndModal(false)}
           title="End Debate Early?"
-          description="Are you sure you want to end this debate? Claude will provide a summary of the progress so far. This action cannot be undone."
+          description="Are you sure you want to end this debate? The debate will stop immediately and no summary or detailed analysis will be generated. This action cannot be undone."
           confirmLabel="End Debate"
           cancelLabel="Continue Debate"
           variant="destructive"
@@ -760,84 +627,6 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
 
         {status === 'active' && (
           <>
-            <button
-              onClick={handlePause}
-              disabled={isLoading}
-              className={cn(
-                desktopPrimaryButtonStyles,
-                'bg-white/[0.08] text-foreground',
-                'hover:bg-white/[0.12]'
-              )}
-            >
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path
-                  fillRule="evenodd"
-                  d="M5.75 3a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0V3.75A.75.75 0 015.75 3zm8.5 0a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0V3.75a.75.75 0 01.75-.75z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{isLoading ? 'Pausing...' : 'Pause'}</span>
-            </button>
-
-            <button
-              onClick={() => setShowEndModal(true)}
-              disabled={isLoading}
-              className={desktopEndButtonStyles}
-            >
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              <span>End</span>
-            </button>
-
-            <div className="h-4 w-px bg-white/[0.10]" />
-
-            <button
-              onClick={handleNewDebate}
-              className={desktopNewButtonStyles}
-              aria-label="New debate"
-            >
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              <span>New</span>
-            </button>
-          </>
-        )}
-
-        {status === 'paused' && (
-          <>
-            <button
-              onClick={handleResume}
-              disabled={isLoading}
-              className={cn(
-                desktopPrimaryButtonStyles,
-                'bg-gradient-to-b from-amber-400/90 to-amber-500/90 text-white',
-                'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.2),0_1px_8px_rgba(245,158,11,0.15)]',
-                'hover:from-amber-400 hover:to-amber-500',
-                'hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.25),0_2px_12px_rgba(245,158,11,0.2)]'
-              )}
-            >
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
-              </svg>
-              <span>{isLoading ? 'Resuming...' : 'Resume'}</span>
-            </button>
-
             <button
               onClick={() => setShowEndModal(true)}
               disabled={isLoading}
@@ -1015,7 +804,7 @@ export function DebateControls({ debateId, className, variant = 'header' }: Deba
         isOpen={showEndModal}
         onClose={() => setShowEndModal(false)}
         title="End Debate Early?"
-        description="Are you sure you want to end this debate? Claude will provide a summary of the progress so far. This action cannot be undone."
+        description="Are you sure you want to end this debate? The debate will stop immediately and no summary or detailed analysis will be generated. This action cannot be undone."
         confirmLabel="End Debate"
         cancelLabel="Continue Debate"
         variant="destructive"

@@ -19,6 +19,7 @@ export class BatchedStreamEmitter {
   private timer: ReturnType<typeof setTimeout> | null = null
   private isFlushing: boolean = false
   private isFinalized: boolean = false
+  private isAborted: boolean = false
 
   private readonly debateId: string
   private readonly turnId: string
@@ -35,10 +36,11 @@ export class BatchedStreamEmitter {
   }
 
   async addChunk(chunk: string): Promise<void> {
-    if (this.isFinalized) {
-      logger.warn('BatchedStreamEmitter: addChunk called after finalize', {
+    if (this.isFinalized || this.isAborted) {
+      logger.warn('BatchedStreamEmitter: addChunk called after finalize/abort', {
         debateId: this.debateId,
         turnId: this.turnId,
+        isAborted: this.isAborted,
       })
       return
     }
@@ -146,5 +148,38 @@ export class BatchedStreamEmitter {
 
   getBufferSize(): number {
     return this.buffer.length
+  }
+
+  /**
+   * Abort streaming immediately. Clears timer and returns unflushed buffer.
+   * Use for pause/cancel scenarios where we need to stop mid-stream.
+   */
+  abort(): string {
+    if (this.isAborted || this.isFinalized) {
+      return ''
+    }
+
+    this.isAborted = true
+
+    if (this.timer) {
+      clearTimeout(this.timer)
+      this.timer = null
+    }
+
+    const remainingBuffer = this.buffer
+    this.buffer = ''
+
+    logger.debug('BatchedStreamEmitter: aborted', {
+      debateId: this.debateId,
+      turnId: this.turnId,
+      remainingBufferSize: remainingBuffer.length,
+      accumulatedLength: this.accumulatedLength,
+    })
+
+    return remainingBuffer
+  }
+
+  shouldAbort(): boolean {
+    return this.isAborted
   }
 }

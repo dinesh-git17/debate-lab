@@ -10,6 +10,8 @@ export type SSEEventType =
   | 'turn_started'
   | 'turn_streaming'
   | 'turn_completed'
+  | 'turn_interrupted'
+  | 'turn_resumed'
   | 'turn_error'
   | 'violation_detected'
   | 'intervention'
@@ -75,6 +77,26 @@ export interface TurnCompletedEvent extends SSEEventBase {
   content: string
   tokenCount: number
   durationMs: number
+}
+
+/**
+ * Turn interrupted event (paused/cancelled mid-stream)
+ */
+export interface TurnInterruptedEvent extends SSEEventBase {
+  type: 'turn_interrupted'
+  turnId: string
+  reason: 'paused' | 'cancelled' | null
+  partialContent: string
+  contentLength: number
+}
+
+/**
+ * Turn resumed event (continuing after pause)
+ */
+export interface TurnResumedEvent extends SSEEventBase {
+  type: 'turn_resumed'
+  turnId: string
+  partialContentLength: number
 }
 
 /**
@@ -206,6 +228,8 @@ export type SSEEvent =
   | TurnStartedEvent
   | TurnStreamingEvent
   | TurnCompletedEvent
+  | TurnInterruptedEvent
+  | TurnResumedEvent
   | TurnErrorEvent
   | ViolationDetectedEvent
   | InterventionEvent

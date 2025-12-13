@@ -186,6 +186,34 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
       }
     })
 
+    eventSource.addEventListener('turn_interrupted', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data) as SSEMessageData
+        if (!data.turnId) return
+        const s = useDebateViewStore.getState()
+        // Stop streaming animation with partial content
+        s.interruptMessage(data.turnId, (data as { partialContent?: string }).partialContent ?? '')
+        s.setCurrentTurn(null)
+        clientLogger.info('Turn interrupted', { turnId: data.turnId, reason: data.reason })
+      } catch (err) {
+        clientLogger.error('SSE: Failed to parse turn_interrupted event', err)
+      }
+    })
+
+    eventSource.addEventListener('turn_resumed', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data) as SSEMessageData
+        if (!data.turnId) return
+        const s = useDebateViewStore.getState()
+        // Resume streaming for a previously interrupted turn
+        s.updateMessage(data.turnId, { isStreaming: true })
+        s.setCurrentTurn(data.turnId)
+        clientLogger.info('Turn resumed', { turnId: data.turnId })
+      } catch (err) {
+        clientLogger.error('SSE: Failed to parse turn_resumed event', err)
+      }
+    })
+
     eventSource.addEventListener('turn_error', (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data) as SSEMessageData
@@ -263,14 +291,6 @@ export function useDebateStream(options: UseDebateStreamOptions): UseDebateStrea
       s.setStatus('completed')
       s.setCurrentTurn(null)
       onDebateCompleteRef.current?.()
-    })
-
-    eventSource.addEventListener('debate_paused', () => {
-      useDebateViewStore.getState().setStatus('paused')
-    })
-
-    eventSource.addEventListener('debate_resumed', () => {
-      useDebateViewStore.getState().setStatus('active')
     })
 
     eventSource.addEventListener('debate_cancelled', () => {

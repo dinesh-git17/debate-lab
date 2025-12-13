@@ -20,7 +20,6 @@ interface ProgressBarProps {
 const STATUS_LABELS: Record<DebateViewStatus, string> = {
   ready: 'Ready to start',
   active: 'In progress',
-  paused: 'Paused',
   completed: 'Complete',
   error: 'Error',
 }
@@ -28,7 +27,6 @@ const STATUS_LABELS: Record<DebateViewStatus, string> = {
 const STATUS_GRADIENTS: Record<DebateViewStatus, string> = {
   ready: 'from-emerald-400/60 to-emerald-500/60',
   active: 'from-blue-400 to-blue-600',
-  paused: 'from-amber-400 to-amber-500',
   completed: 'from-emerald-400 to-emerald-600',
   error: 'from-red-400 to-red-500',
 }
@@ -43,11 +41,6 @@ const STATUS_BADGE_STYLES: Record<DebateViewStatus, { bg: string; text: string; 
     bg: 'bg-blue-500/15',
     text: 'text-blue-400',
     glow: 'shadow-blue-500/20',
-  },
-  paused: {
-    bg: 'bg-amber-500/15',
-    text: 'text-amber-400',
-    glow: 'shadow-amber-500/20',
   },
   completed: {
     bg: 'bg-emerald-500/15',

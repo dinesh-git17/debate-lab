@@ -49,7 +49,19 @@ export class EventSynchronizer {
 
   bufferEvent(event: SSEEvent): void {
     const seqEvent = event as SequencedEvent
-    if (seqEvent.seq === undefined) {
+
+    // Debug log for interrupt/resume events
+    if (event.type === 'turn_interrupted' || event.type === 'turn_resumed') {
+      // eslint-disable-next-line no-console
+      console.log(`[EventSync] bufferEvent ${event.type}`, {
+        seq: seqEvent.seq,
+        lastApplied: this.state.lastAppliedSeq,
+      })
+    }
+
+    // seq === undefined or seq === 0 means "no sequencing, apply immediately"
+    // This handles non-durable events when BATCH_STREAMING is enabled
+    if (seqEvent.seq === undefined || seqEvent.seq === 0) {
       this.applyEvent(event)
       return
     }

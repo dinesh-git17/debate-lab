@@ -293,6 +293,27 @@ export class TurnSequencer {
   }
 
   /**
+   * Store partial content from interrupted turn (paused mid-stream)
+   */
+  setPartialContent(content: string): void {
+    this.state.partialTurnContent = content
+  }
+
+  /**
+   * Get partial content from interrupted turn
+   */
+  getPartialContent(): string | undefined {
+    return this.state.partialTurnContent
+  }
+
+  /**
+   * Clear partial content (after resuming and completing the turn)
+   */
+  clearPartialContent(): void {
+    this.state.partialTurnContent = undefined
+  }
+
+  /**
    * Get progress information
    */
   getProgress(): DebateProgress {
@@ -345,6 +366,9 @@ export class TurnSequencer {
     if (this.state.completedAt) {
       serialized.completedAt = this.state.completedAt.toISOString()
     }
+    if (this.state.partialTurnContent) {
+      serialized.partialTurnContent = this.state.partialTurnContent
+    }
 
     return JSON.stringify(serialized)
   }
@@ -385,6 +409,9 @@ export class TurnSequencer {
     }
     if (parsed.completedAt) {
       state.completedAt = new Date(parsed.completedAt)
+    }
+    if (parsed.partialTurnContent) {
+      state.partialTurnContent = parsed.partialTurnContent
     }
 
     return TurnSequencer.fromState(state)

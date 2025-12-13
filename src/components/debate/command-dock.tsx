@@ -7,7 +7,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Download, Pause, Play, Plus, FileText, RotateCcw } from 'lucide-react'
+import { Download, Play, Plus, FileText, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useCallback } from 'react'
@@ -18,11 +18,81 @@ import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 import { clientLogger } from '@/lib/client-logger'
 import { exportTranscript } from '@/lib/export-transcript'
 import { cn } from '@/lib/utils'
-import { useDebateViewStore } from '@/store/debate-view-store'
+import { useDebateViewStore, type SpeedMultiplier } from '@/store/debate-view-store'
 
 import { ExportModal } from './export-modal'
 
 import type { ExportConfig } from '@/types/export'
+
+const SPEED_OPTIONS: SpeedMultiplier[] = [0.5, 0.75, 1, 1.5, 2]
+
+function SpeedControl() {
+  const speedMultiplier = useDebateViewStore((s) => s.speedMultiplier)
+  const setSpeedMultiplier = useDebateViewStore((s) => s.setSpeedMultiplier)
+
+  const currentIndex = SPEED_OPTIONS.indexOf(speedMultiplier)
+
+  const handleDecrease = () => {
+    const newSpeed = SPEED_OPTIONS[currentIndex - 1]
+    if (newSpeed !== undefined) {
+      setSpeedMultiplier(newSpeed)
+    }
+  }
+
+  const handleIncrease = () => {
+    const newSpeed = SPEED_OPTIONS[currentIndex + 1]
+    if (newSpeed !== undefined) {
+      setSpeedMultiplier(newSpeed)
+    }
+  }
+
+  const canDecrease = currentIndex > 0
+  const canIncrease = currentIndex < SPEED_OPTIONS.length - 1
+
+  return (
+    <div className="flex items-center gap-0.5 px-1">
+      <button
+        onClick={handleDecrease}
+        disabled={!canDecrease}
+        className={cn(
+          'flex items-center justify-center w-6 h-6 rounded-md',
+          'text-[10px] font-bold tracking-tight',
+          'transition-all duration-150',
+          canDecrease
+            ? 'text-white/50 hover:text-white/80 hover:bg-white/[0.06] active:scale-95'
+            : 'text-white/20 cursor-not-allowed'
+        )}
+        aria-label="Decrease speed"
+      >
+        {'<<'}
+      </button>
+      <div
+        className={cn(
+          'flex items-center justify-center min-w-[42px] h-6 px-1.5 rounded-md',
+          'bg-white/[0.06] border border-white/[0.08]',
+          'text-[11px] font-semibold tabular-nums text-white/70'
+        )}
+      >
+        {speedMultiplier}x
+      </div>
+      <button
+        onClick={handleIncrease}
+        disabled={!canIncrease}
+        className={cn(
+          'flex items-center justify-center w-6 h-6 rounded-md',
+          'text-[10px] font-bold tracking-tight',
+          'transition-all duration-150',
+          canIncrease
+            ? 'text-white/50 hover:text-white/80 hover:bg-white/[0.06] active:scale-95'
+            : 'text-white/20 cursor-not-allowed'
+        )}
+        aria-label="Increase speed"
+      >
+        {'>>'}
+      </button>
+    </div>
+  )
+}
 
 const BUTTON_CONFIG = {
   height: 36,
@@ -185,8 +255,7 @@ export function CommandDock({ debateId }: CommandDockProps) {
   const [showNewModal, setShowNewModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
 
-  const isActive = status === 'active' || status === 'paused'
-  const isRunning = status === 'active'
+  const isActive = status === 'active'
 
   const handleStart = async () => {
     setIsLoading(true)
@@ -231,64 +300,15 @@ export function CommandDock({ debateId }: CommandDockProps) {
     }
   }
 
-  const handlePause = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/debate/${debateId}/engine/control`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'pause' }),
-      })
+  const handleEndDebate = () => {
+    // Fire and forget - navigate immediately
+    fetch(`/api/debate/${debateId}/engine/control`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
+    }).catch(() => {})
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error ?? 'Failed to pause debate')
-      }
-    } catch (error) {
-      clientLogger.error('Debate pause failed', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [debateId])
-
-  const handleResume = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/debate/${debateId}/engine/control`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resume' }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error ?? 'Failed to resume debate')
-      }
-    } catch (error) {
-      clientLogger.error('Debate resume failed', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [debateId])
-
-  const handleEndDebate = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/debate/${debateId}/engine/control`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error ?? 'Failed to end debate')
-      }
-    } catch (error) {
-      clientLogger.error('Debate end failed', error)
-    } finally {
-      setIsLoading(false)
-    }
+    router.push('/debate/new')
   }
 
   const handleNewDebate = useCallback(() => {
@@ -299,9 +319,14 @@ export function CommandDock({ debateId }: CommandDockProps) {
     }
   }, [isActive, router])
 
-  const handleConfirmNew = async () => {
+  const handleConfirmNew = () => {
     if (isActive) {
-      await handleEndDebate()
+      // Fire and forget
+      fetch(`/api/debate/${debateId}/engine/control`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'end', reason: 'Ended early by user' }),
+      }).catch(() => {})
     }
     router.push('/debate/new')
   }
@@ -318,14 +343,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
     setShowExportModal(true)
   }, [])
 
-  const handlePlaybackToggle = useCallback(() => {
-    if (isRunning) {
-      handlePause()
-    } else if (status === 'paused') {
-      handleResume()
-    }
-  }, [isRunning, status, handlePause, handleResume])
-
   useKeyboardShortcuts({
     shortcuts: [
       {
@@ -339,11 +356,6 @@ export function CommandDock({ debateId }: CommandDockProps) {
         shift: true,
         action: handleNewDebate,
         description: 'New debate',
-      },
-      {
-        key: ' ',
-        action: handlePlaybackToggle,
-        description: 'Pause/Resume',
       },
     ],
     enabled: true,
@@ -373,39 +385,7 @@ export function CommandDock({ debateId }: CommandDockProps) {
 
       {status === 'active' && (
         <div className="flex items-center gap-1">
-          <PillButton
-            icon={<Pause size={iconSize} strokeWidth={2} />}
-            label="Pause"
-            onClick={handlePause}
-            disabled={isLoading}
-            isLoading={isLoading}
-          />
-          <Divider />
-          <PillButton
-            icon={<FaStop size={iconSize - 4} />}
-            label="End"
-            onClick={() => setShowEndModal(true)}
-            disabled={isLoading}
-            variant="danger"
-          />
-          <Divider />
-          <PillButton
-            icon={<Plus size={iconSize} strokeWidth={2} />}
-            label="New"
-            onClick={handleNewDebate}
-          />
-        </div>
-      )}
-
-      {status === 'paused' && (
-        <div className="flex items-center gap-1">
-          <PillButton
-            icon={<Play size={iconSize} strokeWidth={2} />}
-            label="Resume"
-            onClick={handleResume}
-            disabled={isLoading}
-            isLoading={isLoading}
-          />
+          <SpeedControl />
           <Divider />
           <PillButton
             icon={<FaStop size={iconSize - 4} />}

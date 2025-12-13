@@ -10,6 +10,8 @@ import type {
   ViewProgress,
 } from '@/types/debate-ui'
 
+export type SpeedMultiplier = 0.5 | 0.75 | 1 | 1.5 | 2
+
 interface DebateViewActions {
   setDebateInfo: (info: {
     debateId: string
@@ -25,6 +27,7 @@ interface DebateViewActions {
   updateMessage: (id: string, updates: Partial<DebateMessage>) => void
   appendToMessage: (id: string, chunk: string) => void
   completeMessage: (id: string, finalContent: string, tokenCount: number) => void
+  interruptMessage: (id: string, partialContent: string) => void
 
   // Hydrate store with messages from server (for page reload/navigation back)
   hydrateMessages: (messages: DebateMessage[]) => void
@@ -36,6 +39,9 @@ interface DebateViewActions {
   setProgress: (progress: ViewProgress) => void
   setCurrentTurn: (turnId: string | null) => void
 
+  // Streaming speed control
+  setSpeedMultiplier: (speed: SpeedMultiplier) => void
+
   reset: () => void
 }
 
@@ -45,6 +51,8 @@ interface ExtendedDebateViewState extends DebateViewState {
   displayedMessageIds: Set<string>
   // Flag to track if server said debate is complete but animations aren't done
   pendingCompletion: boolean
+  // Streaming speed multiplier (0.5x to 2x)
+  speedMultiplier: SpeedMultiplier
 }
 
 type DebateViewStore = ExtendedDebateViewState & DebateViewActions
@@ -65,6 +73,7 @@ const initialState: ExtendedDebateViewState = {
   error: null,
   displayedMessageIds: new Set(),
   pendingCompletion: false,
+  speedMultiplier: 1,
 }
 
 export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
@@ -144,6 +153,16 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
       ),
     })),
 
+  // Interrupt a streaming message (cancelled mid-stream)
+  interruptMessage: (id, partialContent) =>
+    set((state) => ({
+      messages: state.messages.map((msg) =>
+        msg.id === id
+          ? { ...msg, content: partialContent, isStreaming: false, isComplete: false }
+          : msg
+      ),
+    })),
+
   // Hydrate store with messages from server (for page reload/navigation back)
   // Only adds messages that don't already exist to avoid duplicates
   hydrateMessages: (messages) =>
@@ -204,6 +223,8 @@ export const useDebateViewStore = create<DebateViewStore>()((set, get) => ({
   setProgress: (progress) => set({ progress }),
 
   setCurrentTurn: (turnId) => set({ currentTurnId: turnId }),
+
+  setSpeedMultiplier: (speed) => set({ speedMultiplier: speed }),
 
   reset: () =>
     set({

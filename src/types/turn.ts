@@ -70,6 +70,8 @@ export interface DebateEngineState {
   startedAt?: Date | undefined
   completedAt?: Date | undefined
   error?: string | undefined
+  /** Partial content from interrupted turn (paused mid-stream) */
+  partialTurnContent?: string | undefined
 }
 
 /**
@@ -136,4 +138,5 @@ export interface SerializedEngineState {
   startedAt?: string | undefined
   completedAt?: string | undefined
   error?: string | undefined
+  partialTurnContent?: string | undefined
 }

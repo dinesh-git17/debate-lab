@@ -36,11 +36,16 @@ function isValidAction(action: unknown): action is ControlAction {
 export async function POST(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id } = await params
 
+  // eslint-disable-next-line no-console
+  console.log(`[ControlRoute] Received request for ${id}`)
+
   if (!isValidDebateId(id)) {
     return NextResponse.json({ error: 'Invalid debate ID' }, { status: 400 })
   }
 
   const state = await getDebateEngineState(id)
+  // eslint-disable-next-line no-console
+  console.log(`[ControlRoute] Engine state for ${id}: status=${state?.status}`)
 
   if (!state) {
     return NextResponse.json({ error: 'Engine not found' }, { status: 404 })
@@ -55,6 +60,8 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
   }
 
   const { action, reason } = body
+  // eslint-disable-next-line no-console
+  console.log(`[ControlRoute] Action requested: ${action} for ${id}`)
 
   if (!isValidAction(action)) {
     return NextResponse.json(
@@ -69,28 +76,40 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
   switch (action) {
     case 'pause':
       if (state.status !== 'in_progress') {
+        // eslint-disable-next-line no-console
+        console.log(`[ControlRoute] Cannot pause - status is ${state.status}`)
         return NextResponse.json(
           { error: `Cannot pause debate in status: ${state.status}` },
           { status: 400 }
         )
       }
+      // eslint-disable-next-line no-console
+      console.log(`[ControlRoute] Calling pauseDebate for ${id}`)
       success = await pauseDebate(id)
       break
 
     case 'resume':
       if (state.status !== 'paused') {
+        // eslint-disable-next-line no-console
+        console.log(`[ControlRoute] Cannot resume - status is ${state.status}`)
         return NextResponse.json(
           { error: `Cannot resume debate in status: ${state.status}` },
           { status: 400 }
         )
       }
+      // eslint-disable-next-line no-console
+      console.log(`[ControlRoute] Calling resumeDebate for ${id}`)
       success = await resumeDebate(id)
       break
 
     case 'end':
       if (state.status === 'completed' || state.status === 'cancelled') {
+        // eslint-disable-next-line no-console
+        console.log(`[ControlRoute] Cannot end - debate already ended`)
         return NextResponse.json({ error: 'Debate already ended' }, { status: 400 })
       }
+      // eslint-disable-next-line no-console
+      console.log(`[ControlRoute] Calling endDebateEarly for ${id}`)
       success = await endDebateEarly(id, reason ?? 'Ended by user')
       break
 
@@ -100,11 +119,16 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
     }
   }
 
+  // eslint-disable-next-line no-console
+  console.log(`[ControlRoute] Action ${action} result: success=${success}`)
+
   if (!success) {
     return NextResponse.json({ error: errorMessage ?? 'Action failed' }, { status: 500 })
   }
 
   const updatedState = await getDebateEngineState(id)
+  // eslint-disable-next-line no-console
+  console.log(`[ControlRoute] Updated state for ${id}: status=${updatedState?.status}`)
 
   return NextResponse.json({
     success: true,

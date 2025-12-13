@@ -1,6 +1,7 @@
 // src/services/debate-engine.ts
 
 import { BatchedStreamEmitter } from '@/lib/batched-emitter'
+import { checkAbortSignal, clearAbortSignal, setAbortSignal } from '@/lib/debate-abort-signals'
 import { getProviderForPosition } from '@/lib/debate-assignment'
 import { debateEvents } from '@/lib/debate-events'
 import { getEngineState, storeEngineState } from '@/lib/engine-store'
@@ -102,6 +103,9 @@ export async function initializeEngine(debateId: string): Promise<DebateEngineCo
  * Start a debate.
  */
 export async function startDebate(debateId: string): Promise<StartDebateResult> {
+  // Clear any stale abort signals from previous runs
+  await clearAbortSignal(debateId)
+
   const context = await initializeEngine(debateId)
   if (!context) {
     return { success: false, error: 'Failed to initialize engine' }
@@ -345,6 +349,12 @@ export async function getDebateTranscript(debateId: string): Promise<string | nu
  * End debate early.
  */
 export async function endDebateEarly(debateId: string, reason: string): Promise<boolean> {
+  // eslint-disable-next-line no-console
+  console.log(`[Control] endDebateEarly called for ${debateId}`)
+
+  // Set abort signal FIRST for immediate effect on streaming loop
+  await setAbortSignal(debateId, 'cancelled')
+
   const context = await initializeEngine(debateId)
   if (!context) return false
 
@@ -358,6 +368,8 @@ export async function endDebateEarly(debateId: string, reason: string): Promise<
     completedTurns: progress.currentTurn,
   })
 
+  // eslint-disable-next-line no-console
+  console.log(`[Control] endDebateEarly completed for ${debateId}`)
   return true
 }
 
@@ -365,10 +377,23 @@ export async function endDebateEarly(debateId: string, reason: string): Promise<
  * Pause debate.
  */
 export async function pauseDebate(debateId: string): Promise<boolean> {
+  // eslint-disable-next-line no-console
+  console.log(`[Control] pauseDebate called for ${debateId}`)
+
+  // Set abort signal FIRST for immediate effect on streaming loop
+  await setAbortSignal(debateId, 'paused')
+
   const context = await initializeEngine(debateId)
-  if (!context) return false
+  if (!context) {
+    // eslint-disable-next-line no-console
+    console.log(`[Control] pauseDebate - context not found for ${debateId}`)
+    return false
+  }
 
   const progress = context.sequencer.getProgress()
+  // eslint-disable-next-line no-console
+  console.log(`[Control] pauseDebate - pausing at turn ${progress.currentTurn} for ${debateId}`)
+
   context.sequencer.pause()
   await storeEngineState(debateId, context.sequencer.getState())
   await updateDebateStatus(debateId, 'paused')
@@ -377,6 +402,8 @@ export async function pauseDebate(debateId: string): Promise<boolean> {
     pausedAtTurn: progress.currentTurn,
   })
 
+  // eslint-disable-next-line no-console
+  console.log(`[Control] pauseDebate completed for ${debateId}`)
   return true
 }
 
@@ -384,10 +411,23 @@ export async function pauseDebate(debateId: string): Promise<boolean> {
  * Resume debate.
  */
 export async function resumeDebate(debateId: string): Promise<boolean> {
+  // eslint-disable-next-line no-console
+  console.log(`[Control] resumeDebate called for ${debateId}`)
+
+  // Clear abort signal to allow streaming to continue
+  await clearAbortSignal(debateId)
+
   const context = await initializeEngine(debateId)
-  if (!context) return false
+  if (!context) {
+    // eslint-disable-next-line no-console
+    console.log(`[Control] resumeDebate - context not found for ${debateId}`)
+    return false
+  }
 
   const progress = context.sequencer.getProgress()
+  // eslint-disable-next-line no-console
+  console.log(`[Control] resumeDebate - resuming at turn ${progress.currentTurn} for ${debateId}`)
+
   context.sequencer.resume()
   await storeEngineState(debateId, context.sequencer.getState())
   await updateDebateStatus(debateId, 'active')
@@ -396,6 +436,8 @@ export async function resumeDebate(debateId: string): Promise<boolean> {
     resumingAtTurn: progress.currentTurn,
   })
 
+  // eslint-disable-next-line no-console
+  console.log(`[Control] resumeDebate completed for ${debateId}`)
   return true
 }
 
@@ -700,9 +742,27 @@ export async function executeNextTurn(debateId: string): Promise<{
       })
     }
 
-    // Generate with streaming
+    // Check for partial content from previous interrupted turn (resume scenario)
+    const partialContent = sequencer.getPartialContent()
     let fullContent = ''
 
+    if (partialContent) {
+      // Prepopulate with partial content and instruct to continue
+      fullContent = partialContent
+      userPrompt = `${userPrompt}\n\n---\n\nIMPORTANT: You were interrupted mid-response. Your partial response so far:\n\n${partialContent}\n\n---\n\nContinue EXACTLY from where you left off. Do NOT repeat any content. Do NOT add any meta-commentary about being interrupted. Simply continue your response naturally as if there was no interruption.`
+
+      // Clear partial content now that we're resuming
+      sequencer.clearPartialContent()
+      await storeEngineState(debateId, sequencer.getState())
+
+      // Emit event so client knows we're continuing
+      await debateEvents.emitEvent(debateId, 'turn_resumed', {
+        turnId,
+        partialContentLength: partialContent.length,
+      })
+    }
+
+    // Generate with streaming
     const stream = generateStream({
       provider,
       params: {
@@ -712,6 +772,9 @@ export async function executeNextTurn(debateId: string): Promise<{
         temperature,
       },
     })
+
+    let wasInterrupted = false
+    let interruptReason: 'paused' | 'cancelled' | null = null
 
     if (BATCH_STREAMING_ENABLED) {
       // Batched streaming: buffer tokens and emit in batches (200ms window)
@@ -730,18 +793,62 @@ export async function executeNextTurn(debateId: string): Promise<{
         maxBatchSize: 150,
       })
 
+      // eslint-disable-next-line no-console
+      console.log(`[StreamLoop] Starting batch streaming for ${debateId}, turn ${turnId}`)
+
       for await (const chunk of stream) {
+        // Check abort signal on EVERY chunk (async Redis check for cross-route consistency)
+        const abortSignal = await checkAbortSignal(debateId)
+        if (abortSignal.aborted) {
+          // eslint-disable-next-line no-console
+          console.log(
+            `[StreamLoop] ABORT DETECTED for ${debateId}: reason=${abortSignal.reason}, contentLength=${fullContent.length}`
+          )
+          wasInterrupted = true
+          interruptReason = abortSignal.reason
+
+          if (abortSignal.reason === 'paused') {
+            // Abort batcher and flush remaining buffer to stream
+            const remaining = batcher.abort()
+            if (remaining) {
+              await debateEvents.emitEvent(debateId, 'turn_streaming', {
+                turnId,
+                chunk: remaining,
+                accumulatedLength: batcher.getAccumulatedLength(),
+              })
+            }
+          } else {
+            batcher.abort()
+          }
+          break
+        }
+
         fullContent += chunk.content
         await batcher.addChunk(chunk.content)
       }
 
-      // Flush any remaining content before completing the turn
-      await batcher.finalize()
+      // eslint-disable-next-line no-console
+      console.log(
+        `[StreamLoop] Finished streaming for ${debateId}, wasInterrupted=${wasInterrupted}, contentLength=${fullContent.length}`
+      )
+
+      // Flush any remaining content before completing the turn (if not interrupted)
+      if (!wasInterrupted) {
+        await batcher.finalize()
+      }
     } else {
       // Legacy streaming: emit every token individually
       let accumulatedLength = 0
 
       for await (const chunk of stream) {
+        // Check abort signal on EVERY chunk (async Redis check for cross-route consistency)
+        const abortSignal = await checkAbortSignal(debateId)
+        if (abortSignal.aborted) {
+          wasInterrupted = true
+          interruptReason = abortSignal.reason
+          break
+        }
+
         fullContent += chunk.content
         accumulatedLength += chunk.content.length
         // CRITICAL: Must await to ensure seq numbers are assigned in order
@@ -750,6 +857,39 @@ export async function executeNextTurn(debateId: string): Promise<{
           chunk: chunk.content,
           accumulatedLength,
         })
+      }
+    }
+
+    // Handle interruption (pause or cancel)
+    if (wasInterrupted) {
+      const log = createDebateLogger(debateId)
+      log.info('Turn interrupted', {
+        turnId,
+        reason: interruptReason,
+        contentLength: fullContent.length,
+      })
+
+      // Emit partial turn event so client knows streaming stopped
+      await debateEvents.emitEvent(debateId, 'turn_interrupted', {
+        turnId,
+        reason: interruptReason,
+        partialContent: fullContent,
+        contentLength: fullContent.length,
+      })
+
+      if (interruptReason === 'paused') {
+        // Store partial content for resume - sequencer will handle this
+        const context = await initializeEngine(debateId)
+        if (context) {
+          context.sequencer.setPartialContent(fullContent)
+          await storeEngineState(debateId, context.sequencer.getState())
+        }
+        return { success: true, isComplete: false }
+      }
+
+      if (interruptReason === 'cancelled') {
+        // Don't store anything, debate is ending
+        return { success: true, isComplete: true }
       }
     }
 
@@ -901,6 +1041,15 @@ export async function runDebateLoop(debateId: string): Promise<{
     }
 
     if (result.isComplete) {
+      // Re-check status to distinguish between natural completion and cancellation
+      const finalContext = await initializeEngine(debateId)
+      const finalStatus = finalContext?.sequencer.getStatus()
+
+      // If cancelled, exit without emitting completion events or preloading judge
+      if (finalStatus === 'cancelled') {
+        return { success: true }
+      }
+
       const finalTurnCount = turnCount + 1
       const finalDurationMs = Date.now() - loopStartTime
       const budgetStatus = getBudgetStatus(debateId)

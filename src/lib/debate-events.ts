@@ -20,14 +20,24 @@ const DURABLE_EVENTS: SSEEventType[] = [
   'debate_started',
   'turn_started',
   'turn_completed',
+  'turn_interrupted',
+  'turn_resumed',
   'debate_completed',
   'debate_error',
   'turn_error',
   'budget_warning',
 ]
 
+// Events that should be persisted but NOT sequenced (applied immediately)
+// These are control events that need to bypass the buffer to take effect immediately
+const IMMEDIATE_EVENTS: SSEEventType[] = ['turn_interrupted', 'turn_resumed']
+
 function isDurableEvent(type: SSEEventType): boolean {
   return DURABLE_EVENTS.includes(type)
+}
+
+function isImmediateEvent(type: SSEEventType): boolean {
+  return IMMEDIATE_EVENTS.includes(type)
 }
 
 interface DebateSubscription {
@@ -74,6 +84,16 @@ class DebateEventEmitter {
   emit(event: SSEEvent): void {
     const shouldPersist = !BATCH_STREAMING_ENABLED || isDurableEvent(event.type)
 
+    // Debug log for interrupt/resume events
+    if (event.type === 'turn_interrupted' || event.type === 'turn_resumed') {
+      // eslint-disable-next-line no-console
+      console.log(`[DebateEvents] emit ${event.type}`, {
+        debateId: event.debateId,
+        seq: (event as { seq?: number }).seq,
+        shouldPersist,
+      })
+    }
+
     if (shouldPersist) {
       appendEvent(event.debateId, event).catch((error) => {
         logger.error('Failed to persist event to Redis', error instanceof Error ? error : null, {
@@ -113,13 +133,16 @@ class DebateEventEmitter {
   /**
    * Primary event emission API for the debate engine.
    * Assigns sequence numbers only to durable events when batch streaming is enabled.
+   * Immediate events (turn_interrupted, turn_resumed) get seq: 0 to bypass client buffering.
    */
   async emitEvent<T extends SSEEventType>(
     debateId: string,
     type: T,
     data: Omit<Extract<SSEEvent, { type: T }>, 'type' | 'timestamp' | 'debateId' | 'seq'>
   ): Promise<void> {
-    const needsSeq = !BATCH_STREAMING_ENABLED || isDurableEvent(type)
+    // Immediate events bypass sequencing to be applied right away on client
+    // They're still persisted (isDurableEvent) but don't need ordering guarantees
+    const needsSeq = !BATCH_STREAMING_ENABLED || (isDurableEvent(type) && !isImmediateEvent(type))
     const seq = needsSeq ? await getNextSeq(debateId) : 0
 
     const event = {
