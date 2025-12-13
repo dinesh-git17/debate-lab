@@ -197,7 +197,6 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
   for: [
     `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.3)}`,
     'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
-    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
     '0 1px 2px rgba(0, 0, 0, 0.18)',
     '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
     '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
@@ -205,7 +204,6 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
   against: [
     `inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.3)}`,
     'inset 1px 0 0 rgba(255, 255, 255, 0.05)',
-    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
     '0 1px 2px rgba(0, 0, 0, 0.18)',
     '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
     '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
@@ -213,7 +211,6 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
   moderator: [
     `inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.25)}`,
     'inset 1px 0 0 rgba(255, 255, 255, 0.04)',
-    'inset 0 -48px 48px -24px rgba(0, 0, 0, 0.25)',
     '0 1px 2px rgba(0, 0, 0, 0.18)',
     '0 16px 32px -8px rgba(0, 0, 0, 0.32)',
     '0 40px 48px -16px rgba(0, 0, 0, 0.25)',
@@ -222,7 +219,6 @@ export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
 
 export const SPEAKER_INACTIVE_SHADOWS = [
   'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
-  'inset 0 -32px 48px -16px rgba(0, 0, 0, 0.2)',
   '0 8px 24px -4px rgba(0, 0, 0, 0.2)',
 ].join(', ')
 

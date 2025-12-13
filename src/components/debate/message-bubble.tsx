@@ -80,7 +80,6 @@ const GLASS_CONFIG = {
   innerGlow: {
     sides: 'inset 1px 0 8px rgba(255, 255, 255, 0.04), inset -1px 0 8px rgba(255, 255, 255, 0.04)',
     top: 'inset 0 1px 12px rgba(255, 255, 255, 0.06)',
-    bottom: 'inset 0 -1px 8px rgba(0, 0, 0, 0.08)',
   },
 } as const
 
@@ -526,10 +525,10 @@ export const MessageBubble = memo(function MessageBubble({
               // Multi-layer shadow system - ambient + highlight + rim light + inner glow for glass thickness
               boxShadow: isCompleted
                 ? isHovered
-                  ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${GLASS_CONFIG.shadow.highlight}, ${activeShadow}, ${GLASS_CONFIG.innerGlow.sides}, ${GLASS_CONFIG.innerGlow.top}, ${GLASS_CONFIG.innerGlow.bottom}` // Completed + hover: full effect
+                  ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${GLASS_CONFIG.shadow.highlight}, ${activeShadow}, ${GLASS_CONFIG.innerGlow.sides}, ${GLASS_CONFIG.innerGlow.top}` // Completed + hover: full effect
                   : `${GLASS_CONFIG.shadow.highlight}, ${SPEAKER_INACTIVE_SHADOWS}, ${GLASS_CONFIG.innerGlow.sides}` // Completed: subtle thickness
                 : isActive
-                  ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${GLASS_CONFIG.shadow.highlight}, ${activeShadow}, ${GLASS_CONFIG.innerGlow.sides}, ${GLASS_CONFIG.innerGlow.top}, ${GLASS_CONFIG.innerGlow.bottom}` // Active: full glass effect
+                  ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${GLASS_CONFIG.shadow.highlight}, ${activeShadow}, ${GLASS_CONFIG.innerGlow.sides}, ${GLASS_CONFIG.innerGlow.top}` // Active: full glass effect
                   : `${GLASS_CONFIG.shadow.highlight}, ${SPEAKER_INACTIVE_SHADOWS}, ${GLASS_CONFIG.innerGlow.sides}`,
               // Smooth state transitions
               transition:
@@ -717,7 +716,10 @@ export const MessageBubble = memo(function MessageBubble({
             {/* Glow Bleed Gradient - light bleeding from neon border */}
             <div
               className="pointer-events-none absolute inset-0"
-              style={{ background: gradient }}
+              style={{
+                background: gradient,
+                borderRadius: GLASS_CONFIG.borderRadius.css,
+              }}
               aria-hidden="true"
             />
 
