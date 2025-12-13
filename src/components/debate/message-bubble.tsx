@@ -130,19 +130,47 @@ function SmoothHeightWrapper({
 }) {
   const contentRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState<number | 'auto'>('auto')
+  const rafIdRef = useRef<number | null>(null)
+  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Buffer to account for sub-pixel rendering differences
+  const HEIGHT_BUFFER_PX = 4
 
   useEffect(() => {
     if (!contentRef.current || !isExpanding) return
 
     const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const newHeight = entry.contentRect.height
-        setHeight(newHeight)
+      // Cancel any pending RAF/timeout to prevent race conditions
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
       }
+      if (timeoutIdRef.current !== null) {
+        clearTimeout(timeoutIdRef.current)
+      }
+
+      // Debounce with small delay, then use RAF to ensure DOM has settled
+      timeoutIdRef.current = setTimeout(() => {
+        rafIdRef.current = requestAnimationFrame(() => {
+          for (const entry of entries) {
+            // Use getBoundingClientRect for more accurate measurement
+            const rect = entry.target.getBoundingClientRect()
+            const newHeight = Math.ceil(rect.height) + HEIGHT_BUFFER_PX
+            setHeight(newHeight)
+          }
+        })
+      }, 16) // ~1 frame debounce
     })
 
     observer.observe(contentRef.current)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
+      }
+      if (timeoutIdRef.current !== null) {
+        clearTimeout(timeoutIdRef.current)
+      }
+    }
   }, [isExpanding])
 
   useEffect(() => {
@@ -151,11 +179,14 @@ function SmoothHeightWrapper({
     }
   }, [isExpanding])
 
+  // Only use overflow:hidden during active transitions, visible otherwise
+  const isTransitioning = isExpanding && typeof height === 'number'
+
   return (
     <div
       style={{
         height: height === 'auto' ? 'auto' : height,
-        overflow: 'hidden',
+        overflow: isTransitioning ? 'hidden' : 'visible',
         transition: isExpanding
           ? `height ${ANIMATION_CONFIG.HEIGHT_TRANSITION.DURATION_MS}ms ${ANIMATION_CONFIG.HEIGHT_TRANSITION.EASING}`
           : 'none',
@@ -442,11 +473,13 @@ export const MessageBubble = memo(function MessageBubble({
         {/* Inner tilting card - receives spring-physics rotation */}
         <motion.div
           className={cn(
-            'relative z-10 overflow-hidden',
+            'relative z-10',
             // Smooth transition for depth filter
             'transition-[filter] duration-500 ease-out',
             // Enable 3D transforms on this element
-            '[transform-style:preserve-3d]'
+            '[transform-style:preserve-3d]',
+            // GPU optimization for transforms (replaces overflow-hidden)
+            'will-change-transform'
           )}
           style={{
             borderRadius: GLASS_CONFIG.borderRadius.css,
@@ -460,7 +493,7 @@ export const MessageBubble = memo(function MessageBubble({
           {/* Content wrapper - Graphite Glass frosted panel */}
           <div
             className={cn(
-              'relative overflow-hidden backdrop-saturate-150',
+              'relative backdrop-saturate-150',
               // Focus mode opacity - context-aware
               isCompleted
                 ? 'opacity-100 grayscale-0' // Completed: all cards fully visible
