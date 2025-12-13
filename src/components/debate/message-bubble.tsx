@@ -7,7 +7,7 @@
 'use client'
 
 import { motion, useMotionValue, useSpring } from 'framer-motion'
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa'
 import { LuScale } from 'react-icons/lu'
 
@@ -347,7 +347,22 @@ export const MessageBubble = memo(function MessageBubble({
 
   // Spring-physics tilt effect configuration - balanced responsiveness
   const springConfig = { damping: 40, stiffness: 120, mass: 1 }
-  const rotateAmplitude = 8 // Maximum tilt angle in degrees
+
+  // Scale tilt amplitude based on content length - shorter cards get full tilt, longer cards get reduced tilt
+  const contentLength = message.content.length
+  const rotateAmplitude = useMemo(() => {
+    const maxAmplitude = 8
+    const minAmplitude = 4.5
+    const shortThreshold = 200
+    const longThreshold = 800
+
+    if (contentLength <= shortThreshold) return maxAmplitude
+    if (contentLength >= longThreshold) return minAmplitude
+
+    // Linear interpolation between thresholds
+    const ratio = (contentLength - shortThreshold) / (longThreshold - shortThreshold)
+    return maxAmplitude - ratio * (maxAmplitude - minAmplitude)
+  }, [contentLength])
 
   // Motion values for smooth spring-based tilt
   const rotateX = useSpring(useMotionValue(0), springConfig)
