@@ -666,7 +666,7 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         className="overflow-y-auto px-4 h-full"
         style={{
           scrollBehavior: 'auto',
-          scrollSnapType: 'y proximity',
+          scrollSnapType: status === 'completed' ? 'y proximity' : undefined,
           maskImage:
             'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
           WebkitMaskImage:
