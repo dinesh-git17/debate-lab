@@ -4,6 +4,7 @@ import { create } from 'zustand'
 
 import { getModelIdentity } from '@/types/summary'
 
+import type { JudgeAnalysis } from '@/types/judge'
 import type { RevealedAssignment, SummaryResponse, SummaryState } from '@/types/summary'
 
 interface SummaryActions {
@@ -15,8 +16,8 @@ interface SummaryActions {
   completeReveal: () => void
   resetReveal: () => void
 
-  setClaudeSummary: (summary: string) => void
-  setSummaryLoading: (loading: boolean) => void
+  setJudgeAnalysis: (analysis: JudgeAnalysis) => void
+  setAnalysisLoading: (loading: boolean) => void
 
   reset: () => void
 }
@@ -33,8 +34,8 @@ const initialState: SummaryState = {
   statistics: null,
   revealState: 'hidden',
   assignment: null,
-  claudeSummary: null,
-  isSummaryLoading: false,
+  judgeAnalysis: null,
+  isAnalysisLoading: false,
 }
 
 export const useSummaryStore = create<SummaryStore>()((set, get) => ({
@@ -63,6 +64,8 @@ export const useSummaryStore = create<SummaryStore>()((set, get) => ({
       statistics: data.statistics,
       assignment,
       revealState: 'hidden',
+      // Show skeleton for non-cancelled debates while analysis loads
+      isAnalysisLoading: data.status !== 'cancelled',
     })
   },
 
@@ -82,9 +85,9 @@ export const useSummaryStore = create<SummaryStore>()((set, get) => ({
     set({ revealState: 'hidden' })
   },
 
-  setClaudeSummary: (summary) => set({ claudeSummary: summary, isSummaryLoading: false }),
+  setJudgeAnalysis: (analysis) => set({ judgeAnalysis: analysis, isAnalysisLoading: false }),
 
-  setSummaryLoading: (loading) => set({ isSummaryLoading: loading }),
+  setAnalysisLoading: (loading) => set({ isAnalysisLoading: loading }),
 
   reset: () => set(initialState),
 }))

@@ -134,87 +134,101 @@ export function RevealSection({ className }: RevealSectionProps) {
         />
       </div>
 
-      {!isRevealed && (
-        <div className="flex items-center justify-center" style={{ minHeight: 52 }}>
-          {/* Button - fades out when revealing */}
-          <AnimatePresence>
-            {!isRevealing && (
-              <motion.button
-                onClick={handleReveal}
-                disabled={!canReveal}
-                className={cn(
-                  'absolute px-8 py-3.5 rounded-full font-medium',
-                  'bg-primary text-primary-foreground',
-                  'focus:outline-none focus:ring-2 focus:ring-primary/30',
-                  'disabled:cursor-not-allowed disabled:pointer-events-none'
+      <AnimatePresence>
+        {!isRevealed && (
+          <motion.div
+            className="overflow-hidden"
+            initial={{ height: 52, opacity: 1 }}
+            animate={{ height: 52, opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
+          >
+            <div className="flex items-center justify-center" style={{ height: 52 }}>
+              {/* Button - fades out when revealing */}
+              <AnimatePresence>
+                {!isRevealing && (
+                  <motion.button
+                    onClick={handleReveal}
+                    disabled={!canReveal}
+                    className={cn(
+                      'absolute px-8 py-3.5 rounded-full font-medium',
+                      'bg-primary text-primary-foreground',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/30',
+                      'disabled:cursor-not-allowed disabled:pointer-events-none'
+                    )}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.92 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
+                  >
+                    Reveal the Models
+                  </motion.button>
                 )}
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
-              >
-                Reveal the Models
-              </motion.button>
-            )}
-          </AnimatePresence>
+              </AnimatePresence>
 
-          {/* Standalone spinner - fades in when loading, fades out before reveal */}
-          <AnimatePresence>
-            {showSpinner && (
-              <motion.div
-                className="absolute flex items-center justify-center"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                style={{ pointerEvents: 'none' }}
-                transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="rgba(255,255,255,0.12)"
-                    strokeWidth="2.5"
-                  />
-                  <motion.circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="rgba(255,255,255,0.45)"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeDasharray="63"
-                    strokeDashoffset="47"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    style={{ transformOrigin: 'center' }}
-                  />
-                </svg>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+              {/* Standalone spinner - fades in when loading, fades out before reveal */}
+              <AnimatePresence>
+                {showSpinner && (
+                  <motion.div
+                    className="absolute flex items-center justify-center"
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    style={{ pointerEvents: 'none' }}
+                    transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="rgba(255,255,255,0.12)"
+                        strokeWidth="2.5"
+                      />
+                      <motion.circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="rgba(255,255,255,0.45)"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeDasharray="63"
+                        strokeDashoffset="47"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        style={{ transformOrigin: 'center' }}
+                      />
+                    </svg>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isRevealed && (
           <motion.div
-            className={cn('mt-8 p-6 rounded-xl bg-muted/30 border border-border', 'text-center')}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
+            className="overflow-hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
           >
-            <p className="text-muted-foreground">
-              Both models are designed to argue convincingly from their assigned positions.
-            </p>
-            <p className="text-muted-foreground/70 text-sm mt-2">
-              Performance here reflects rhetorical structure and reasoning, not beliefs, intent, or
-              independent judgment.
-            </p>
+            <div
+              className={cn('mt-8 p-6 rounded-xl bg-muted/30 border border-border', 'text-center')}
+            >
+              <p className="text-muted-foreground">
+                Both models are designed to argue convincingly from their assigned positions.
+              </p>
+              <p className="text-muted-foreground/70 text-sm mt-2">
+                Performance here reflects rhetorical structure and reasoning, not beliefs, intent,
+                or independent judgment.
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

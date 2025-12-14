@@ -1,5 +1,6 @@
 // src/types/summary.ts
 
+import type { JudgeAnalysis } from './judge'
 import type { LLMProviderType } from './llm'
 import type { TurnSpeaker, TurnType } from './turn'
 
@@ -92,8 +93,8 @@ export interface SummaryState {
   statistics: DebateStatistics | null
   revealState: RevealState
   assignment: RevealedAssignment | null
-  claudeSummary: string | null
-  isSummaryLoading: boolean
+  judgeAnalysis: JudgeAnalysis | null
+  isAnalysisLoading: boolean
 }
 
 /**

@@ -74,10 +74,16 @@ function generateMockJudgeAnalysis(
         'Could have addressed counterarguments more directly in some sections',
         'Some opportunities for deeper engagement with opposing evidence were missed',
       ],
-      standoutMoments: [
-        'The opening framework was particularly well-structured and set a strong foundation',
-        'Effective pivot during rebuttal phase to address opponent strongest points',
-      ],
+      standoutMoments:
+        speaker === 'for'
+          ? [
+              'Strong opening framework establishing functional definitions over philosophical abstraction',
+              'Effective use of the "crumb test" to ground abstract concepts in observable reality',
+            ]
+          : [
+              'Compelling argument that conceptual analysis can fundamentally alter perception',
+              'Strategic pivot to linguistic philosophy that reframed the entire debate',
+            ],
     }
   }
 
@@ -106,28 +112,29 @@ function generateMockJudgeAnalysis(
     againstAnalysis,
     keyClashPoints: [
       {
-        topic: 'Core Framework Disagreement',
+        topic: 'Functional vs Conceptual Identity',
         description:
-          'A fundamental disagreement about the appropriate framework for evaluating this issue',
+          'Whether a sandwich is defined by its physical properties or by how we conceptualize it',
         forArgument:
-          'Argued for a principled approach based on established precedent and systematic analysis',
+          'A sandwich is defined by use and structure—bread, filling, consumption method. Overthinking cannot change these facts.',
         againstArgument:
-          'Countered with a pragmatic framework emphasizing real-world outcomes and practical considerations',
+          'Conceptual analysis reveals that "sandwich" is a linguistic construct whose boundaries dissolve under scrutiny.',
         analysis:
-          'Both frameworks have merit. The clash highlighted genuine tension between theoretical ideals and practical implementation.',
+          'This clash highlighted the tension between pragmatic definitions and philosophical deconstruction.',
       },
       {
-        topic: 'Evidence Interpretation',
-        description: 'Competing interpretations of the available data and research',
-        forArgument: 'Cited specific studies supporting the affirmative position',
-        againstArgument: 'Challenged methodology and offered alternative interpretations',
-        analysis:
-          'This clash demonstrated the complexity of empirical questions in policy debates where data can support multiple conclusions.',
+        topic: 'The Hot Dog Question',
+        description: 'Whether edge cases like hot dogs undermine categorical definitions',
+        forArgument:
+          'Edge cases prove the rule—hot dogs have their own category precisely because sandwiches have clear boundaries',
+        againstArgument:
+          'The inability to cleanly categorize hot dogs reveals the arbitrariness of all food taxonomy',
+        analysis: 'Both sides made compelling points about how we handle definitional edge cases.',
       },
     ],
     turningMoments: [
-      'The rebuttal phase marked a shift in momentum as both sides directly engaged with core disagreements',
-      'Cross-examination revealed key assumptions that shaped the remainder of the debate',
+      "The shift from physical properties to linguistic philosophy changed the debate's entire framing",
+      'FOR\'s "crumb test" argument forced AGAINST to concede that practical definitions have utility',
     ],
     missedOpportunities: [
       'Neither side fully explored the implications of their position for edge cases',

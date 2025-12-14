@@ -108,11 +108,12 @@ export function ModelCard({
             )}
             spotlightColor={config.spotlightColor}
           >
-            <FaLock className={cn('w-10 h-10', config.iconColor)} />
-            <div className={cn('text-sm font-semibold uppercase tracking-wider', config.textColor)}>
+            <FaLock className={cn('w-12 h-12', config.iconColor)} />
+            <div
+              className={cn('text-base font-semibold uppercase tracking-wider', config.textColor)}
+            >
               {config.label}
             </div>
-            <div className="text-lg font-medium text-foreground/70">{config.hiddenLabel}</div>
           </SpotlightCard>
         </motion.div>
 

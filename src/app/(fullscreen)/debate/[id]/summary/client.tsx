@@ -1,7 +1,7 @@
 // client.tsx
 /**
  * Client component for debate summary display.
- * Orchestrates reveal, statistics, sharing, and Claude's analysis sections.
+ * Orchestrates reveal, statistics, sharing, and highlights sections.
  */
 
 'use client'
@@ -9,9 +9,9 @@
 import Link from 'next/link'
 import { useEffect, useCallback, useRef } from 'react'
 
+import { DebateHighlightsCard } from '@/components/summary/debate-highlights-card'
 import { RevealSection } from '@/components/summary/reveal-section'
 import { ShareSection } from '@/components/summary/share-section'
-import { SummaryCard } from '@/components/summary/summary-card'
 import { SummaryNavigation } from '@/components/summary/summary-navigation'
 import { clientLogger } from '@/lib/client-logger'
 import { cn } from '@/lib/utils'
@@ -29,32 +29,32 @@ interface SummaryPageClientProps {
 export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryPageClientProps) {
   const status = useSummaryStore((s) => s.status)
   const error = useSummaryStore((s) => s.error)
-  const hasFetchedSummary = useRef(false)
+  const hasFetchedAnalysis = useRef(false)
 
-  const fetchClaudeSummary = useCallback(async () => {
-    if (hasFetchedSummary.current) return
-    hasFetchedSummary.current = true
+  const fetchJudgeAnalysis = useCallback(async () => {
+    if (hasFetchedAnalysis.current) return
+    hasFetchedAnalysis.current = true
 
     const store = useSummaryStore.getState()
-    store.setSummaryLoading(true)
+    store.setAnalysisLoading(true)
 
     try {
       const response = await fetch(`/api/debate/${initialData.debateId}/judge`)
       if (!response.ok) {
         clientLogger.error('Summary: Failed to fetch judge analysis')
-        store.setSummaryLoading(false)
+        store.setAnalysisLoading(false)
         return
       }
 
       const data = (await response.json()) as JudgeAnalysisResponse
       if (data.success && data.analysis) {
-        store.setClaudeSummary(data.analysis.overviewSummary)
+        store.setJudgeAnalysis(data.analysis)
       } else {
-        store.setSummaryLoading(false)
+        store.setAnalysisLoading(false)
       }
     } catch (err) {
       clientLogger.error('Summary: Error fetching judge analysis', err)
-      store.setSummaryLoading(false)
+      store.setAnalysisLoading(false)
     }
   }, [initialData.debateId])
 
@@ -63,14 +63,14 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
 
     // Skip judge analysis for debates that were ended early (cancelled)
     if (initialData.status !== 'cancelled') {
-      fetchClaudeSummary()
+      fetchJudgeAnalysis()
     }
 
     return () => {
       useSummaryStore.getState().reset()
-      hasFetchedSummary.current = false
+      hasFetchedAnalysis.current = false
     }
-  }, [initialData, fetchClaudeSummary])
+  }, [initialData, fetchJudgeAnalysis])
 
   if (status === 'loading') {
     return (
@@ -125,7 +125,7 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
         <SummaryNavigation className="mb-12" />
         <RevealSection className="mb-16" />
         <hr className="border-border my-12" />
-        <SummaryCard className="mb-16" />
+        <DebateHighlightsCard className="mb-16" />
         <hr className="border-border my-12" />
         <ShareSection
           debateId={initialData.debateId}

@@ -543,6 +543,23 @@ body {
   animation: breathe-glow 3s ease-in-out infinite;
 }
 
+/* Mosaic loader animation - cubes appear/disappear like react-loading-indicators */
+@keyframes mosaic-cube {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-mosaic-cube {
+  animation: mosaic-cube 1.5s ease-in-out infinite;
+}
+
 /* Safe area utilities for notched devices */
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);

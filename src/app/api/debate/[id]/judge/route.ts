@@ -34,6 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
   return NextResponse.json(
     {
+      success: true,
       analysis: response.analysis,
       cached: response.cached,
       generationTimeMs: response.generationTimeMs,
