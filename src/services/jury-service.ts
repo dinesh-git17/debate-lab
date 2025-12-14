@@ -191,7 +191,7 @@ async function extractClaims(
   const prompt = buildExtractionPrompt(topic, debateTranscript)
 
   const result = await generate({
-    provider: 'anthropic',
+    provider: 'xai',
     params: {
       systemPrompt: EVIDENCE_EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
@@ -400,9 +400,9 @@ async function resolveScores(
 ): Promise<ArbiterResolution> {
   const prompt = buildArbiterPrompt(geminiEval, deepseekEval, disagreements)
 
-  // Use Claude as neutral arbiter
+  // Use Grok as neutral arbiter
   const result = await generate({
-    provider: 'anthropic',
+    provider: 'xai',
     params: {
       systemPrompt: ARBITER_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
