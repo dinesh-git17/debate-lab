@@ -6,14 +6,16 @@
 
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 import { useSummaryStore, selectCanReveal } from '@/store/summary-store'
 
 import { ModelCard } from './model-card'
 
-const REVEAL_ANIMATION_DURATION = 2000
+const REVEAL_ANIMATION_DURATION = 1000
+const SPINNER_FADE_DURATION = 300
 
 interface RevealSectionProps {
   className?: string
@@ -24,15 +26,29 @@ export function RevealSection({ className }: RevealSectionProps) {
   const assignment = useSummaryStore((s) => s.assignment)
   const canReveal = useSummaryStore(selectCanReveal)
 
+  const [showSpinner, setShowSpinner] = useState(false)
+  const [shouldFlipCards, setShouldFlipCards] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleReveal = useCallback(() => {
     if (!canReveal) return
 
     useSummaryStore.getState().startReveal()
+    setShowSpinner(true)
 
     timerRef.current = setTimeout(() => {
-      useSummaryStore.getState().completeReveal()
+      // Spinner starts fading out
+      setShowSpinner(false)
+
+      // After spinner fade completes, start card flip then mark revealed
+      fadeTimerRef.current = setTimeout(() => {
+        setShouldFlipCards(true)
+        // Give flip animation time to complete before final state
+        setTimeout(() => {
+          useSummaryStore.getState().completeReveal()
+        }, 800) // matches card flip duration
+      }, SPINNER_FADE_DURATION)
     }, REVEAL_ANIMATION_DURATION)
   }, [canReveal])
 
@@ -41,23 +57,54 @@ export function RevealSection({ className }: RevealSectionProps) {
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
+      if (fadeTimerRef.current) {
+        clearTimeout(fadeTimerRef.current)
+      }
     }
   }, [])
 
   const isRevealing = revealState === 'revealing'
   const isRevealed = revealState === 'revealed'
 
+  const textTransition = {
+    duration: 0.5,
+    ease: [0.22, 0.61, 0.36, 1] as const,
+  }
+
   return (
     <section className={cn('w-full', className)}>
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          {isRevealed ? 'The Models Behind the Debate' : 'Who Was Arguing?'}
-        </h2>
-        <p className="text-muted-foreground">
-          {isRevealed
-            ? 'Now that you know who argued each side, reflect on their arguments'
-            : 'Click the button below to reveal which AI model argued each position'}
-        </p>
+      <div className="mb-8 text-center relative" style={{ minHeight: 80 }}>
+        <AnimatePresence mode="wait">
+          {!shouldFlipCards ? (
+            <motion.div
+              key="hidden-text"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={textTransition}
+            >
+              <h2 className="text-2xl font-bold text-foreground mb-2">Who Was Arguing?</h2>
+              <p className="text-muted-foreground">
+                Click the button below to reveal which AI model argued each position
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="revealed-text"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={textTransition}
+            >
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                The Models Behind the Debate
+              </h2>
+              <p className="text-muted-foreground">
+                Now that the debate has concluded, you can see which AI model argued each side
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-8">
@@ -65,7 +112,7 @@ export function RevealSection({ className }: RevealSectionProps) {
           position="for"
           identity={assignment?.for ?? null}
           isRevealed={isRevealed}
-          isRevealing={isRevealing}
+          isRevealing={shouldFlipCards}
         />
 
         <div
@@ -83,68 +130,94 @@ export function RevealSection({ className }: RevealSectionProps) {
           position="against"
           identity={assignment?.against ?? null}
           isRevealed={isRevealed}
-          isRevealing={isRevealing}
+          isRevealing={shouldFlipCards}
         />
       </div>
 
       {!isRevealed && (
-        <div className="flex justify-center">
-          <button
-            onClick={handleReveal}
-            disabled={!canReveal || isRevealing}
-            className={cn(
-              'relative px-8 py-3.5 rounded-full font-medium',
-              'bg-primary text-primary-foreground',
-              'transition-all duration-200',
-              'hover:bg-primary/90 hover:scale-[1.02]',
-              'focus:outline-none focus:ring-2 focus:ring-primary/30',
-              'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
+        <div className="flex items-center justify-center" style={{ minHeight: 52 }}>
+          {/* Button - fades out when revealing */}
+          <AnimatePresence>
+            {!isRevealing && (
+              <motion.button
+                onClick={handleReveal}
+                disabled={!canReveal}
+                className={cn(
+                  'absolute px-8 py-3.5 rounded-full font-medium',
+                  'bg-primary text-primary-foreground',
+                  'focus:outline-none focus:ring-2 focus:ring-primary/30',
+                  'disabled:cursor-not-allowed disabled:pointer-events-none'
+                )}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
+              >
+                Reveal the Models
+              </motion.button>
             )}
-          >
-            {isRevealing ? (
-              <span className="flex items-center gap-2">
-                <svg
-                  className="animate-spin h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
+          </AnimatePresence>
+
+          {/* Standalone spinner - fades in when loading, fades out before reveal */}
+          <AnimatePresence>
+            {showSpinner && (
+              <motion.div
+                className="absolute flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                style={{ pointerEvents: 'none' }}
+                transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <circle
-                    className="opacity-25"
                     cx="12"
                     cy="12"
                     r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
+                    stroke="rgba(255,255,255,0.12)"
+                    strokeWidth="2.5"
                   />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  <motion.circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="rgba(255,255,255,0.45)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeDasharray="63"
+                    strokeDashoffset="47"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    style={{ transformOrigin: 'center' }}
                   />
                 </svg>
-                Revealing...
-              </span>
-            ) : (
-              <span>Reveal the Models</span>
+              </motion.div>
             )}
-          </button>
+          </AnimatePresence>
         </div>
       )}
 
-      {isRevealed && (
-        <div
-          className={cn(
-            'mt-8 p-6 rounded-xl bg-muted/30 border border-border',
-            'text-center animate-fade-in'
-          )}
-        >
-          <p className="text-muted-foreground">
-            Were you surprised? Both AI models are trained to argue persuasively, regardless of
-            their actual capabilities or &ldquo;beliefs.&rdquo;
-          </p>
-        </div>
-      )}
+      <AnimatePresence>
+        {isRevealed && (
+          <motion.div
+            className={cn('mt-8 p-6 rounded-xl bg-muted/30 border border-border', 'text-center')}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
+          >
+            <p className="text-muted-foreground">
+              Both models are designed to argue convincingly from their assigned positions.
+            </p>
+            <p className="text-muted-foreground/70 text-sm mt-2">
+              Performance here reflects rhetorical structure and reasoning, not beliefs, intent, or
+              independent judgment.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

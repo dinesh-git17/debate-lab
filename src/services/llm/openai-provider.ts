@@ -18,7 +18,7 @@ import type {
 } from '@/types/llm'
 import type { TiktokenModel } from 'tiktoken'
 
-const MODEL = 'gpt-5.1'
+export const OPENAI_MODEL = 'gpt-5.1'
 const TIKTOKEN_MODEL: TiktokenModel = 'gpt-4'
 
 export class OpenAIProvider extends BaseLLMProvider {
@@ -26,7 +26,7 @@ export class OpenAIProvider extends BaseLLMProvider {
   readonly info: ProviderInfo = {
     name: 'ChatGPT',
     provider: 'openai',
-    model: MODEL,
+    model: OPENAI_MODEL,
     maxContextTokens: 128000,
     maxOutputTokens: 4096,
     supportsStreaming: true,
@@ -85,7 +85,7 @@ export class OpenAIProvider extends BaseLLMProvider {
 
     try {
       const response = await client.chat.completions.create({
-        model: MODEL,
+        model: OPENAI_MODEL,
         messages: [
           { role: 'system', content: params.systemPrompt },
           ...params.messages.map((m) => ({
@@ -110,7 +110,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         finishReason,
         latencyMs: Date.now() - startTime,
         provider: 'openai',
-        model: MODEL,
+        model: OPENAI_MODEL,
       }
     } catch (error) {
       throw this.handleError(error)
@@ -122,7 +122,7 @@ export class OpenAIProvider extends BaseLLMProvider {
 
     try {
       const stream = await client.chat.completions.create({
-        model: MODEL,
+        model: OPENAI_MODEL,
         messages: [
           { role: 'system', content: params.systemPrompt },
           ...params.messages.map((m) => ({
@@ -158,7 +158,7 @@ export class OpenAIProvider extends BaseLLMProvider {
 
     try {
       const client = this.getClient()
-      await client.models.retrieve(MODEL)
+      await client.models.retrieve(OPENAI_MODEL)
 
       return {
         provider: 'openai',

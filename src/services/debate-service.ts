@@ -9,6 +9,8 @@ import {
 } from '@/lib/logging'
 import { getSession, storeSession, toPublicSession, updateSession } from '@/lib/session-store'
 import { getTopicCategoryWithFallback } from '@/lib/topic-backgrounds'
+import { OPENAI_MODEL } from '@/services/llm/openai-provider'
+import { XAI_MODEL } from '@/services/llm/xai-provider'
 
 import type { DebateFormValues } from '@/lib/schemas/debate-schema'
 import type {
@@ -155,10 +157,10 @@ export async function revealAssignment(
   }
 
   // Map internal provider names to LLMProviderType format
-  // getModelIdentity expects format like 'openai:gpt-4' or 'xai:grok'
+  // getModelIdentity expects format like 'openai:gpt-5.1' or 'xai:grok-4-1-fast-reasoning'
   const providerMapping: Record<LLMProvider, string> = {
-    chatgpt: 'openai:gpt-4',
-    grok: 'xai:grok',
+    chatgpt: `openai:${OPENAI_MODEL}`,
+    grok: `xai:${XAI_MODEL}`,
   }
 
   return {

@@ -16,7 +16,7 @@ import type {
   StreamChunk,
 } from '@/types/llm'
 
-const MODEL = 'grok-4-1-fast-reasoning'
+export const XAI_MODEL = 'grok-4-1-fast-reasoning'
 const BASE_URL = 'https://api.x.ai/v1'
 
 export class XAIProvider extends BaseLLMProvider {
@@ -24,7 +24,7 @@ export class XAIProvider extends BaseLLMProvider {
   readonly info: ProviderInfo = {
     name: 'Grok',
     provider: 'xai',
-    model: MODEL,
+    model: XAI_MODEL,
     maxContextTokens: 131072,
     maxOutputTokens: 4096,
     supportsStreaming: true,
@@ -73,7 +73,7 @@ export class XAIProvider extends BaseLLMProvider {
 
     try {
       const response = await client.chat.completions.create({
-        model: MODEL,
+        model: XAI_MODEL,
         messages: [
           { role: 'system', content: params.systemPrompt },
           ...params.messages.map((m) => ({
@@ -98,7 +98,7 @@ export class XAIProvider extends BaseLLMProvider {
         finishReason,
         latencyMs: Date.now() - startTime,
         provider: 'xai',
-        model: MODEL,
+        model: XAI_MODEL,
       }
     } catch (error) {
       throw this.handleError(error)
@@ -110,7 +110,7 @@ export class XAIProvider extends BaseLLMProvider {
 
     try {
       const stream = await client.chat.completions.create({
-        model: MODEL,
+        model: XAI_MODEL,
         messages: [
           { role: 'system', content: params.systemPrompt },
           ...params.messages.map((m) => ({
