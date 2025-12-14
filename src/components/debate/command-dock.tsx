@@ -358,9 +358,17 @@ export function CommandDock({ debateId }: CommandDockProps) {
   }
 
   const handleExport = useCallback(
-    (config: ExportConfig) => {
+    async (config: ExportConfig) => {
       const summaryMessage = messages.find((m) => m.turnType === 'moderator_summary')
-      exportTranscript(debateId, topic, format, status, messages, config, summaryMessage?.content)
+      await exportTranscript(
+        debateId,
+        topic,
+        format,
+        status,
+        messages,
+        config,
+        summaryMessage?.content
+      )
     },
     [debateId, topic, format, status, messages]
   )

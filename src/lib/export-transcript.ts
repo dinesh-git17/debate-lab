@@ -1,13 +1,16 @@
-// export-transcript.ts
 /**
  * Debate transcript export utilities.
- * Supports Markdown, plain text, and JSON formats with configurable content options.
+ * Supports Markdown, PDF, and JSON formats with configurable content options.
  */
+
+import { pdf } from '@react-pdf/renderer'
+
+import { DebateDocument } from '@/lib/export/pdf'
 
 import type { DebateMessage } from '@/types/debate-ui'
 import type { ExportConfig, ExportedTranscript, ExportedTurn } from '@/types/export'
 
-export function generateFilename(topic: string, format: 'markdown' | 'text' | 'json'): string {
+export function generateFilename(topic: string, format: 'markdown' | 'pdf' | 'json'): string {
   const slug = topic
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -15,7 +18,7 @@ export function generateFilename(topic: string, format: 'markdown' | 'text' | 'j
     .slice(0, 50)
 
   const date = new Date().toISOString().split('T')[0]
-  const extension = format === 'markdown' ? 'md' : format === 'text' ? 'txt' : 'json'
+  const extension = format === 'markdown' ? 'md' : format
 
   return `debate-${slug}-${date}.${extension}`
 }
@@ -74,55 +77,28 @@ export function exportAsMarkdown(
   return lines.join('\n')
 }
 
-export function exportAsText(
+export async function exportAsPDF(
   topic: string,
   format: string,
   messages: DebateMessage[],
   config: ExportConfig,
-  summary?: string
-): string {
-  const lines: string[] = []
+  summary?: string | undefined
+): Promise<Blob> {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
-  lines.push(`AI DEBATE: ${topic}`)
-  lines.push(`Format: ${format}`)
-  lines.push(`Exported: ${new Date().toLocaleString()}`)
-  lines.push('')
-  lines.push('='.repeat(60))
-  lines.push('')
+  const document = DebateDocument({
+    topic,
+    format,
+    messages,
+    config,
+    summary,
+    baseUrl,
+  })
 
-  for (const message of messages) {
-    if (!config.includeModeratorTurns && message.speaker === 'moderator') {
-      continue
-    }
-
-    const label =
-      message.speaker === 'for'
-        ? '[FOR]'
-        : message.speaker === 'against'
-          ? '[AGAINST]'
-          : '[MODERATOR]'
-
-    lines.push(`${label} ${message.speakerLabel}`)
-
-    if (config.includeTimestamps && message.timestamp) {
-      lines.push(`(${message.timestamp.toLocaleString()})`)
-    }
-
-    lines.push('')
-    lines.push(message.content)
-    lines.push('')
-
-    lines.push('-'.repeat(60))
-    lines.push('')
-  }
-
-  if (summary) {
-    lines.push('MODERATOR SUMMARY')
-    lines.push('')
-    lines.push(summary)
-  }
-
-  return lines.join('\n')
+  // Type assertion required for @react-pdf/renderer generic constraints
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await pdf(document as any).toBlob()
+  return blob
 }
 
 export function exportAsJSON(
@@ -171,8 +147,8 @@ export function exportAsJSON(
   return JSON.stringify(exported, null, 2)
 }
 
-export function downloadFile(content: string, filename: string, mimeType: string): void {
-  const blob = new Blob([content], { type: mimeType })
+export function downloadFile(content: string | Blob, filename: string, mimeType: string): void {
+  const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType })
   const url = URL.createObjectURL(blob)
 
   const link = document.createElement('a')
@@ -185,7 +161,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url)
 }
 
-export function exportTranscript(
+export async function exportTranscript(
   debateId: string,
   topic: string,
   format: string,
@@ -193,8 +169,8 @@ export function exportTranscript(
   messages: DebateMessage[],
   config: ExportConfig,
   summary?: string
-): void {
-  let content: string
+): Promise<void> {
+  let content: string | Blob
   let mimeType: string
 
   switch (config.format) {
@@ -202,9 +178,9 @@ export function exportTranscript(
       content = exportAsMarkdown(topic, format, messages, config, summary)
       mimeType = 'text/markdown'
       break
-    case 'text':
-      content = exportAsText(topic, format, messages, config, summary)
-      mimeType = 'text/plain'
+    case 'pdf':
+      content = await exportAsPDF(topic, format, messages, config, summary)
+      mimeType = 'application/pdf'
       break
     case 'json':
       content = exportAsJSON(debateId, topic, format, status, messages, config, summary)

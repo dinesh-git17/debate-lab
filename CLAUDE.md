@@ -12,7 +12,7 @@ This document provides guidance for AI assistants working on the Debate Lab code
 - Never mention "Claude", "AI", or "assistant" in commit messages
 - Write commit messages as if a human developer made the changes
 - Use conventional commit format: `type(scope): description`
-- Always show the proposed commit message and wait for approval
+- Always show the proposed commit message and proceed to commit
 
 ### Build Process - NEVER Run Builds
 

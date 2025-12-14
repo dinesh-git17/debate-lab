@@ -1,7 +1,7 @@
 // src/components/debate/export-modal.tsx
 /**
  * Modal dialog for exporting debate transcripts in various formats.
- * Supports markdown, plain text, and JSON with configurable metadata options.
+ * Supports markdown, PDF, and JSON with configurable metadata options.
  */
 
 'use client'
@@ -16,11 +16,11 @@ import type { ExportFormat, ExportConfig } from '@/types/export'
 interface ExportModalProps {
   isOpen: boolean
   onClose: () => void
-  onExport: (config: ExportConfig) => void
+  onExport: (config: ExportConfig) => void | Promise<void>
 }
 
 export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
-  const [format, setFormat] = useState<ExportFormat>('markdown')
+  const [format, setFormat] = useState<ExportFormat>('pdf')
   const [includeTimestamps, setIncludeTimestamps] = useState(true)
   const [includeModeratorTurns, setIncludeModeratorTurns] = useState(true)
   const [mounted, setMounted] = useState(false)
@@ -67,14 +67,14 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
 
   const formatOptions: { value: ExportFormat; label: string; description: string }[] = [
     {
+      value: 'pdf',
+      label: 'PDF (.pdf)',
+      description: 'Premium document for sharing and printing',
+    },
+    {
       value: 'markdown',
       label: 'Markdown (.md)',
       description: 'Formatted with headers and styling',
-    },
-    {
-      value: 'text',
-      label: 'Plain Text (.txt)',
-      description: 'Simple text with line breaks',
     },
     {
       value: 'json',

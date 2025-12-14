@@ -3,7 +3,7 @@
 /**
  * Available export formats
  */
-export type ExportFormat = 'markdown' | 'text' | 'json'
+export type ExportFormat = 'markdown' | 'pdf' | 'json'
 
 /**
  * Export configuration
