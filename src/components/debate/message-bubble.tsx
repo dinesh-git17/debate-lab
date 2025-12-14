@@ -290,7 +290,7 @@ function MessageContent({
 
   const initialDelayMs = speaker === 'moderator' ? 0 : ANIMATION_CONFIG.DEBATER_THINKING_DELAY_MS
 
-  const { displayContent, isTyping, isRevealing, newContentStartIndex } = useSmoothReveal({
+  const { displayContent, isTyping, isRevealing } = useSmoothReveal({
     messageId,
     rawContent: content,
     isStreaming,
@@ -333,11 +333,7 @@ function MessageContent({
               textShadow: '0 0 20px rgba(255, 255, 255, 0.03)',
             }}
           >
-            <AnimatedText
-              content={displayContent}
-              isRevealing={isRevealing}
-              newContentStartIndex={newContentStartIndex}
-            />
+            <AnimatedText content={displayContent} isRevealing={isRevealing} />
           </div>
         </SmoothHeightWrapper>
       )}

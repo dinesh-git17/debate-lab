@@ -411,6 +411,9 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     setHoveredMessageId(isHovered ? messageId : null)
   }, [])
 
+  // Track previous status to detect transitions
+  const previousStatusRef = useRef(status)
+
   // Initial mount: scroll to top and trigger cascade animation for completed debates
   useEffect(() => {
     // Don't do anything until we have messages (wait for hydration)
@@ -474,6 +477,32 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
 
     smoothScrollRafRef.current = requestAnimationFrame(animateScroll)
   }, [])
+
+  // Scroll to reveal SummaryHint when debate completes (status transitions to 'completed')
+  useEffect(() => {
+    const wasActive = previousStatusRef.current === 'active'
+    const isNowCompleted = status === 'completed'
+    previousStatusRef.current = status
+
+    // Only trigger on active → completed transition (not on page load)
+    if (!wasActive || !isNowCompleted) return
+
+    const container = containerRef.current
+    if (!container) return
+
+    // Wait for last message reveal to settle, then scroll to show SummaryHint
+    const scrollDelay = ANIMATION_CONFIG.AUTO_SCROLL.PAUSE_AFTER_COMPLETE_MS + 200
+
+    const timeoutId = setTimeout(() => {
+      const { scrollHeight, clientHeight } = container
+      const maxScroll = scrollHeight - clientHeight
+
+      // Scroll to bottom with eased animation to reveal the hint
+      smoothScrollTo(container, maxScroll)
+    }, scrollDelay)
+
+    return () => clearTimeout(timeoutId)
+  }, [status, smoothScrollTo])
 
   useEffect(() => {
     if (!shouldAutoScroll) return

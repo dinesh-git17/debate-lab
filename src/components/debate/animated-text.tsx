@@ -7,7 +7,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 
 import { Markdown } from '@/components/ui/markdown'
 import { ANIMATION_CONFIG } from '@/lib/animation-config'
@@ -18,8 +18,6 @@ interface AnimatedTextProps {
   content: string
   /** Whether content is still being revealed */
   isRevealing: boolean
-  /** Index where new content begins */
-  newContentStartIndex: number
   /** Additional class names */
   className?: string
 }
@@ -27,13 +25,9 @@ interface AnimatedTextProps {
 export const AnimatedText = memo(function AnimatedText({
   content,
   isRevealing,
-  newContentStartIndex,
   className,
 }: AnimatedTextProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-  const previousContentLengthRef = useRef(0)
-  const animationKeyRef = useRef(0)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -44,13 +38,6 @@ export const AnimatedText = memo(function AnimatedText({
     return () => mediaQuery.removeEventListener('change', handler)
   }, [])
 
-  useEffect(() => {
-    if (content.length > previousContentLengthRef.current) {
-      animationKeyRef.current++
-    }
-    previousContentLengthRef.current = content.length
-  }, [content])
-
   if (prefersReducedMotion) {
     return (
       <div className={className}>
@@ -59,38 +46,16 @@ export const AnimatedText = memo(function AnimatedText({
     )
   }
 
-  const hasNewContent = newContentStartIndex > 0 && newContentStartIndex < content.length
-
   return (
-    <div ref={containerRef} className={cn('relative', className)}>
-      <div className={cn('transition-opacity duration-75', isRevealing && 'will-change-contents')}>
-        <Markdown content={content} />
-      </div>
-
-      {hasNewContent && isRevealing && <RevealWave key={animationKeyRef.current} />}
+    <div
+      className={cn(
+        'transition-opacity duration-75',
+        isRevealing && 'will-change-contents',
+        className
+      )}
+    >
+      <Markdown content={content} />
     </div>
-  )
-})
-
-const RevealWave = memo(function RevealWave() {
-  return (
-    <motion.div
-      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent"
-      initial={{ x: '-100%', opacity: 0 }}
-      animate={{ x: '100%', opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{
-        x: {
-          duration: 0.6,
-          ease: [0.25, 0.1, 0.25, 1],
-        },
-        opacity: {
-          duration: 0.2,
-        },
-      }}
-      style={{ willChange: 'transform, opacity' }}
-      aria-hidden="true"
-    />
   )
 })
 
