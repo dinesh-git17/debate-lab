@@ -11,6 +11,8 @@ import {
   revealAssignment,
   updateDebateStatus,
 } from '@/services/debate-service'
+import { OPENAI_MODEL } from '@/services/llm/openai-provider'
+import { XAI_MODEL } from '@/services/llm/xai-provider'
 
 import type { DebateFormValues } from '@/lib/schemas/debate-schema'
 
@@ -211,8 +213,9 @@ describe('debate-service', () => {
       const assignment = await revealAssignment(createResult.debateId!)
       expect(assignment).not.toBeNull()
       // revealAssignment returns model identifiers in 'provider:model' format
-      expect(['openai:gpt-4', 'xai:grok']).toContain(assignment?.forModel)
-      expect(['openai:gpt-4', 'xai:grok']).toContain(assignment?.againstModel)
+      const expectedModels = [`openai:${OPENAI_MODEL}`, `xai:${XAI_MODEL}`]
+      expect(expectedModels).toContain(assignment?.forModel)
+      expect(expectedModels).toContain(assignment?.againstModel)
       expect(assignment?.forModel).not.toBe(assignment?.againstModel)
     })
 
