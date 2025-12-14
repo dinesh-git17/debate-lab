@@ -52,7 +52,7 @@ export async function HEAD(request: NextRequest, { params }: RouteParams): Promi
     return new Response(null, { status: 400 })
   }
 
-  const cached = isDeliberationCached(debateId)
+  const cached = await isDeliberationCached(debateId)
 
   return new Response(null, {
     status: 200,

@@ -13,8 +13,8 @@ import { cn } from '@/lib/utils'
 import { useSummaryStore } from '@/store/summary-store'
 
 import { ArbiterResolutionCard } from './arbiter-resolution-card'
-import { DeliberationLog } from './deliberation-log'
 import { JurorCard } from './juror-card'
+import { JurorConclusionPanel } from './juror-conclusion-panel'
 import { JuryHelpModal } from './jury-help-modal'
 import { JurySkeleton } from './jury-skeleton'
 
@@ -288,19 +288,56 @@ export function EvidenceReviewSection({ className }: EvidenceReviewSectionProps)
                 />
               </div>
 
-              {/* Juror Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Info Panel */}
+              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                <p className="text-xs text-blue-300/80 leading-relaxed">
+                  <strong className="text-blue-300">Note:</strong> These scores evaluate{' '}
+                  <em>evidence quality</em> and <em>factual accuracy</em>, not debate performance or
+                  persuasiveness. They may differ from the Performance Breakdown above, which
+                  measures rhetorical structure and argument technique.
+                </p>
+              </div>
+
+              {/* Juror Cards - Each juror evaluates both positions */}
+              <div className="space-y-6">
+                {/* Gemini's evaluations */}
                 {juryDeliberation.geminiEvaluation && (
-                  <JurorCard evaluation={juryDeliberation.geminiEvaluation} position="for" />
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground/70 uppercase tracking-wide">
+                      Gemini Evaluation
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <JurorCard evaluation={juryDeliberation.geminiEvaluation} position="for" />
+                      <JurorCard
+                        evaluation={juryDeliberation.geminiEvaluation}
+                        position="against"
+                      />
+                    </div>
+                  </div>
                 )}
+
+                {/* DeepSeek's evaluations */}
                 {juryDeliberation.deepseekEvaluation && (
-                  <JurorCard evaluation={juryDeliberation.deepseekEvaluation} position="against" />
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground/70 uppercase tracking-wide">
+                      DeepSeek Evaluation
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <JurorCard evaluation={juryDeliberation.deepseekEvaluation} position="for" />
+                      <JurorCard
+                        evaluation={juryDeliberation.deepseekEvaluation}
+                        position="against"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Deliberation Log */}
-              {juryDeliberation.deliberationLog.length > 0 && (
-                <DeliberationLog exchanges={juryDeliberation.deliberationLog} />
+              {/* Juror Conclusion */}
+              {juryDeliberation.arbiterResolution?.deliberationSummary && (
+                <JurorConclusionPanel
+                  summary={juryDeliberation.arbiterResolution.deliberationSummary}
+                />
               )}
 
               {/* Arbiter Resolution */}

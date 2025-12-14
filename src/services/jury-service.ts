@@ -5,6 +5,12 @@
 
 import { getEngineState } from '@/lib/engine-store'
 import { JURY_DISCLAIMER, JURY_SCORING_RUBRICS, MAX_JURY_SCORE } from '@/lib/jury-scoring-rubric'
+import {
+  deleteDeliberation,
+  getStoredDeliberation,
+  hasStoredDeliberation,
+  storeDeliberation,
+} from '@/lib/jury-store'
 import { logger } from '@/lib/logging'
 import {
   ARBITER_SYSTEM_PROMPT,
@@ -32,8 +38,6 @@ import type {
   JuryDeliberationResponse,
   ScoreDisagreement,
 } from '@/types/jury'
-
-const deliberationCache = new Map<string, JuryDeliberation>()
 
 /**
  * Generate mock jury deliberation for testing without API calls
@@ -163,7 +167,13 @@ function generateMockJuryDeliberation(debateId: string): JuryDeliberation {
       evidenceFavors === 'inconclusive'
         ? 'Both positions presented comparable evidence quality. Scores within 5% margin.'
         : `Evidence ${evidenceFavors === 'for' ? 'favored the affirmative' : 'favored the negative'} position based on ${evidenceFavors === 'for' ? 'stronger source attribution' : 'more consistent logical framework'}.`,
-    penaltyNotes: ['Minor penalty applied for unsupported claim F2 (-2 points)'],
+    deliberationSummary: [
+      'Both jurors independently evaluated factual claims from each position.',
+      'Minor disagreement on evidence strength was resolved through deliberation.',
+      'The affirmative position demonstrated stronger source attribution overall.',
+      'Penalties were applied to claims presented without supporting evidence.',
+    ],
+    penaltyNotes: ['Minor penalty applied for unsupported claim (-2 points)'],
     disclaimer: '[MOCK MODE] ' + JURY_DISCLAIMER,
   }
 
@@ -426,6 +436,10 @@ async function resolveScores(
     evidenceFavors: parsed.evidenceFavors ?? 'inconclusive',
     confidenceLevel: parsed.confidenceLevel ?? 'moderate',
     rationale: parsed.rationale ?? 'Resolution based on averaged juror scores.',
+    deliberationSummary: parsed.deliberationSummary ?? [
+      'Jurors completed independent evaluation of both positions.',
+      'Final scores represent the arbiter-resolved consensus.',
+    ],
     penaltyNotes: parsed.penaltyNotes ?? [],
     disclaimer: JURY_DISCLAIMER,
   }
@@ -441,7 +455,7 @@ export async function getJuryDeliberation(
   const startTime = Date.now()
 
   if (!forceRegenerate) {
-    const cached = deliberationCache.get(debateId)
+    const cached = await getStoredDeliberation(debateId)
     if (cached) {
       return {
         success: true,
@@ -480,7 +494,7 @@ export async function getJuryDeliberation(
   // Return mock deliberation in mock mode
   if (isMockMode()) {
     const deliberation = generateMockJuryDeliberation(debateId)
-    deliberationCache.set(debateId, deliberation)
+    await storeDeliberation(debateId, deliberation)
 
     return {
       success: true,
@@ -553,7 +567,12 @@ export async function getJuryDeliberation(
       processingTimeMs: Date.now() - startTime,
     }
 
-    deliberationCache.set(debateId, deliberation)
+    await storeDeliberation(debateId, deliberation)
+
+    logger.info('Jury deliberation generated and cached', {
+      debateId,
+      processingTimeMs: deliberation.processingTimeMs,
+    })
 
     return {
       success: true,
@@ -603,13 +622,13 @@ function parseJsonResponse<T>(response: string): T {
 /**
  * Clear cached deliberation for a debate
  */
-export function clearDeliberationCache(debateId: string): void {
-  deliberationCache.delete(debateId)
+export async function clearDeliberationCache(debateId: string): Promise<void> {
+  await deleteDeliberation(debateId)
 }
 
 /**
  * Check if deliberation is cached for a debate
  */
-export function isDeliberationCached(debateId: string): boolean {
-  return deliberationCache.has(debateId)
+export async function isDeliberationCached(debateId: string): Promise<boolean> {
+  return hasStoredDeliberation(debateId)
 }

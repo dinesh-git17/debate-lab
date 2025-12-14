@@ -3,7 +3,7 @@
  */
 
 export { ArbiterResolutionCard } from './arbiter-resolution-card'
-export { DeliberationLog } from './deliberation-log'
 export { EvidenceReviewSection } from './evidence-review-section'
 export { JurorCard } from './juror-card'
+export { JurorConclusionPanel } from './juror-conclusion-panel'
 export { JurySkeleton } from './jury-skeleton'

@@ -119,6 +119,7 @@ export interface ArbiterResolution {
   evidenceFavors: EvidenceFavors
   confidenceLevel: ConfidenceLevel
   rationale: string
+  deliberationSummary: string[]
   penaltyNotes: string[]
   disclaimer: string
 }

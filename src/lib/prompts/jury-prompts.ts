@@ -268,6 +268,16 @@ Use neutral, legal-document tone:
 - "Demonstrated stronger support..." NOT "Beat..."
 - "Contained fewer inaccuracies..." NOT "Was more truthful..."
 
+## Deliberation Summary Guidelines
+
+Provide a brief summary of the juror deliberation process for end users:
+- Write 3-5 bullet points summarizing key observations
+- Use plain language accessible to non-experts
+- Do NOT reference internal claim IDs (F1, A3, etc.) - describe claims in plain terms
+- Do NOT use emojis
+- Focus on what the jurors agreed/disagreed on and how it was resolved
+- Maintain formal, arbiter-like tone
+
 ## Output Format
 
 Return a JSON object with this structure:
@@ -277,6 +287,11 @@ Return a JSON object with this structure:
   "evidenceFavors": "for" | "against" | "inconclusive",
   "confidenceLevel": "high" | "moderate" | "low",
   "rationale": "Explanation of how scores were resolved",
+  "deliberationSummary": [
+    "Both jurors agreed that the affirmative position provided stronger source citations",
+    "Minor disagreement on statistical claim accuracy was resolved in favor of the lower score",
+    "The negative position received penalties for several unsupported assertions"
+  ],
   "penaltyNotes": ["List of any penalties applied"],
   "disclaimer": "Standard disclaimer about AI evaluation limitations"
 }`
