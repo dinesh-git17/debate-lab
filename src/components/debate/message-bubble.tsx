@@ -6,7 +6,7 @@
 
 'use client'
 
-import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa'
 import { LuScale } from 'react-icons/lu'
@@ -416,6 +416,9 @@ export const MessageBubble = memo(function MessageBubble({
   // Spring-physics tilt effect configuration - balanced responsiveness
   const springConfig = { damping: 40, stiffness: 120, mass: 1 }
 
+  // Spotlight spring config - slower than tilt for visible inertial lag
+  const spotlightSpringConfig = { damping: 30, stiffness: 90, mass: 1 }
+
   // Scale tilt amplitude based on content length - shorter cards get full tilt, longer cards get reduced tilt
   const contentLength = message.content.length
   const rotateAmplitude = useMemo(() => {
@@ -437,7 +440,18 @@ export const MessageBubble = memo(function MessageBubble({
   const rotateY = useSpring(useMotionValue(0), springConfig)
   const scale = useSpring(1, springConfig)
 
-  // Handle mouse move for spring tilt effect
+  // Motion values for cursor-tracked spotlight (spring-lagged for inertial feel)
+  const lightX = useSpring(useMotionValue(0), spotlightSpringConfig)
+  const lightY = useSpring(useMotionValue(0), spotlightSpringConfig)
+
+  // Compose spotlight gradient from spring values
+  const spotlightGradient = useTransform(
+    [lightX, lightY],
+    ([x, y]) =>
+      `radial-gradient(ellipse 320px 200px at ${x}px ${y}px, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 45%, transparent 70%)`
+  )
+
+  // Handle mouse move for spring tilt effect + spotlight tracking
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!cardRef.current) return
@@ -451,25 +465,43 @@ export const MessageBubble = memo(function MessageBubble({
 
       rotateX.set(rotationX)
       rotateY.set(rotationY)
+
+      // Update spotlight position (raw coordinates for gradient origin)
+      const cursorX = e.clientX - rect.left
+      const cursorY = e.clientY - rect.top
+      lightX.set(cursorX)
+      lightY.set(cursorY)
     },
-    [rotateX, rotateY, rotateAmplitude]
+    [rotateX, rotateY, rotateAmplitude, lightX, lightY]
   )
 
-  // Reset tilt on mouse leave with spring animation
+  // Reset tilt and spotlight on mouse leave with spring animation
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false)
     onHoverChange?.(message.id, false)
     rotateX.set(0)
     rotateY.set(0)
     scale.set(1)
-  }, [rotateX, rotateY, scale, onHoverChange, message.id])
+    // Reset spotlight to center so it fades out gracefully
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect()
+      lightX.set(rect.width / 2)
+      lightY.set(rect.height / 2)
+    }
+  }, [rotateX, rotateY, scale, onHoverChange, message.id, lightX, lightY])
 
-  // Handle mouse enter
+  // Handle mouse enter - initialize spotlight at card center
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true)
     onHoverChange?.(message.id, true)
     scale.set(1.02) // Subtle scale on hover
-  }, [scale, onHoverChange, message.id])
+    // Initialize spotlight at center (will animate to cursor on first move)
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect()
+      lightX.set(rect.width / 2)
+      lightY.set(rect.height / 2)
+    }
+  }, [scale, onHoverChange, message.id, lightX, lightY])
 
   // Track when the client-side reveal animation is complete
   // (separate from message.isComplete which reflects server state)
@@ -710,6 +742,20 @@ export const MessageBubble = memo(function MessageBubble({
                 }}
               />
             </div>
+
+            {/* Cursor-tracked spotlight - spring-physics light reflection (desktop only) */}
+            {!isMobile && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none overflow-hidden"
+                style={{
+                  borderRadius: responsiveBorderRadius.css,
+                  background: spotlightGradient,
+                  opacity: isHovered ? 1 : 0,
+                  transition: 'opacity 0.25s ease-out',
+                }}
+                aria-hidden="true"
+              />
+            )}
 
             {/* Hanging Tab - entrance via framer-motion, hover fade via CSS (desktop only) */}
             {!isFirst && !isMobile && (
