@@ -23,10 +23,9 @@ import type { SummaryResponse } from '@/types/summary'
 interface SummaryPageClientProps {
   initialData: SummaryResponse
   shareUrl?: string
-  shortCode?: string
 }
 
-export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryPageClientProps) {
+export function SummaryPageClient({ initialData, shareUrl }: SummaryPageClientProps) {
   const status = useSummaryStore((s) => s.status)
   const error = useSummaryStore((s) => s.error)
   const hasFetchedAnalysis = useRef(false)
@@ -127,12 +126,7 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
         <hr className="border-border my-12" />
         <DebateHighlightsCard className="mb-16" />
         <hr className="border-border my-12" />
-        <ShareSection
-          debateId={initialData.debateId}
-          shareUrl={shareUrl}
-          shortCode={shortCode}
-          className="mb-16"
-        />
+        <ShareSection debateId={initialData.debateId} shareUrl={shareUrl} className="mb-16" />
         <div className="h-16" />
       </div>
     </div>

@@ -8,8 +8,18 @@ import { generateShortCode, getShareUrl } from './short-code'
 
 import type { ShareSettings, ShareVisibility, ShortUrlMapping } from '@/types/share'
 
-const shareSettingsStore = new Map<string, ShareSettings>()
-const shortCodeStore = new Map<string, ShortUrlMapping>()
+const globalForStore = globalThis as unknown as {
+  shareSettingsStore: Map<string, ShareSettings> | undefined
+  shortCodeStore: Map<string, ShortUrlMapping> | undefined
+}
+
+const shareSettingsStore = globalForStore.shareSettingsStore ?? new Map<string, ShareSettings>()
+const shortCodeStore = globalForStore.shortCodeStore ?? new Map<string, ShortUrlMapping>()
+
+if (process.env.NODE_ENV === 'development') {
+  globalForStore.shareSettingsStore = shareSettingsStore
+  globalForStore.shortCodeStore = shortCodeStore
+}
 
 export async function getOrCreateShareSettings(
   debateId: string,

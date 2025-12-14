@@ -158,11 +158,5 @@ export default async function SummaryPage({ params }: SummaryPageProps) {
 
   const shareSettings = await getOrCreateShareSettings(id)
 
-  return (
-    <SummaryPageClient
-      initialData={summaryData}
-      shareUrl={shareSettings.shareUrl}
-      shortCode={shareSettings.shortCode}
-    />
-  )
+  return <SummaryPageClient initialData={summaryData} shareUrl={shareSettings.shareUrl} />
 }

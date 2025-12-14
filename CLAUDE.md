@@ -22,7 +22,7 @@ This document provides guidance for AI assistants working on the Debate Lab code
 
 ### Code Quality Enforcement
 
-After making big changes to multiple files — if making single ui changes you can ignore this section , **before providing a summary**:
+Before pushing to github, and **before providing a summary**:
 
 1. Run `npm run typecheck` (TypeScript compiler check)
 2. Run `npm run lint` (ESLint)

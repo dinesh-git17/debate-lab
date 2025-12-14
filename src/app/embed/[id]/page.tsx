@@ -41,13 +41,30 @@ export default async function EmbedPage({ params, searchParams }: EmbedPageProps
   const resolvedTheme = theme === 'light' || theme === 'dark' ? theme : 'auto'
   const resolvedShowScores = showScores !== 'false'
 
+  // Extract provider from model string (format: "provider:model")
+  const forModelRaw = assignment?.forModel ?? 'AI'
+  const againstModelRaw = assignment?.againstModel ?? 'AI'
+
+  const forParts = forModelRaw.split(':')
+  const againstParts = againstModelRaw.split(':')
+
+  const forProvider = forParts.length > 1 ? (forParts[0] ?? 'openai') : 'openai'
+  const againstProvider = againstParts.length > 1 ? (againstParts[0] ?? 'openai') : 'openai'
+
+  // Get display name (model part only)
+  const forDisplayName = forParts.length > 1 ? (forParts[1] ?? forModelRaw) : forModelRaw
+  const againstDisplayName =
+    againstParts.length > 1 ? (againstParts[1] ?? againstModelRaw) : againstModelRaw
+
   return (
     <EmbedWidget
       debateId={id}
       topic={session.topic}
       format={session.format}
-      forModel={assignment?.forModel ?? 'AI'}
-      againstModel={assignment?.againstModel ?? 'AI'}
+      forModel={forDisplayName}
+      againstModel={againstDisplayName}
+      forProvider={forProvider}
+      againstProvider={againstProvider}
       theme={resolvedTheme}
       showScores={resolvedShowScores}
     />
