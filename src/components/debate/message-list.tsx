@@ -630,13 +630,21 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         return
       }
 
-      // Calculate target: center of active message in usable viewport (accounting for dock)
+      // Calculate target scroll position
       const containerRect = container.getBoundingClientRect()
       const usableHeight = containerRect.height - DOCK_CLEARANCE
+
+      // Option 1: Center the element in the usable viewport
       const elementCenterInContainer = activeElement.offsetTop + activeElement.offsetHeight / 2
       const viewportCenterOffset = usableHeight * CENTER_TARGET
+      const centeredScrollTop = elementCenterInContainer - viewportCenterOffset
 
-      const targetScrollTop = elementCenterInContainer - viewportCenterOffset
+      // Option 2: Ensure element bottom stays above the dock
+      const elementBottom = activeElement.offsetTop + activeElement.offsetHeight
+      const bottomClearanceScrollTop = elementBottom - usableHeight
+
+      // Use whichever scrolls more - ensures bottom never goes under dock
+      const targetScrollTop = Math.max(centeredScrollTop, bottomClearanceScrollTop)
       const clampedTarget = Math.max(
         0,
         Math.min(targetScrollTop, container.scrollHeight - container.clientHeight)
@@ -645,9 +653,15 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
       const { scrollTop } = container
       const distance = clampedTarget - scrollTop
 
+      // Check if content bottom is currently visible above dock
+      const currentBottomPosition = elementBottom - scrollTop
+      const isBottomUnderDock = currentBottomPosition > usableHeight
+
       // Only scroll if we need to move more than 1px
       if (Math.abs(distance) > 1) {
-        const newScrollTop = scrollTop + distance * LERP_FACTOR
+        // Use aggressive scroll when bottom is under/near dock, smooth otherwise
+        const lerpFactor = isBottomUnderDock ? 0.4 : LERP_FACTOR
+        const newScrollTop = scrollTop + distance * lerpFactor
         scrollLockUntil.current = Date.now() + 50
         container.scrollTop = newScrollTop
       }
@@ -768,21 +782,23 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     ? { height: '100dvh', minHeight: '100vh' } // dvh with vh fallback
     : undefined
 
+  // Top fade only - dock floats freely over content with no bottom mask
+  const maskGradient =
+    'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black 100%)'
+
   return (
     <div className={cn('relative', !isMobile && 'h-full', className)} style={heightStyle}>
       <div
         ref={containerRef}
         className="overflow-y-auto px-4"
         style={{
-          height: 'calc(100% - 124px)',
+          height: '100%',
           scrollBehavior: 'auto',
           scrollSnapType: status === 'completed' ? 'y proximity' : undefined,
           // Prevent scroll-snap from snapping past the header area in completed state
           scrollPaddingTop: status === 'completed' ? (isMobile ? 144 : 160) : undefined,
-          maskImage:
-            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 24px), transparent 100%)',
-          WebkitMaskImage:
-            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 24px), transparent 100%)',
+          maskImage: maskGradient,
+          WebkitMaskImage: maskGradient,
         }}
         role="log"
         aria-live="polite"
@@ -842,7 +858,8 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             {status === 'completed' && <SummaryHint className="-mt-2" />}
           </AnimatePresence>
 
-          <div className={cn('h-8', isMobile && 'safe-area-inset-bottom')} aria-hidden="true" />
+          {/* Bottom spacer - clears the floating dock (32px from bottom + ~56px dock height + buffer) */}
+          <div className={cn('h-28', isMobile && 'safe-area-inset-bottom')} aria-hidden="true" />
 
           <div id="scroll-anchor" aria-hidden="true" />
         </div>

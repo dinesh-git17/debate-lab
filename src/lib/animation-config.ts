@@ -60,7 +60,7 @@ export const ANIMATION_CONFIG = {
     PAUSE_AFTER_COMPLETE_MS: 400,
     SCROLL_DURATION_MS: 500,
     SCROLL_EASING: [0.25, 0.1, 0.25, 1] as const,
-    LERP_FACTOR: 0.12,
+    LERP_FACTOR: 0.18,
     CENTER_OFFSET: 0.35,
     // Spring physics for Apple-style scroll centering (tuned for faster tracking)
     SPRING_STIFFNESS: 160,
@@ -68,8 +68,8 @@ export const ANIMATION_CONFIG = {
     SPRING_MASS: 1,
     // Viewport center target (0.5 = exact center, lower = higher on screen)
     CENTER_TARGET: 0.4,
-    // Floating dock clearance: bottom-8 (32px) + dock height (~60px)
-    DOCK_CLEARANCE: 100,
+    // Floating dock clearance: bottom-8 (32px) + dock height (~56px) + buffer
+    DOCK_CLEARANCE: 140,
   },
 
   HEIGHT_TRANSITION: {
