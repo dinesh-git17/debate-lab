@@ -22,7 +22,6 @@ interface ExportModalProps {
 export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
   const [format, setFormat] = useState<ExportFormat>('markdown')
   const [includeTimestamps, setIncludeTimestamps] = useState(true)
-  const [includeTokenCounts, setIncludeTokenCounts] = useState(false)
   const [includeModeratorTurns, setIncludeModeratorTurns] = useState(true)
   const [mounted, setMounted] = useState(false)
 
@@ -55,7 +54,6 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
       format,
       includeMetadata: true,
       includeTimestamps,
-      includeTokenCounts,
       includeModeratorTurns,
     })
     onClose()
@@ -157,15 +155,6 @@ export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
                   className="rounded accent-white"
                 />
                 <span className="text-sm text-zinc-300">Include timestamps</span>
-              </label>
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={includeTokenCounts}
-                  onChange={(e) => setIncludeTokenCounts(e.target.checked)}
-                  className="rounded accent-white"
-                />
-                <span className="text-sm text-zinc-300">Include token counts</span>
               </label>
             </div>
           </div>

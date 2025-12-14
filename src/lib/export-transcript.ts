@@ -60,11 +60,6 @@ export function exportAsMarkdown(
     lines.push(message.content)
     lines.push('')
 
-    if (config.includeTokenCounts && message.tokenCount) {
-      lines.push(`> Tokens: ${message.tokenCount}`)
-      lines.push('')
-    }
-
     lines.push('---')
     lines.push('')
   }
@@ -117,11 +112,6 @@ export function exportAsText(
     lines.push(message.content)
     lines.push('')
 
-    if (config.includeTokenCounts && message.tokenCount) {
-      lines.push(`[Tokens: ${message.tokenCount}]`)
-      lines.push('')
-    }
-
     lines.push('-'.repeat(60))
     lines.push('')
   }
@@ -153,10 +143,6 @@ export function exportAsJSON(
         speakerLabel: message.speakerLabel,
         turnType: message.turnType,
         content: message.content,
-      }
-
-      if (config.includeTokenCounts && message.tokenCount) {
-        turn.tokenCount = message.tokenCount
       }
 
       if (config.includeTimestamps && message.timestamp) {

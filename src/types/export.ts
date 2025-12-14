@@ -12,7 +12,6 @@ export interface ExportConfig {
   format: ExportFormat
   includeMetadata: boolean
   includeTimestamps: boolean
-  includeTokenCounts: boolean
   includeModeratorTurns: boolean
 }
 
