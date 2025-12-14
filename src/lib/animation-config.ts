@@ -62,6 +62,14 @@ export const ANIMATION_CONFIG = {
     SCROLL_EASING: [0.25, 0.1, 0.25, 1] as const,
     LERP_FACTOR: 0.1,
     CENTER_OFFSET: 0.35,
+    // Spring physics for Apple-style scroll centering
+    SPRING_STIFFNESS: 120,
+    SPRING_DAMPING: 20,
+    SPRING_MASS: 1,
+    // Only start centering after this many characters
+    MIN_CONTENT_CHARS: 80,
+    // Viewport center target (0.5 = exact center, lower = higher on screen)
+    CENTER_TARGET: 0.45,
   },
 
   HEIGHT_TRANSITION: {

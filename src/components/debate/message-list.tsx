@@ -23,9 +23,39 @@ import { SummaryHint } from './summary-hint'
 import type { BackgroundCategory } from '@/lib/topic-backgrounds'
 import type { DebateMessage } from '@/types/debate-ui'
 
-function easeOutCubic(t: number): number {
-  const [_x1, y1, _x2, y2] = ANIMATION_CONFIG.AUTO_SCROLL.SCROLL_EASING
-  return 1 - Math.pow(1 - t, 3) * (1 - y2) + Math.pow(t, 3) * y1
+/** Spring physics state for smooth scroll centering. */
+interface SpringState {
+  position: number
+  velocity: number
+  target: number
+}
+
+/**
+ * Advances spring physics by one frame.
+ * Returns true if spring has settled (velocity and displacement below threshold).
+ */
+function advanceSpring(
+  state: SpringState,
+  stiffness: number,
+  damping: number,
+  mass: number,
+  dt: number
+): boolean {
+  const displacement = state.position - state.target
+  const springForce = -stiffness * displacement
+  const dampingForce = -damping * state.velocity
+  const acceleration = (springForce + dampingForce) / mass
+
+  state.velocity += acceleration * dt
+  state.position += state.velocity * dt
+
+  // Settle when both displacement and velocity are tiny
+  const isSettled = Math.abs(displacement) < 0.5 && Math.abs(state.velocity) < 0.5
+  if (isSettled) {
+    state.position = state.target
+    state.velocity = 0
+  }
+  return isSettled
 }
 
 const FORMAT_DISPLAY_NAMES: Record<string, string> = {
@@ -402,6 +432,8 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   const lastCompletedMessageId = useRef<string | null>(null)
   const isPausedForReading = useRef(false)
   const smoothScrollRafRef = useRef<number | null>(null)
+  const springStateRef = useRef<SpringState>({ position: 0, velocity: 0, target: 0 })
+  const lastFrameTimeRef = useRef<number>(0)
 
   // Track which message is currently hovered (for connector fade effect)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
@@ -449,26 +481,37 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     autoScroll && hasMessages && status !== 'completed' && initialStatus !== 'completed'
 
   const smoothScrollTo = useCallback((container: HTMLDivElement, targetScrollTop: number) => {
-    const startScrollTop = container.scrollTop
-    const distance = targetScrollTop - startScrollTop
-    const duration = ANIMATION_CONFIG.AUTO_SCROLL.SCROLL_DURATION_MS
-    const startTime = performance.now()
+    // Initialize spring from current position
+    springStateRef.current = {
+      position: container.scrollTop,
+      velocity: 0,
+      target: targetScrollTop,
+    }
+    lastFrameTimeRef.current = performance.now()
 
     // Cancel any existing smooth scroll
     if (smoothScrollRafRef.current) {
       cancelAnimationFrame(smoothScrollRafRef.current)
     }
 
+    const { SPRING_STIFFNESS, SPRING_DAMPING, SPRING_MASS } = ANIMATION_CONFIG.AUTO_SCROLL
+
     const animateScroll = (currentTime: number) => {
-      const elapsed = currentTime - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      const easedProgress = easeOutCubic(progress)
+      const dt = Math.min((currentTime - lastFrameTimeRef.current) / 1000, 0.032) // Cap at ~30fps minimum
+      lastFrameTimeRef.current = currentTime
 
-      const newScrollTop = startScrollTop + distance * easedProgress
+      const isSettled = advanceSpring(
+        springStateRef.current,
+        SPRING_STIFFNESS,
+        SPRING_DAMPING,
+        SPRING_MASS,
+        dt
+      )
+
       scrollLockUntil.current = Date.now() + 100
-      container.scrollTop = newScrollTop
+      container.scrollTop = springStateRef.current.position
 
-      if (progress < 1) {
+      if (!isSettled) {
         smoothScrollRafRef.current = requestAnimationFrame(animateScroll)
       } else {
         smoothScrollRafRef.current = null
@@ -561,6 +604,8 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     let rafId: number | null = null
     let isRunning = true
 
+    const { LERP_FACTOR, CENTER_TARGET, MIN_CONTENT_CHARS } = ANIMATION_CONFIG.AUTO_SCROLL
+
     const checkAndScroll = () => {
       if (!isRunning) return
 
@@ -570,14 +615,54 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         return
       }
 
-      const { scrollTop, scrollHeight, clientHeight } = container
-      const targetScrollTop = scrollHeight - clientHeight
-      const distanceFromBottom = targetScrollTop - scrollTop
+      if (isUserScrolling.current || isPausedForReading.current) {
+        rafId = requestAnimationFrame(checkAndScroll)
+        return
+      }
 
-      if (!isUserScrolling.current && !isPausedForReading.current && distanceFromBottom > 1) {
-        const lerpFactor = ANIMATION_CONFIG.AUTO_SCROLL.LERP_FACTOR
-        const newScrollTop = scrollTop + distanceFromBottom * lerpFactor
+      // Find the active (last) message element
+      const messageElements = container.querySelectorAll('[role="article"]')
+      const activeElement = messageElements[messageElements.length - 1] as HTMLElement | undefined
 
+      if (!activeElement) {
+        rafId = requestAnimationFrame(checkAndScroll)
+        return
+      }
+
+      // Check minimum content threshold to avoid bouncing on short initial content
+      const contentLength = activeElement.textContent?.length ?? 0
+      if (contentLength < MIN_CONTENT_CHARS) {
+        // Fall back to keeping bottom visible for short content
+        const { scrollTop, scrollHeight, clientHeight } = container
+        const maxScroll = scrollHeight - clientHeight
+        const distanceFromBottom = maxScroll - scrollTop
+
+        if (distanceFromBottom > 1) {
+          container.scrollTop = scrollTop + distanceFromBottom * LERP_FACTOR
+          scrollLockUntil.current = Date.now() + 50
+        }
+
+        rafId = requestAnimationFrame(checkAndScroll)
+        return
+      }
+
+      // Calculate target: center of active message at CENTER_TARGET of viewport
+      const containerRect = container.getBoundingClientRect()
+      const elementCenterInContainer = activeElement.offsetTop + activeElement.offsetHeight / 2
+      const viewportCenterOffset = containerRect.height * CENTER_TARGET
+
+      const targetScrollTop = elementCenterInContainer - viewportCenterOffset
+      const clampedTarget = Math.max(
+        0,
+        Math.min(targetScrollTop, container.scrollHeight - container.clientHeight)
+      )
+
+      const { scrollTop } = container
+      const distance = clampedTarget - scrollTop
+
+      // Only scroll if we need to move more than 1px
+      if (Math.abs(distance) > 1) {
+        const newScrollTop = scrollTop + distance * LERP_FACTOR
         scrollLockUntil.current = Date.now() + 50
         container.scrollTop = newScrollTop
       }
