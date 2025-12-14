@@ -38,26 +38,25 @@ import type { TurnSpeaker } from '@/types/turn'
 
 const GLASS_CONFIG = {
   borderRadius: {
-    top: 34,
-    bottom: 28,
+    value: 32,
     get css() {
-      return `${this.top}px ${this.top}px ${this.bottom}px ${this.bottom}px`
+      return `${this.value}px`
     },
   },
-  backdropBlur: 28,
+  backdropBlur: 40,
   padding: { x: 40, y: 48 },
   cardGap: 56,
   typography: {
     display: {
       fontFamily:
         '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
-      letterSpacing: '0.02em',
+      letterSpacing: '-0.01em',
     },
     body: {
       fontFamily:
         '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
-      fontSize: 17,
-      lineHeight: 1.68,
+      fontSize: 15,
+      lineHeight: 1.5,
       letterSpacing: '-0.01em',
     },
     rounded: {
@@ -67,21 +66,25 @@ const GLASS_CONFIG = {
     maxContentWidth: 580,
   },
   tint: {
-    base: 'rgba(255, 255, 255, 0.05)',
-    gradientTop: 'rgba(255, 255, 255, 0.07)',
-    gradientBottom: 'rgba(255, 255, 255, 0.03)',
+    base: 'rgba(255, 255, 255, 0.08)',
+    gradientTop: 'rgba(255, 255, 255, 0.08)',
+    gradientBottom: 'rgba(255, 255, 255, 0.04)',
+  },
+  border: {
+    color: 'rgba(255, 255, 255, 0.15)',
+    activeColor: 'rgba(255, 255, 255, 0.2)',
   },
   shadow: {
-    ambient: '0 30px 60px rgba(0, 0, 0, 0.25)',
+    ambient: '0 20px 40px rgba(0, 0, 0, 0.4)',
     highlight: 'inset 0 3px 8px rgba(255, 255, 255, 0.08)',
   },
   floatingShadow: {
-    active: '0 30px 60px rgba(0, 0, 0, 0.32), inset 0 3px 8px rgba(255, 255, 255, 0.08)',
-    inactive: '0 20px 40px rgba(0, 0, 0, 0.18), inset 0 2px 6px rgba(255, 255, 255, 0.05)',
+    active: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 3px 8px rgba(255, 255, 255, 0.08)',
+    inactive: '0 4px 30px rgba(0, 0, 0, 0.1), inset 0 2px 6px rgba(255, 255, 255, 0.05)',
   },
   innerGlow: {
     sides: 'inset 1px 0 8px rgba(255, 255, 255, 0.04), inset -1px 0 8px rgba(255, 255, 255, 0.04)',
-    top: 'inset 0 1px 12px rgba(255, 255, 255, 0.06)',
+    top: 'inset 0 0 20px rgba(255, 255, 255, 0.05)',
   },
 } as const
 
@@ -107,16 +110,24 @@ interface MessageBubbleProps {
   cascadeIndex?: number
 }
 
-function SpeakerIcon({ type, className }: { type: string; className?: string }) {
+function SpeakerIcon({
+  type,
+  className,
+  style,
+}: {
+  type: string
+  className?: string
+  style?: React.CSSProperties
+}) {
   const iconClass = cn('w-3 h-3 flex-shrink-0', className)
 
   switch (type) {
     case 'thumbs-up':
-      return <FaThumbsUp className={iconClass} />
+      return <FaThumbsUp className={iconClass} style={style} />
     case 'thumbs-down':
-      return <FaThumbsDown className={iconClass} />
+      return <FaThumbsDown className={iconClass} style={style} />
     case 'scale':
-      return <LuScale className={iconClass} />
+      return <LuScale className={iconClass} style={style} />
     default:
       return null
   }
@@ -324,14 +335,11 @@ function MessageContent({
           <div
             className="font-normal antialiased"
             style={{
-              // SF Pro Text for body - optimized for readability
               fontFamily: GLASS_CONFIG.typography.body.fontFamily,
               fontSize: bodyFontSize,
               lineHeight: bodyLineHeight,
               letterSpacing: GLASS_CONFIG.typography.body.letterSpacing,
-              // Soft text color for premium feel
-              color: 'rgba(244, 244, 245, 0.9)',
-              textShadow: '0 0 20px rgba(255, 255, 255, 0.03)',
+              color: 'rgba(255, 255, 255, 0.85)',
             }}
           >
             <AnimatedText content={displayContent} isRevealing={isRevealing} />
@@ -373,9 +381,7 @@ export const MessageBubble = memo(function MessageBubble({
   const responsivePadding = isMobile
     ? { x: 20, y: 24 }
     : { x: GLASS_CONFIG.padding.x, y: GLASS_CONFIG.padding.y }
-  const responsiveBorderRadius = isMobile
-    ? { top: 16, bottom: 16, css: '16px' }
-    : GLASS_CONFIG.borderRadius
+  const responsiveBorderRadius = isMobile ? { value: 16, css: '16px' } : GLASS_CONFIG.borderRadius
   const responsiveCardGap = isMobile ? 24 : GLASS_CONFIG.cardGap
   const responsiveShadow = isMobile
     ? {
@@ -440,24 +446,89 @@ export const MessageBubble = memo(function MessageBubble({
   const rotateY = useSpring(useMotionValue(0), springConfig)
   const scale = useSpring(1, springConfig)
 
-  // Motion values for cursor-tracked spotlight (spring-lagged for inertial feel)
-  const lightX = useSpring(useMotionValue(0), spotlightSpringConfig)
-  const lightY = useSpring(useMotionValue(0), spotlightSpringConfig)
+  // Motion values for cursor position (spring-lagged for inertial feel)
+  const cursorX = useSpring(useMotionValue(0), spotlightSpringConfig)
+  const cursorY = useSpring(useMotionValue(0), spotlightSpringConfig)
 
-  // Compose spotlight gradient from spring values
-  const spotlightGradient = useTransform(
-    [lightX, lightY],
-    ([x, y]) =>
-      `radial-gradient(ellipse 320px 200px at ${x}px ${y}px, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 45%, transparent 70%)`
+  // Track card dimensions for reflection calculations
+  const [cardDimensions, setCardDimensions] = useState({ width: 600, height: 400 })
+
+  // Specular reflection - light appears OPPOSITE to cursor (like real glass)
+  // When cursor moves right, reflection slides left - mimics curved reflective surface
+  const reflectionX = useTransform(cursorX, (x) => {
+    const centerX = cardDimensions.width / 2
+    const offset = (centerX - x) * 0.7 // 70% reflection offset
+    return centerX + offset
+  })
+  const reflectionY = useTransform(cursorY, (y) => {
+    const centerY = cardDimensions.height / 2
+    const offset = (centerY - y) * 0.5 // 50% vertical offset (more subtle)
+    return centerY + offset
+  })
+
+  // Compose specular reflection gradient (main highlight - opposite to cursor)
+  const specularGradient = useTransform(
+    [reflectionX, reflectionY],
+    ([rx, ry]) =>
+      `radial-gradient(ellipse 280px 140px at ${rx}px ${ry}px, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.04) 40%, transparent 70%)`
   )
 
-  // Handle mouse move for spring tilt effect + spotlight tracking
+  // Compose Fresnel edge glow with continuous per-edge intensities (no harsh transitions)
+  const fresnelGradient = useTransform([cursorX, cursorY], ([x, y]) => {
+    const xNum = x as number
+    const yNum = y as number
+    const { width, height } = cardDimensions
+
+    // Calculate smooth intensity for each edge based on distance
+    // Uses exponential falloff for natural light behavior
+    const edgeZone = 120 // How far from edge the glow starts
+    const maxIntensity = 0.1
+
+    // Distance from each edge (0 = at edge, increases toward center)
+    const distFromLeft = xNum
+    const distFromRight = width - xNum
+    const distFromTop = yNum
+    const distFromBottom = height - yNum
+
+    // Smooth falloff function - intensity peaks at edge and fades toward center
+    const falloff = (dist: number) => {
+      if (dist >= edgeZone) return 0
+      // Quadratic ease-out for smooth fade
+      const t = 1 - dist / edgeZone
+      return t * t * maxIntensity
+    }
+
+    const leftIntensity = falloff(distFromLeft)
+    const rightIntensity = falloff(distFromRight)
+    const topIntensity = falloff(distFromTop) * 1.2 // Top slightly brighter (overhead light)
+    const bottomIntensity = falloff(distFromBottom) * 0.5 // Bottom dimmer
+
+    const glows: string[] = []
+
+    // Always include all edges with their current intensity (even if 0)
+    // This prevents the "jump" when edges turn on/off
+    if (leftIntensity > 0.001)
+      glows.push(`linear-gradient(90deg, rgba(255,255,255,${leftIntensity}) 0%, transparent 18%)`)
+    if (rightIntensity > 0.001)
+      glows.push(`linear-gradient(270deg, rgba(255,255,255,${rightIntensity}) 0%, transparent 18%)`)
+    if (topIntensity > 0.001)
+      glows.push(`linear-gradient(180deg, rgba(255,255,255,${topIntensity}) 0%, transparent 15%)`)
+    if (bottomIntensity > 0.001)
+      glows.push(`linear-gradient(0deg, rgba(255,255,255,${bottomIntensity}) 0%, transparent 12%)`)
+
+    return glows.length > 0 ? glows.join(', ') : 'transparent'
+  })
+
+  // Handle mouse move for spring tilt effect + reflection tracking
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!cardRef.current) return
       const rect = cardRef.current.getBoundingClientRect()
       const offsetX = e.clientX - rect.left - rect.width / 2
       const offsetY = e.clientY - rect.top - rect.height / 2
+
+      // Update card dimensions for reflection calculations
+      setCardDimensions({ width: rect.width, height: rect.height })
 
       // Calculate rotation based on mouse position relative to center
       const rotationX = (offsetY / (rect.height / 2)) * -rotateAmplitude
@@ -466,42 +537,43 @@ export const MessageBubble = memo(function MessageBubble({
       rotateX.set(rotationX)
       rotateY.set(rotationY)
 
-      // Update spotlight position (raw coordinates for gradient origin)
-      const cursorX = e.clientX - rect.left
-      const cursorY = e.clientY - rect.top
-      lightX.set(cursorX)
-      lightY.set(cursorY)
+      // Update cursor position (raw coordinates - reflection is computed from this)
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+      cursorX.set(mouseX)
+      cursorY.set(mouseY)
     },
-    [rotateX, rotateY, rotateAmplitude, lightX, lightY]
+    [rotateX, rotateY, rotateAmplitude, cursorX, cursorY, setCardDimensions]
   )
 
-  // Reset tilt and spotlight on mouse leave with spring animation
+  // Reset tilt and reflection on mouse leave with spring animation
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false)
     onHoverChange?.(message.id, false)
     rotateX.set(0)
     rotateY.set(0)
     scale.set(1)
-    // Reset spotlight to center so it fades out gracefully
+    // Reset cursor to center so reflection fades out gracefully
     if (cardRef.current) {
       const rect = cardRef.current.getBoundingClientRect()
-      lightX.set(rect.width / 2)
-      lightY.set(rect.height / 2)
+      cursorX.set(rect.width / 2)
+      cursorY.set(rect.height / 2)
     }
-  }, [rotateX, rotateY, scale, onHoverChange, message.id, lightX, lightY])
+  }, [rotateX, rotateY, scale, onHoverChange, message.id, cursorX, cursorY])
 
-  // Handle mouse enter - initialize spotlight at card center
+  // Handle mouse enter - initialize cursor position at card center
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true)
     onHoverChange?.(message.id, true)
     scale.set(1.02) // Subtle scale on hover
-    // Initialize spotlight at center (will animate to cursor on first move)
+    // Initialize at center (will animate to cursor on first move)
     if (cardRef.current) {
       const rect = cardRef.current.getBoundingClientRect()
-      lightX.set(rect.width / 2)
-      lightY.set(rect.height / 2)
+      setCardDimensions({ width: rect.width, height: rect.height })
+      cursorX.set(rect.width / 2)
+      cursorY.set(rect.height / 2)
     }
-  }, [scale, onHoverChange, message.id, lightX, lightY])
+  }, [scale, onHoverChange, message.id, cursorX, cursorY, setCardDimensions])
 
   // Track when the client-side reveal animation is complete
   // (separate from message.isComplete which reflects server state)
@@ -743,15 +815,46 @@ export const MessageBubble = memo(function MessageBubble({
               />
             </div>
 
-            {/* Cursor-tracked spotlight - spring-physics light reflection (desktop only) */}
+            {/* Specular reflection - moves opposite to cursor like real glass (desktop only) */}
             {!isMobile && (
               <motion.div
                 className="absolute inset-0 pointer-events-none overflow-hidden"
                 style={{
                   borderRadius: responsiveBorderRadius.css,
-                  background: spotlightGradient,
+                  background: specularGradient,
+                }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{
                   opacity: isHovered ? 1 : 0,
-                  transition: 'opacity 0.25s ease-out',
+                  scale: isHovered ? 1 : 0.95,
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 120,
+                  damping: 20,
+                  mass: 0.8,
+                }}
+                aria-hidden="true"
+              />
+            )}
+
+            {/* Fresnel edge glow - edges light up when cursor approaches (desktop only) */}
+            {!isMobile && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none overflow-hidden"
+                style={{
+                  borderRadius: responsiveBorderRadius.css,
+                  background: fresnelGradient,
+                }}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: isHovered ? 1 : 0,
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 150,
+                  damping: 25,
+                  mass: 0.6,
                 }}
                 aria-hidden="true"
               />
@@ -878,7 +981,7 @@ export const MessageBubble = memo(function MessageBubble({
               style={{
                 height: 2,
                 background: 'linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.15))',
-                borderRadius: `0 0 ${responsiveBorderRadius.bottom}px ${responsiveBorderRadius.bottom}px`,
+                borderRadius: `0 0 ${responsiveBorderRadius.value}px ${responsiveBorderRadius.value}px`,
               }}
               aria-hidden="true"
             />
@@ -889,12 +992,12 @@ export const MessageBubble = memo(function MessageBubble({
               <div className="flex items-center justify-center mb-6">
                 {/* Speaker Pill Badge - Luminous frosted glass with SF Pro Rounded */}
                 <motion.div
-                  className="inline-flex items-center gap-2 rounded-full"
+                  className="inline-flex items-center gap-2"
                   style={{
                     height: 30,
                     paddingLeft: 14,
                     paddingRight: 14,
-                    // Luminous gradient background (instead of flat frosted)
+                    borderRadius: 999,
                     background:
                       isActive || (isCompleted && isHovered)
                         ? pillStyles.background
@@ -902,7 +1005,6 @@ export const MessageBubble = memo(function MessageBubble({
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
                     border: `1px solid ${pillStyles.border}`,
-                    // Combined inner glow + outer glow for luminous effect
                     boxShadow:
                       isActive || (isCompleted && isHovered)
                         ? `${pillStyles.innerGlow}, ${pillStyles.glow}`
@@ -915,15 +1017,27 @@ export const MessageBubble = memo(function MessageBubble({
                     damping: 25,
                   }}
                 >
-                  <SpeakerIcon type={config.icon} className="w-3 h-3" />
+                  <SpeakerIcon
+                    type={config.icon}
+                    className="w-3 h-3"
+                    style={{
+                      color: pillStyles.text,
+                      filter:
+                        isActive || (isCompleted && isHovered)
+                          ? `drop-shadow(${pillStyles.textShadow})`
+                          : 'none',
+                    }}
+                  />
                   <span
                     className="uppercase"
                     style={{
                       color: pillStyles.text,
                       fontSize: responsiveTypography.pill.fontSize,
                       fontWeight: 600,
-                      letterSpacing: '0.1em', // Optical tracking for display
+                      letterSpacing: '0.1em',
                       fontFamily: GLASS_CONFIG.typography.rounded.fontFamily,
+                      textShadow:
+                        isActive || (isCompleted && isHovered) ? pillStyles.textShadow : 'none',
                     }}
                   >
                     {config.shortLabel}
@@ -963,12 +1077,11 @@ export const MessageBubble = memo(function MessageBubble({
 
               {/* Row 2: Phase/Turn Type Chip - visually centered to match speaker pill */}
               <div className="relative flex items-center justify-center">
-                {/* Left divider - absolute positioned */}
+                {/* Left divider - accent-tinted gradient */}
                 <div
                   className="absolute left-0 right-1/2 h-px mr-12"
                   style={{
-                    background:
-                      'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 100%)',
+                    background: `linear-gradient(90deg, transparent 0%, ${APPLE_COLORS[message.speaker].rgba(0.2)} 100%)`,
                   }}
                   aria-hidden="true"
                 />
@@ -989,12 +1102,11 @@ export const MessageBubble = memo(function MessageBubble({
                   {getTurnTypeShortLabel(message.turnType)}
                 </span>
 
-                {/* Right divider - absolute positioned */}
+                {/* Right divider - accent-tinted gradient */}
                 <div
                   className="absolute left-1/2 right-0 h-px ml-12"
                   style={{
-                    background:
-                      'linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, transparent 100%)',
+                    background: `linear-gradient(90deg, ${APPLE_COLORS[message.speaker].rgba(0.2)} 0%, transparent 100%)`,
                   }}
                   aria-hidden="true"
                 />

@@ -14,27 +14,39 @@ import { cn } from '@/lib/utils'
 
 import type { TurnSpeaker } from '@/types/turn'
 
+// Match visionOS glass config from message-bubble
 const GLASS_CONFIG = {
   borderRadius: {
-    top: 34,
-    bottom: 28,
+    value: 32,
     get css() {
-      return `${this.top}px ${this.top}px ${this.bottom}px ${this.bottom}px`
+      return `${this.value}px`
     },
   },
-  backdropBlur: 28,
+  backdropBlur: 40,
   padding: { x: 40, y: 48 },
+  cardGap: 56,
   tint: {
-    base: 'rgba(255, 255, 255, 0.03)',
-    gradientTop: 'rgba(255, 255, 255, 0.05)',
-    gradientBottom: 'rgba(255, 255, 255, 0.02)',
+    base: 'rgba(255, 255, 255, 0.08)',
+    gradientTop: 'rgba(255, 255, 255, 0.08)',
+    gradientBottom: 'rgba(255, 255, 255, 0.04)',
+  },
+  shadow: {
+    ambient: '0 20px 40px rgba(0, 0, 0, 0.4)',
+    highlight: 'inset 0 3px 8px rgba(255, 255, 255, 0.08)',
   },
 } as const
 
+// visionOS speaker colors - Electric Mint, Warm Coral, Platinum White
 const SPEAKER_TINTS: Record<TurnSpeaker, string> = {
-  for: 'rgba(52, 199, 89, 0.08)',
-  against: 'rgba(255, 69, 58, 0.08)',
-  moderator: 'rgba(255, 214, 10, 0.08)',
+  for: 'rgba(99, 230, 190, 0.06)', // Electric Mint
+  against: 'rgba(255, 107, 107, 0.06)', // Warm Coral
+  moderator: 'rgba(242, 242, 247, 0.04)', // Platinum White
+}
+
+const SPEAKER_ACCENT_COLORS: Record<TurnSpeaker, string> = {
+  for: 'rgba(99, 230, 190, 0.15)',
+  against: 'rgba(255, 107, 107, 0.15)',
+  moderator: 'rgba(242, 242, 247, 0.1)',
 }
 
 interface SkeletonCardProps {
@@ -43,11 +55,52 @@ interface SkeletonCardProps {
   className?: string
 }
 
+interface SkeletonLineProps {
+  width: number // 0-1 fraction of container width
+  height: number
+  index: number
+  lineIndex: number
+}
+
+/**
+ * Animated shimmer line for skeleton loading states.
+ * Width is a fraction (0-1) of the container width.
+ */
+function SkeletonLine({ width, height, index, lineIndex }: SkeletonLineProps) {
+  return (
+    <motion.div
+      className="relative overflow-hidden"
+      style={{
+        width: `${width * 100}%`,
+        height,
+        borderRadius: height / 2,
+        background: 'rgba(255, 255, 255, 0.06)',
+      }}
+    >
+      <motion.div
+        className="absolute inset-0 w-[200%]"
+        style={{
+          background:
+            'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)',
+        }}
+        animate={{ x: ['-100%', '100%'] }}
+        transition={{
+          duration: 1.8,
+          repeat: Infinity,
+          ease: 'linear',
+          delay: index * 0.15 + lineIndex * 0.08,
+        }}
+      />
+    </motion.div>
+  )
+}
+
 export function SkeletonCard({ speaker, index, className }: SkeletonCardProps) {
   const isMobile = useIsMobile()
 
   const responsivePadding = isMobile ? { x: 20, y: 24 } : GLASS_CONFIG.padding
-  const responsiveBorderRadius = isMobile ? { css: '16px' } : { css: GLASS_CONFIG.borderRadius.css }
+  const responsiveBorderRadius = isMobile ? '16px' : GLASS_CONFIG.borderRadius.css
+  const responsiveCardGap = isMobile ? 24 : GLASS_CONFIG.cardGap
 
   const staggerDelay = (index * ANIMATION_CONFIG.CARD_ENTRANCE.STAGGER_MS) / 1000
 
@@ -75,13 +128,13 @@ export function SkeletonCard({ speaker, index, className }: SkeletonCardProps) {
         ease: ANIMATION_CONFIG.CARD_ENTRANCE.EASING,
         delay: staggerDelay,
       }}
-      style={{ marginBottom: isMobile ? 24 : 56 }}
+      style={{ marginBottom: responsiveCardGap }}
     >
       <div className="relative mx-auto max-w-3xl">
         <div
           className="relative backdrop-saturate-150"
           style={{
-            borderRadius: responsiveBorderRadius.css,
+            borderRadius: responsiveBorderRadius,
             backdropFilter: `blur(${GLASS_CONFIG.backdropBlur}px)`,
             WebkitBackdropFilter: `blur(${GLASS_CONFIG.backdropBlur}px)`,
             padding: `${responsivePadding.y}px ${responsivePadding.x}px`,
@@ -92,20 +145,17 @@ export function SkeletonCard({ speaker, index, className }: SkeletonCardProps) {
                 ${GLASS_CONFIG.tint.gradientBottom} 100%),
               linear-gradient(180deg, ${SPEAKER_TINTS[speaker]} 0%, transparent 50%)
             `.replace(/\s+/g, ' '),
-            boxShadow: `
-              0 20px 40px rgba(0, 0, 0, 0.18),
-              inset 0 2px 6px rgba(255, 255, 255, 0.05)
-            `.replace(/\s+/g, ' '),
+            boxShadow: `${GLASS_CONFIG.shadow.ambient}, ${GLASS_CONFIG.shadow.highlight}`,
           }}
         >
-          {/* Gradient border */}
+          {/* Gradient border - matches message-bubble */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              borderRadius: responsiveBorderRadius.css,
+              borderRadius: responsiveBorderRadius,
               padding: '1px',
               background:
-                'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 35%, transparent 65%)',
+                'linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 25%, rgba(255, 255, 255, 0.02) 50%, transparent 70%)',
               WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               WebkitMaskComposite: 'xor',
               maskComposite: 'exclude',
@@ -115,25 +165,26 @@ export function SkeletonCard({ speaker, index, className }: SkeletonCardProps) {
 
           {/* Header skeleton */}
           <div className="relative mb-7">
-            {/* Speaker pill skeleton */}
+            {/* Speaker pill skeleton - capsule shape like real pills */}
             <div className="flex items-center justify-center mb-6">
               <motion.div
-                className="rounded-full overflow-hidden"
+                className="overflow-hidden"
                 style={{
                   width: isMobile ? 80 : 100,
                   height: 30,
-                  background: 'rgba(255, 255, 255, 0.06)',
+                  borderRadius: 999,
+                  background: SPEAKER_ACCENT_COLORS[speaker],
+                  border: `1px solid ${SPEAKER_TINTS[speaker]}`,
                 }}
               >
                 <motion.div
                   className="h-full w-[200%]"
                   style={{
-                    background:
-                      'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%)',
+                    background: `linear-gradient(90deg, transparent 0%, ${SPEAKER_ACCENT_COLORS[speaker]} 50%, transparent 100%)`,
                   }}
                   animate={{ x: ['-100%', '100%'] }}
                   transition={{
-                    duration: 1.5,
+                    duration: 1.8,
                     repeat: Infinity,
                     ease: 'linear',
                     delay: index * 0.15,
@@ -147,8 +198,7 @@ export function SkeletonCard({ speaker, index, className }: SkeletonCardProps) {
               <div
                 className="absolute left-0 right-1/2 h-px mr-12"
                 style={{
-                  background:
-                    'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 100%)',
+                  background: `linear-gradient(90deg, transparent 0%, ${SPEAKER_TINTS[speaker]} 100%)`,
                 }}
               />
               <motion.div
@@ -157,17 +207,18 @@ export function SkeletonCard({ speaker, index, className }: SkeletonCardProps) {
                   width: isMobile ? 60 : 80,
                   height: 24,
                   background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
                 }}
               >
                 <motion.div
                   className="h-full w-[200%]"
                   style={{
                     background:
-                      'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%)',
+                      'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%)',
                   }}
                   animate={{ x: ['-100%', '100%'] }}
                   transition={{
-                    duration: 1.5,
+                    duration: 1.8,
                     repeat: Infinity,
                     ease: 'linear',
                     delay: index * 0.15 + 0.1,
@@ -177,42 +228,57 @@ export function SkeletonCard({ speaker, index, className }: SkeletonCardProps) {
               <div
                 className="absolute left-1/2 right-0 h-px ml-12"
                 style={{
-                  background:
-                    'linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%)',
+                  background: `linear-gradient(90deg, ${SPEAKER_TINTS[speaker]} 0%, transparent 100%)`,
                 }}
               />
             </div>
           </div>
 
-          {/* Content skeleton lines */}
-          <div className="space-y-3">
-            {[0.95, 0.88, 0.75, 0.6].map((width, lineIndex) => (
-              <motion.div
-                key={lineIndex}
-                className="rounded overflow-hidden"
+          {/* Content skeleton - matches actual card structure */}
+          {speaker === 'moderator' ? (
+            // MOD intro: header, blockquote, sentences, divider, call-to-action
+            <div className="space-y-4">
+              {/* "Today's Debate" header */}
+              <SkeletonLine width={0.28} height={20} index={index} lineIndex={0} />
+
+              {/* Blockquote with left border */}
+              <div className="pl-4" style={{ borderLeft: '3px solid rgba(255, 255, 255, 0.08)' }}>
+                <SkeletonLine width={0.92} height={16} index={index} lineIndex={1} />
+              </div>
+
+              {/* Question sentence */}
+              <SkeletonLine width={0.65} height={16} index={index} lineIndex={2} />
+
+              {/* "Two sides..." sentence */}
+              <SkeletonLine width={0.78} height={16} index={index} lineIndex={3} />
+
+              {/* Divider */}
+              <div
+                className="my-4"
                 style={{
-                  width: `${width * 100}%`,
-                  height: isMobile ? 16 : 18,
-                  background: 'rgba(255, 255, 255, 0.04)',
+                  height: 1,
+                  background: 'rgba(255, 255, 255, 0.06)',
                 }}
-              >
-                <motion.div
-                  className="h-full w-[200%]"
-                  style={{
-                    background:
-                      'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%)',
-                  }}
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'linear',
-                    delay: index * 0.15 + lineIndex * 0.08,
-                  }}
-                />
-              </motion.div>
-            ))}
-          </div>
+              />
+
+              {/* "FOR, you have the floor" - bolder */}
+              <SkeletonLine width={0.38} height={18} index={index} lineIndex={4} />
+            </div>
+          ) : (
+            // FOR/AGAINST: header title + body paragraphs
+            <div className="space-y-4">
+              {/* Section header like "The Sandwich Collapses Under Scrutiny" */}
+              <SkeletonLine width={0.65} height={22} index={index} lineIndex={0} />
+
+              {/* Body paragraph lines */}
+              <div className="space-y-3">
+                <SkeletonLine width={0.98} height={16} index={index} lineIndex={1} />
+                <SkeletonLine width={0.94} height={16} index={index} lineIndex={2} />
+                <SkeletonLine width={0.88} height={16} index={index} lineIndex={3} />
+                <SkeletonLine width={0.72} height={16} index={index} lineIndex={4} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

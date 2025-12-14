@@ -9,31 +9,34 @@ import type { TurnSpeaker } from '@/types/turn'
 
 export const APPLE_COLORS = {
   for: {
-    primary: 'hsl(192, 45%, 52%)', // Cool teal-blue (iOS system accent)
-    secondary: 'hsl(195, 50%, 45%)', // Deeper teal
-    highlight: 'hsl(190, 38%, 68%)', // Soft teal highlight
-    hsl: 'hsl(192, 45%, 52%)',
-    rgb: 'rgb(73, 148, 164)',
-    rgba: (alpha: number) => `rgba(73, 148, 164, ${alpha})`,
-    rgba2: (alpha: number) => `rgba(58, 138, 158, ${alpha})`,
+    primary: '#63E6BE', // Electric Mint (visionOS spatial computing)
+    secondary: 'hsl(162, 69%, 55%)', // Deeper mint
+    highlight: 'hsl(162, 69%, 75%)', // Soft mint highlight
+    hsl: 'hsl(162, 69%, 65%)',
+    rgb: 'rgb(99, 230, 190)',
+    rgba: (alpha: number) => `rgba(99, 230, 190, ${alpha})`,
+    rgba2: (alpha: number) => `rgba(79, 210, 170, ${alpha})`,
+    glow: 'rgba(99, 230, 190, 0.6)', // Text glow for pills
   },
   against: {
-    primary: 'hsl(25, 50%, 52%)', // Warm amber/terracotta (grounded, skeptical)
-    secondary: 'hsl(20, 55%, 45%)', // Deeper rust
-    highlight: 'hsl(28, 42%, 68%)', // Soft peach highlight
-    hsl: 'hsl(25, 50%, 52%)',
-    rgb: 'rgb(184, 128, 92)',
-    rgba: (alpha: number) => `rgba(184, 128, 92, ${alpha})`,
-    rgba2: (alpha: number) => `rgba(176, 112, 74, ${alpha})`,
+    primary: '#FF6B6B', // Warm Coral (visionOS spatial computing)
+    secondary: 'hsl(0, 100%, 61%)', // Deeper coral
+    highlight: 'hsl(0, 100%, 81%)', // Soft coral highlight
+    hsl: 'hsl(0, 100%, 71%)',
+    rgb: 'rgb(255, 107, 107)',
+    rgba: (alpha: number) => `rgba(255, 107, 107, ${alpha})`,
+    rgba2: (alpha: number) => `rgba(235, 87, 87, ${alpha})`,
+    glow: 'rgba(255, 107, 107, 0.6)', // Text glow for pills
   },
   moderator: {
-    primary: 'hsl(220, 12%, 58%)', // True neutral silver
-    secondary: 'hsl(222, 15%, 48%)', // Deeper slate
-    highlight: 'hsl(218, 10%, 72%)', // Soft silver highlight
-    hsl: 'hsl(220, 12%, 58%)',
-    rgb: 'rgb(133, 139, 156)',
-    rgba: (alpha: number) => `rgba(133, 139, 156, ${alpha})`,
-    rgba2: (alpha: number) => `rgba(113, 119, 140, ${alpha})`,
+    primary: '#F2F2F7', // Platinum White (visionOS neutral)
+    secondary: 'hsl(240, 24%, 90%)', // Deeper platinum
+    highlight: 'hsl(240, 24%, 98%)', // Near-white highlight
+    hsl: 'hsl(240, 24%, 96%)',
+    rgb: 'rgb(242, 242, 247)',
+    rgba: (alpha: number) => `rgba(242, 242, 247, ${alpha})`,
+    rgba2: (alpha: number) => `rgba(222, 222, 232, ${alpha})`,
+    glow: 'rgba(242, 242, 247, 0.5)', // Subtle glow for pills
   },
 } as const
 
@@ -41,38 +44,38 @@ export const SPEAKER_CONFIGS: Record<TurnSpeaker, SpeakerConfig> = {
   for: {
     label: 'FOR (Affirmative)',
     shortLabel: 'FOR',
-    color: 'text-[hsl(190,38%,68%)]',
+    color: 'text-[#63E6BE]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(192,45%,52%)]',
+    borderColor: 'bg-[#63E6BE]',
     icon: 'thumbs-up',
     position: 'left',
-    chipBorder: 'border-[hsl(192,45%,52%)]/20',
-    chipBg: 'bg-[hsl(192,45%,52%)]/5',
-    glowColor: 'shadow-[hsl(192,45%,52%)]/10',
+    chipBorder: 'border-[#63E6BE]/30',
+    chipBg: 'bg-[#63E6BE]/15',
+    glowColor: 'shadow-[#63E6BE]/20',
   },
   against: {
     label: 'AGAINST (Negative)',
     shortLabel: 'AGAINST',
-    color: 'text-[hsl(28,42%,68%)]',
+    color: 'text-[#FF6B6B]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(25,50%,52%)]',
+    borderColor: 'bg-[#FF6B6B]',
     icon: 'thumbs-down',
     position: 'right',
-    chipBorder: 'border-[hsl(25,50%,52%)]/20',
-    chipBg: 'bg-[hsl(25,50%,52%)]/5',
-    glowColor: 'shadow-[hsl(25,50%,52%)]/10',
+    chipBorder: 'border-[#FF6B6B]/30',
+    chipBg: 'bg-[#FF6B6B]/15',
+    glowColor: 'shadow-[#FF6B6B]/20',
   },
   moderator: {
     label: 'Moderator',
     shortLabel: 'MOD',
-    color: 'text-[hsl(218,10%,72%)]',
-    bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(220,12%,58%)]',
+    color: 'text-[#F2F2F7]',
+    bgColor: 'bg-black/[0.1]',
+    borderColor: 'bg-[#F2F2F7]',
     icon: 'scale',
     position: 'center',
-    chipBorder: 'border-[hsl(220,12%,58%)]/20',
-    chipBg: 'bg-[hsl(220,12%,58%)]/5',
-    glowColor: 'shadow-[hsl(220,12%,58%)]/10',
+    chipBorder: 'border-[#F2F2F7]/20',
+    chipBg: 'bg-[#F2F2F7]/10',
+    glowColor: 'shadow-[#F2F2F7]/10',
   },
 }
 
@@ -188,9 +191,9 @@ export const SPEAKER_GRADIENTS: Record<TurnSpeaker, string> = {
 }
 
 export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
-  for: `text-[hsl(190,38%,68%)] border-[hsl(192,45%,52%)]/35 bg-[hsl(192,45%,52%)]/10`,
-  against: `text-[hsl(28,42%,68%)] border-[hsl(25,50%,52%)]/35 bg-[hsl(25,50%,52%)]/10`,
-  moderator: `text-[hsl(218,10%,72%)] border-[hsl(220,12%,58%)]/35 bg-[hsl(220,12%,58%)]/10`,
+  for: `text-[#63E6BE] border-[#63E6BE]/35 bg-[#63E6BE]/10`,
+  against: `text-[#FF6B6B] border-[#FF6B6B]/35 bg-[#FF6B6B]/10`,
+  moderator: `text-[#F2F2F7] border-[#F2F2F7]/35 bg-[#F2F2F7]/10`,
 }
 
 export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
@@ -250,40 +253,32 @@ export const SPEAKER_PILL_STYLES: Record<
     text: string
     border: string
     glow: string
+    textShadow: string
     innerGlow: string
   }
 > = {
   for: {
-    background: `linear-gradient(135deg,
-      ${APPLE_COLORS.for.rgba(0.18)} 0%,
-      ${APPLE_COLORS.for.rgba(0.08)} 50%,
-      ${APPLE_COLORS.for.rgba(0.12)} 100%
-    )`.replace(/\s+/g, ' '),
-    text: APPLE_COLORS.for.highlight,
-    border: APPLE_COLORS.for.rgba(0.25),
-    glow: 'none',
+    background: APPLE_COLORS.for.rgba(0.15),
+    text: '#FFFFFF',
+    border: APPLE_COLORS.for.rgba(0.3),
+    glow: `0 0 10px ${APPLE_COLORS.for.glow}`,
+    textShadow: `0 0 10px ${APPLE_COLORS.for.glow}`,
     innerGlow: `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.35)}`,
   },
   against: {
-    background: `linear-gradient(135deg,
-      ${APPLE_COLORS.against.rgba(0.18)} 0%,
-      ${APPLE_COLORS.against.rgba(0.08)} 50%,
-      ${APPLE_COLORS.against.rgba(0.12)} 100%
-    )`.replace(/\s+/g, ' '),
-    text: APPLE_COLORS.against.highlight,
-    border: APPLE_COLORS.against.rgba(0.25),
-    glow: 'none',
+    background: APPLE_COLORS.against.rgba(0.15),
+    text: '#FFFFFF',
+    border: APPLE_COLORS.against.rgba(0.3),
+    glow: `0 0 12px ${APPLE_COLORS.against.glow}`,
+    textShadow: `0 0 8px ${APPLE_COLORS.against.glow}`,
     innerGlow: `inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.35)}`,
   },
   moderator: {
-    background: `linear-gradient(135deg,
-      ${APPLE_COLORS.moderator.rgba(0.15)} 0%,
-      ${APPLE_COLORS.moderator.rgba(0.06)} 50%,
-      ${APPLE_COLORS.moderator.rgba(0.1)} 100%
-    )`.replace(/\s+/g, ' '),
-    text: APPLE_COLORS.moderator.highlight,
+    background: APPLE_COLORS.moderator.rgba(0.1),
+    text: '#FFFFFF',
     border: APPLE_COLORS.moderator.rgba(0.2),
     glow: 'none',
+    textShadow: 'none',
     innerGlow: `inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.3)}`,
   },
 }

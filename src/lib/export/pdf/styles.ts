@@ -47,7 +47,7 @@ export const typography = {
 
 export const spacing = {
   page: {
-    top: 50,
+    top: 88, // Clears fixed logo header: 24 (top) + 48 (height) + 16 (margin)
     bottom: 50,
     left: 48,
     right: 48,
@@ -84,21 +84,29 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.page.left,
   },
 
-  // Document Header
-  documentHeader: {
+  // Fixed Page Logo (appears on every page)
+  pageLogoContainer: {
+    position: 'absolute',
+    top: 24,
+    left: 16,
+  },
+  pageLogo: {
+    width: 72,
+    height: 48, // 3:2 aspect ratio (1536x1024 source)
+    opacity: 0.4,
+  },
+
+  // Topic Header (first page only, centered)
+  topicHeader: {
     alignItems: 'center',
-    paddingHorizontal: spacing.page.left,
     marginBottom: spacing.section,
   },
-  documentLogo: {
-    height: 80,
-    marginBottom: 12,
-  },
-  documentTitle: {
+  topicTitle: {
     fontSize: typography.fontSize.title,
     fontWeight: 'bold',
     color: colors.text.primary,
     lineHeight: typography.lineHeight.tight,
+    textAlign: 'center',
   },
 
   // Metadata Block (stacked vertical layout)
@@ -133,16 +141,23 @@ export const styles = StyleSheet.create({
   },
 
   // Speaker Card
+  speakerCardWrapper: {
+    // Wrapper for pagination control - allows cards to break gracefully
+    marginBottom: 0,
+  },
   speakerCard: {
     backgroundColor: colors.card,
     borderRadius: spacing.card.borderRadius,
-    padding: spacing.card.padding,
+    // Split padding: no paddingTop - handled by content marginTop for page break survival
+    paddingBottom: spacing.card.padding,
+    paddingHorizontal: spacing.card.padding,
     marginBottom: spacing.card.marginBottom,
   },
   speakerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: spacing.card.padding, // Provides top spacing (survives page breaks better than card padding)
     marginBottom: 8,
   },
   speakerIdentity: {
@@ -224,25 +239,37 @@ export const styles = StyleSheet.create({
     color: colors.text.muted,
   },
 
-  // Summary Section
-  summarySection: {
-    marginTop: spacing.section,
-    paddingTop: spacing.paragraph,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    borderTopStyle: 'solid',
+  // Summary Card (matches speaker card styling)
+  summaryCard: {
+    backgroundColor: colors.card,
+    borderRadius: spacing.card.borderRadius,
+    // Split padding: no paddingTop - MarkdownRenderer elements have marginTop for page break survival
+    paddingBottom: spacing.card.padding,
+    paddingHorizontal: spacing.card.padding,
+    marginBottom: spacing.card.marginBottom,
   },
-  summaryTitle: {
-    fontSize: typography.fontSize.sectionHeader,
-    fontWeight: 'bold',
-    color: colors.speaker.moderator,
-    marginBottom: spacing.paragraph,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+
+  // Thank You Card (end of document)
+  thankYouCard: {
+    backgroundColor: colors.card,
+    borderRadius: spacing.card.borderRadius,
+    paddingVertical: 20,
+    paddingHorizontal: spacing.card.padding,
+    alignItems: 'center',
   },
-  summaryContent: {
+  thankYouTitle: {
     fontSize: typography.fontSize.body,
-    lineHeight: typography.lineHeight.relaxed,
+    fontWeight: 'bold',
     color: colors.text.primary,
+    marginBottom: 4,
+  },
+  thankYouText: {
+    fontSize: typography.fontSize.caption,
+    color: colors.text.secondary,
+    marginBottom: 6,
+  },
+  thankYouLink: {
+    fontSize: typography.fontSize.caption,
+    color: colors.accent,
   },
 })

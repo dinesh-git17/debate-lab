@@ -1,6 +1,6 @@
 /**
  * Stacked metadata block displaying debate context.
- * Renders topic, date, format, and participants in vertical rows.
+ * Renders purpose, date, format, and participants in vertical rows.
  */
 
 import { Text, View } from '@react-pdf/renderer'
@@ -8,7 +8,6 @@ import { Text, View } from '@react-pdf/renderer'
 import { styles } from '../styles'
 
 interface MetadataBarProps {
-  topic: string
   date: Date
   format: string
   participants: {
@@ -34,17 +33,12 @@ function formatParticipants(participants: MetadataBarProps['participants']): str
   return list.join(', ')
 }
 
-export function MetadataBar({
-  topic,
-  date,
-  format,
-  participants,
-}: MetadataBarProps): React.ReactElement {
+export function MetadataBar({ date, format, participants }: MetadataBarProps): React.ReactElement {
   return (
     <View style={styles.metadataBlock}>
       <View style={styles.metadataRow}>
-        <Text style={styles.metadataLabel}>Topic</Text>
-        <Text style={styles.metadataValue}>{topic}</Text>
+        <Text style={styles.metadataLabel}>Purpose</Text>
+        <Text style={styles.metadataValue}>AI debate report</Text>
       </View>
       <View style={styles.metadataRow}>
         <Text style={styles.metadataLabel}>Date</Text>

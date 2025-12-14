@@ -1,16 +1,45 @@
 /**
  * Main PDF document component for debate transcript exports.
  * Assembles header, metadata, speaker cards, and footer into a complete document.
+ *
+ * Uses content-aware pagination to ensure:
+ * - Section headers never appear alone at page bottom
+ * - Related content blocks stay together when possible
+ * - Orphan/widow prevention for professional layout
  */
 
-import { Document, Page, Text, View } from '@react-pdf/renderer'
+import { Document, Font, Page, Text, View } from '@react-pdf/renderer'
 
-import { DocumentHeader, MetadataBar, PageFooter, SpeakerCard } from './components'
+// Disable hyphenation globally to prevent mid-word breaks (e.g., "civiliza-tion")
+Font.registerHyphenationCallback((word) => [word])
+
+import {
+  MarkdownRenderer,
+  MetadataBar,
+  PageFooter,
+  PageLogo,
+  SpeakerCard,
+  TopicHeader,
+} from './components'
 import { styles } from './styles'
 
 import type { DebateMessage } from '@/types/debate-ui'
 import type { ExportConfig } from '@/types/export'
 import type { TurnType } from '@/types/turn'
+
+/**
+ * Pagination thresholds for content-aware layout.
+ * Controls when elements push to next page vs. break gracefully.
+ */
+const PAGINATION = {
+  // Section headers need enough content to not appear orphaned
+  SECTION_HEADER_MIN_AHEAD: 80,
+  // Summary title needs content to follow
+  SUMMARY_TITLE_MIN_AHEAD: 60,
+  // Speaker card wrapper - just needs enough to start the card header
+  // Lower values prevent pushing entire cards to next page (they can wrap instead)
+  SPEAKER_CARD_MIN_AHEAD: 50,
+} as const
 
 interface DebateDocumentProps {
   topic: string
@@ -109,24 +138,29 @@ export function DebateDocument({
   return (
     <Document title={`Debate: ${topic}`} author="Debate Lab" subject={topic}>
       <Page size="LETTER" style={styles.page}>
-        <DocumentHeader logoUrl={logoUrl} />
+        <PageLogo logoUrl={logoUrl} />
 
         <View style={styles.contentWrapper}>
-          <MetadataBar
-            topic={topic}
-            date={new Date()}
-            format={format}
-            participants={participants}
-          />
+          <TopicHeader topic={topic} />
+          <MetadataBar date={new Date()} format={format} participants={participants} />
 
-          {groupedMessages.map((group, groupIndex) => (
+          {groupedMessages.map((group) => (
             <View key={group.phase} style={styles.sectionGroup}>
-              {groupIndex > 0 && <View style={styles.divider} minPresenceAhead={100} />}
-              <Text style={styles.sectionTitle} minPresenceAhead={80}>
+              {/* Section header with lookahead - ensures content follows */}
+              <Text
+                style={styles.sectionTitle}
+                minPresenceAhead={PAGINATION.SECTION_HEADER_MIN_AHEAD}
+              >
                 {group.phase}
               </Text>
+
               {group.messages.map((message) => (
-                <View key={message.id} wrap={false}>
+                <View
+                  key={message.id}
+                  style={styles.speakerCardWrapper}
+                  wrap={true}
+                  minPresenceAhead={PAGINATION.SPEAKER_CARD_MIN_AHEAD}
+                >
                   <SpeakerCard
                     speaker={message.speaker}
                     speakerLabel={message.speakerLabel}
@@ -140,12 +174,37 @@ export function DebateDocument({
             </View>
           ))}
 
+          {/* Summary section - wrapped in card panel like speaker cards */}
           {summary && (
-            <View style={styles.summarySection}>
-              <Text style={styles.summaryTitle}>Moderator Summary</Text>
-              <Text style={styles.summaryContent}>{summary}</Text>
+            <View style={styles.sectionGroup}>
+              <Text
+                style={styles.sectionTitle}
+                minPresenceAhead={PAGINATION.SECTION_HEADER_MIN_AHEAD}
+              >
+                Moderator Summary
+              </Text>
+              <View
+                style={styles.speakerCardWrapper}
+                wrap={true}
+                minPresenceAhead={PAGINATION.SPEAKER_CARD_MIN_AHEAD}
+              >
+                <View style={styles.summaryCard}>
+                  <MarkdownRenderer content={summary} />
+                </View>
+              </View>
             </View>
           )}
+
+          {/* Thank You Card */}
+          <View style={styles.sectionGroup}>
+            <View style={styles.thankYouCard}>
+              <Text style={styles.thankYouTitle}>Thank you for reading.</Text>
+              <Text style={styles.thankYouText}>
+                Debate Lab is an experiment in structured AI debate.
+              </Text>
+              <Text style={styles.thankYouLink}>debatelab.dineshd.dev</Text>
+            </View>
+          </View>
         </View>
 
         <PageFooter format={format} />

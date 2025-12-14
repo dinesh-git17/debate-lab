@@ -745,8 +745,10 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   }, [hasMessages, initialStatus])
 
   // Determine which view state to show
+  // Skeleton only shows when loading a completed debate (page refresh/navigation)
+  // Not when debate first starts - users see empty → first card transition directly
   const showEmptyState = messages.length === 0 && status === 'ready'
-  const showWaitingState = messages.length === 0 && (status === 'active' || status === 'completed')
+  const showWaitingState = messages.length === 0 && status === 'completed'
   const showMessageList = messages.length > 0
 
   // Use dvh for dynamic viewport height on mobile (prevents browser chrome jump)
@@ -815,8 +817,6 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
               style={{
                 height: '100%',
                 scrollBehavior: 'auto',
-                scrollSnapType: status === 'completed' ? 'y proximity' : undefined,
-                scrollPaddingTop: status === 'completed' ? (isMobile ? 144 : 160) : undefined,
                 maskImage: maskGradient,
                 WebkitMaskImage: maskGradient,
               }}
@@ -831,11 +831,11 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
                     ? 'min-h-full justify-center'
                     : isMobile
                       ? status === 'completed'
-                        ? 'pt-36 pb-6'
-                        : 'pt-20 pb-6'
+                        ? 'pt-36 pb-12'
+                        : 'pt-20 pb-12'
                       : status === 'completed'
-                        ? 'pt-40 pb-6'
-                        : 'pt-24 pb-6',
+                        ? 'pt-40 pb-16'
+                        : 'pt-24 pb-16',
                   isMobile && 'mx-auto'
                 )}
                 style={{
