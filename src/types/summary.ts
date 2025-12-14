@@ -1,6 +1,9 @@
 // src/types/summary.ts
+/**
+ * Type definitions for debate summary page state and data.
+ */
 
-import type { JudgeAnalysis } from './judge'
+import type { JudgeAnalysis, QuickScore } from './judge'
 import type { JuryDeliberation, JuryPhase } from './jury'
 import type { LLMProviderType } from './llm'
 import type { TurnSpeaker, TurnType } from './turn'
@@ -94,6 +97,7 @@ export interface SummaryState {
   statistics: DebateStatistics | null
   revealState: RevealState
   assignment: RevealedAssignment | null
+  quickScore: QuickScore | null
   judgeAnalysis: JudgeAnalysis | null
   isAnalysisLoading: boolean
   juryDeliberation: JuryDeliberation | null

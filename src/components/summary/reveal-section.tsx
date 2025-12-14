@@ -27,9 +27,16 @@ export function RevealSection({ className }: RevealSectionProps) {
   const canReveal = useSummaryStore(selectCanReveal)
 
   const [showSpinner, setShowSpinner] = useState(false)
-  const [shouldFlipCards, setShouldFlipCards] = useState(false)
+  const [shouldFlipCards, setShouldFlipCards] = useState(revealState === 'revealed')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sync shouldFlipCards when revealState changes (e.g., loaded from localStorage)
+  useEffect(() => {
+    if (revealState === 'revealed') {
+      setShouldFlipCards(true)
+    }
+  }, [revealState])
 
   const handleReveal = useCallback(() => {
     if (!canReveal) return

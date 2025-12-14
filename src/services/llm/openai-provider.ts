@@ -82,10 +82,11 @@ export class OpenAIProvider extends BaseLLMProvider {
   async generate(params: GenerateParams): Promise<GenerateResult> {
     const client = this.getClient()
     const startTime = Date.now()
+    const modelToUse = params.model ?? OPENAI_MODEL
 
     try {
       const response = await client.chat.completions.create({
-        model: OPENAI_MODEL,
+        model: modelToUse,
         messages: [
           { role: 'system', content: params.systemPrompt },
           ...params.messages.map((m) => ({
@@ -110,7 +111,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         finishReason,
         latencyMs: Date.now() - startTime,
         provider: 'openai',
-        model: OPENAI_MODEL,
+        model: modelToUse,
       }
     } catch (error) {
       throw this.handleError(error)

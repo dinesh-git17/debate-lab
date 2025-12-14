@@ -88,8 +88,17 @@ export function SummaryPageClient({ initialData, shareUrl }: SummaryPageClientPr
       }
 
       const data = (await response.json()) as JudgeAnalysisResponse
-      if (data.success && data.analysis) {
-        store.setJudgeAnalysis(data.analysis)
+      if (data.success) {
+        // Set quick score immediately for progressive rendering of metric bars
+        if (data.quickScore) {
+          store.setQuickScore(data.quickScore)
+        }
+        // Set full analysis if available
+        if (data.analysis) {
+          store.setJudgeAnalysis(data.analysis, data.quickScore)
+        } else {
+          store.setAnalysisLoading(false)
+        }
       } else {
         store.setAnalysisLoading(false)
       }

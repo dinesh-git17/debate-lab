@@ -8,9 +8,14 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { FaQuestionCircle } from 'react-icons/fa'
 
 import { cn } from '@/lib/utils'
 import { useSummaryStore, selectFormattedDuration } from '@/store/summary-store'
+
+import { JudgeHelpModal } from './judge-help-modal'
+
+import type { QuickScore } from '@/types/judge'
 
 const JUDGE_PHRASES = [
   'Analyzing arguments',
@@ -311,9 +316,11 @@ const fadeTransition = {
 
 export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
   const judgeAnalysis = useSummaryStore((s) => s.judgeAnalysis)
+  const quickScore = useSummaryStore((s) => s.quickScore)
   const statistics = useSummaryStore((s) => s.statistics)
   const format = useSummaryStore((s) => s.format)
   const duration = useSummaryStore(selectFormattedDuration)
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   const metricMapping: Record<string, string> = {
     argument_quality: 'Structure',
@@ -322,19 +329,41 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
     rebuttal_effectiveness: 'Rebuttal',
   }
 
-  const getMetricPair = (category: string): { forValue: number; againstValue: number } => {
-    if (!judgeAnalysis) return { forValue: 0, againstValue: 0 }
-
-    const forScore = judgeAnalysis.forAnalysis.categoryScores.find((s) => s.category === category)
-    const againstScore = judgeAnalysis.againstAnalysis.categoryScores.find(
-      (s) => s.category === category
-    )
-
-    return {
-      forValue: forScore?.percentage ?? 0,
-      againstValue: againstScore?.percentage ?? 0,
+  /**
+   * Get metric values from quickScore (fast) or judgeAnalysis (detailed).
+   * QuickScore values are 0-100 percentages, judgeAnalysis has categoryScores with percentage.
+   */
+  const getMetricPair = (
+    category: string,
+    quickScoreData: QuickScore | null
+  ): { forValue: number; againstValue: number } => {
+    // First try quickScore (arrives in ~1-2 sec)
+    if (quickScoreData) {
+      const quickScoreKey = category as keyof typeof quickScoreData.forScores
+      return {
+        forValue: Math.round(quickScoreData.forScores[quickScoreKey] ?? 0),
+        againstValue: Math.round(quickScoreData.againstScores[quickScoreKey] ?? 0),
+      }
     }
+
+    // Fall back to full analysis if available
+    if (judgeAnalysis) {
+      const forScore = judgeAnalysis.forAnalysis.categoryScores.find((s) => s.category === category)
+      const againstScore = judgeAnalysis.againstAnalysis.categoryScores.find(
+        (s) => s.category === category
+      )
+      return {
+        forValue: forScore?.percentage ?? 0,
+        againstValue: againstScore?.percentage ?? 0,
+      }
+    }
+
+    return { forValue: 0, againstValue: 0 }
   }
+
+  // Progressive loading states
+  const hasQuickScore = quickScore !== null
+  const hasFullAnalysis = judgeAnalysis !== null
 
   const keyMoments = judgeAnalysis
     ? [
@@ -358,7 +387,8 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
         transition={{ layout: { duration: 0.4, ease: [0.22, 0.61, 0.36, 1] } }}
       >
         <AnimatePresence mode="wait">
-          {!judgeAnalysis ? (
+          {!hasQuickScore && !hasFullAnalysis ? (
+            /* State 1: Full skeleton - waiting for any data */
             <motion.div
               key="skeleton"
               initial={{ opacity: 1 }}
@@ -368,6 +398,7 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
               <SkeletonCard />
             </motion.div>
           ) : (
+            /* State 2/3: QuickScore or full analysis available */
             <motion.div
               key="content"
               initial={{ opacity: 0 }}
@@ -376,11 +407,45 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
               className="space-y-8"
             >
               {/* Header */}
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-                  Post-Debate Breakdown
-                </h2>
-                <p className="text-muted-foreground text-sm mt-1">Debate Highlights</p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+                    Post-Debate Breakdown
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-1">Debate Highlights</p>
+                </div>
+                <div className="relative group">
+                  <button
+                    onClick={() => setShowHelpModal(true)}
+                    className={cn(
+                      'p-2 rounded-full cursor-pointer',
+                      'text-muted-foreground/60 group-hover:text-muted-foreground',
+                      'group-hover:bg-white/[0.06]'
+                    )}
+                    aria-label="How this works"
+                  >
+                    <FaQuestionCircle className="w-5 h-5" />
+                  </button>
+
+                  {/* Apple-style tooltip */}
+                  <div
+                    className={cn(
+                      'absolute top-full right-0 mt-2 z-50',
+                      'px-3 py-1.5 rounded-lg',
+                      'bg-[#1c1c1e]/95 backdrop-blur-xl',
+                      'border border-white/[0.08]',
+                      'shadow-[0_4px_20px_rgba(0,0,0,0.4)]',
+                      'whitespace-nowrap',
+                      'pointer-events-none',
+                      'opacity-0 scale-95 translate-y-1',
+                      'group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0',
+                      'transition-all duration-150 ease-out'
+                    )}
+                  >
+                    <span className="text-xs font-medium text-white/90">How this works</span>
+                    <div className="absolute -top-1 right-4 w-2 h-2 rotate-45 bg-[#1c1c1e]/95 border-l border-t border-white/[0.08]" />
+                  </div>
+                </div>
               </div>
 
               {/* Metadata */}
@@ -394,7 +459,7 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
                 <span className="text-emerald-500/80">Completed</span>
               </div>
 
-              {/* Performance Breakdown */}
+              {/* Performance Breakdown - Shows immediately with quickScore */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground/90 uppercase tracking-wide">
@@ -414,7 +479,7 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
 
                 <div className="space-y-5">
                   {Object.entries(metricMapping).map(([category, label]) => {
-                    const { forValue, againstValue } = getMetricPair(category)
+                    const { forValue, againstValue } = getMetricPair(category, quickScore)
                     return (
                       <MetricBar
                         key={category}
@@ -427,45 +492,100 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
                 </div>
               </div>
 
-              {/* Key Moments */}
-              {keyMoments.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground/90 uppercase tracking-wide">
-                    Key Moments
-                  </h3>
-                  <ul className="space-y-2.5">
-                    {keyMoments.map((moment, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-3 text-sm text-muted-foreground/90"
-                      >
-                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-neutral-600 flex-shrink-0" />
-                        <span className="leading-relaxed">{moment}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Key Moments - Skeleton until full analysis arrives */}
+              <AnimatePresence mode="wait">
+                {!hasFullAnalysis ? (
+                  <motion.div
+                    key="moments-skeleton"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={fadeTransition}
+                    className="space-y-4"
+                  >
+                    <SkeletonBar width="w-28" height="h-4" />
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-start gap-3">
+                          <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-neutral-800 flex-shrink-0" />
+                          <SkeletonBar
+                            width={i === 1 ? 'w-full' : i === 2 ? 'w-5/6' : 'w-4/6'}
+                            height="h-4"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                ) : keyMoments.length > 0 ? (
+                  <motion.div
+                    key="moments-content"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={fadeTransition}
+                    className="space-y-4"
+                  >
+                    <h3 className="text-sm font-semibold text-foreground/90 uppercase tracking-wide">
+                      Key Moments
+                    </h3>
+                    <ul className="space-y-2.5">
+                      {keyMoments.map((moment, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-3 text-sm text-muted-foreground/90"
+                        >
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-neutral-600 flex-shrink-0" />
+                          <span className="leading-relaxed">{moment}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
 
-              {/* Where the Debate Turned */}
-              {turningPoints.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground/90 uppercase tracking-wide">
-                    Where the Debate Turned
-                  </h3>
-                  <ul className="space-y-2.5">
-                    {turningPoints.map((point, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-3 text-sm text-muted-foreground/90"
-                      >
-                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-neutral-600 flex-shrink-0" />
-                        <span className="leading-relaxed">{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Where the Debate Turned - Skeleton until full analysis arrives */}
+              <AnimatePresence mode="wait">
+                {!hasFullAnalysis ? (
+                  <motion.div
+                    key="turning-skeleton"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={fadeTransition}
+                    className="space-y-4"
+                  >
+                    <SkeletonBar width="w-48" height="h-4" />
+                    <div className="space-y-3">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="flex items-start gap-3">
+                          <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-neutral-800 flex-shrink-0" />
+                          <SkeletonBar width={i === 1 ? 'w-full' : 'w-5/6'} height="h-4" />
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                ) : turningPoints.length > 0 ? (
+                  <motion.div
+                    key="turning-content"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={fadeTransition}
+                    className="space-y-4"
+                  >
+                    <h3 className="text-sm font-semibold text-foreground/90 uppercase tracking-wide">
+                      Where the Debate Turned
+                    </h3>
+                    <ul className="space-y-2.5">
+                      {turningPoints.map((point, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-3 text-sm text-muted-foreground/90"
+                        >
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-neutral-600 flex-shrink-0" />
+                          <span className="leading-relaxed">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
 
               {/* Footer */}
               <div className="pt-4 border-t border-neutral-800/60">
@@ -477,6 +597,8 @@ export function DebateHighlightsCard({ className }: DebateHighlightsCardProps) {
           )}
         </AnimatePresence>
       </motion.div>
+
+      <JudgeHelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
     </section>
   )
 }

@@ -1,13 +1,13 @@
 // route.ts
 /**
  * Debate judge analysis endpoint.
- * Generates or retrieves AI-powered scoring and clash analysis for completed debates.
+ * Supports two-tier loading: quick scores first, full analysis follows.
  */
 
 import { NextResponse } from 'next/server'
 
 import { isValidDebateId } from '@/lib/id-generator'
-import { getJudgeAnalysis, isAnalysisCached } from '@/services/judge-service'
+import { getJudgeAnalysis, isAnalysisCached, isQuickScoreCached } from '@/services/judge-service'
 
 import type { NextRequest } from 'next/server'
 
@@ -35,8 +35,10 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   return NextResponse.json(
     {
       success: true,
+      quickScore: response.quickScore,
       analysis: response.analysis,
       cached: response.cached,
+      quickScoreCached: response.quickScoreCached,
       generationTimeMs: response.generationTimeMs,
     },
     {
@@ -54,12 +56,16 @@ export async function HEAD(request: NextRequest, { params }: RouteParams): Promi
     return new Response(null, { status: 400 })
   }
 
-  const cached = isAnalysisCached(debateId)
+  const [analysisCached, quickScoreCached] = await Promise.all([
+    isAnalysisCached(debateId),
+    isQuickScoreCached(debateId),
+  ])
 
   return new Response(null, {
     status: 200,
     headers: {
-      'X-Analysis-Cached': cached ? 'true' : 'false',
+      'X-Analysis-Cached': analysisCached ? 'true' : 'false',
+      'X-QuickScore-Cached': quickScoreCached ? 'true' : 'false',
     },
   })
 }

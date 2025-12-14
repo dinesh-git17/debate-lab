@@ -1,11 +1,25 @@
 // src/services/judge-service.ts
+/**
+ * Two-tier judge analysis service for debate evaluation.
+ * Quick scores (GPT-4o-mini) provide instant results, full analysis (GPT-4o) follows.
+ */
 
 import { getEngineState } from '@/lib/engine-store'
+import {
+  getStoredAnalysis,
+  getStoredQuickScore,
+  hasStoredAnalysis,
+  hasStoredQuickScore,
+  storeAnalysis,
+  storeQuickScore,
+} from '@/lib/judge-store'
 import { logger } from '@/lib/logging'
 import {
   buildJudgeAnalysisPrompt,
+  buildQuickScorePrompt,
   JUDGE_DISCLAIMER,
   JUDGE_SYSTEM_PROMPT,
+  QUICK_SCORE_SYSTEM_PROMPT,
 } from '@/lib/prompts/judge-prompt'
 import { getFormatDisplayName } from '@/lib/prompts/moderator-system'
 import { MAX_TOTAL_SCORE, SCORING_RUBRICS, validateCategoryScore } from '@/lib/scoring-rubric'
@@ -20,12 +34,11 @@ import type {
   JudgeAnalysisResponse,
   ParsedJudgeResponse,
   ParticipantScores,
+  QuickScore,
   ScoringCategory,
 } from '@/types/judge'
 import type { DebateHistoryEntry } from '@/types/prompts'
 import type { TurnSpeaker } from '@/types/turn'
-
-const analysisCache = new Map<string, JudgeAnalysis>()
 
 /**
  * Generate mock judge analysis for testing without API calls
@@ -162,22 +175,203 @@ function generateMockJudgeAnalysis(
 }
 
 /**
- * Generate or retrieve judge analysis for a completed debate
+ * Generate mock quick scores for testing without API calls
+ */
+function generateMockQuickScore(): QuickScore {
+  const randomScore = (): number => 65 + Math.floor(Math.random() * 25)
+
+  return {
+    forScores: {
+      argument_quality: randomScore(),
+      clarity_presentation: randomScore(),
+      evidence_support: randomScore(),
+      rebuttal_effectiveness: randomScore(),
+    },
+    againstScores: {
+      argument_quality: randomScore(),
+      clarity_presentation: randomScore(),
+      evidence_support: randomScore(),
+      rebuttal_effectiveness: randomScore(),
+    },
+    generatedAt: new Date(),
+  }
+}
+
+/**
+ * Build transcript string for quick score prompt
+ */
+function buildTranscriptForScoring(completedTurns: DebateHistoryEntry[]): string {
+  return completedTurns
+    .filter((t) => t.speaker !== 'moderator')
+    .map((t) => `[${t.speaker.toUpperCase()}]: ${t.content}`)
+    .join('\n\n')
+}
+
+/**
+ * Parse quick score JSON response from GPT-4o-mini
+ */
+function parseQuickScoreResponse(response: string): QuickScore {
+  let jsonStr = response.trim()
+
+  const jsonMatch = response.match(/\{[\s\S]*\}/)
+  if (jsonMatch?.[0]) {
+    jsonStr = jsonMatch[0]
+  }
+
+  const parsed = JSON.parse(jsonStr) as {
+    for: {
+      argument_quality: number
+      clarity_presentation: number
+      evidence_support: number
+      rebuttal_effectiveness: number
+    }
+    against: {
+      argument_quality: number
+      clarity_presentation: number
+      evidence_support: number
+      rebuttal_effectiveness: number
+    }
+  }
+
+  return {
+    forScores: {
+      argument_quality: Math.round(Math.min(100, Math.max(0, parsed.for.argument_quality))),
+      clarity_presentation: Math.round(Math.min(100, Math.max(0, parsed.for.clarity_presentation))),
+      evidence_support: Math.round(Math.min(100, Math.max(0, parsed.for.evidence_support))),
+      rebuttal_effectiveness: Math.round(
+        Math.min(100, Math.max(0, parsed.for.rebuttal_effectiveness))
+      ),
+    },
+    againstScores: {
+      argument_quality: Math.round(Math.min(100, Math.max(0, parsed.against.argument_quality))),
+      clarity_presentation: Math.round(
+        Math.min(100, Math.max(0, parsed.against.clarity_presentation))
+      ),
+      evidence_support: Math.round(Math.min(100, Math.max(0, parsed.against.evidence_support))),
+      rebuttal_effectiveness: Math.round(
+        Math.min(100, Math.max(0, parsed.against.rebuttal_effectiveness))
+      ),
+    },
+    generatedAt: new Date(),
+  }
+}
+
+interface QuickScoreResponse {
+  success: boolean
+  quickScore?: QuickScore
+  error?: string
+  cached: boolean
+}
+
+/**
+ * Generate fast quick scores using GPT-4o-mini.
+ * Returns in ~1-2 seconds for immediate UI rendering.
+ */
+export async function getQuickScore(debateId: string): Promise<QuickScoreResponse> {
+  const cached = await getStoredQuickScore(debateId)
+  if (cached) {
+    return { success: true, quickScore: cached, cached: true }
+  }
+
+  const session = await getSession(debateId)
+  if (!session) {
+    return { success: false, error: 'Debate not found', cached: false }
+  }
+
+  if (session.status !== 'completed') {
+    return { success: false, error: 'Debate is not yet completed', cached: false }
+  }
+
+  const engineState = await getEngineState(debateId)
+  if (!engineState || engineState.completedTurns.length === 0) {
+    return { success: false, error: 'No debate turns found', cached: false }
+  }
+
+  if (engineState.status === 'cancelled') {
+    return {
+      success: false,
+      error: 'Quick score not available for cancelled debates',
+      cached: false,
+    }
+  }
+
+  if (isMockMode()) {
+    const quickScore = generateMockQuickScore()
+    await storeQuickScore(debateId, quickScore)
+    return { success: true, quickScore, cached: false }
+  }
+
+  try {
+    const debateHistory: DebateHistoryEntry[] = engineState.completedTurns.map((turn, index) => ({
+      speaker: turn.speaker,
+      speakerLabel: turn.speaker === 'moderator' ? 'MODERATOR' : turn.speaker.toUpperCase(),
+      turnType: turn.config.type,
+      content: turn.content,
+      turnNumber: index + 1,
+    }))
+
+    const transcript = buildTranscriptForScoring(debateHistory)
+    const prompt = buildQuickScorePrompt(session.topic, transcript)
+
+    const result = await generate({
+      provider: 'openai',
+      params: {
+        systemPrompt: QUICK_SCORE_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 500,
+        temperature: 0.2,
+        model: 'gpt-4o-mini',
+      },
+      enableRetry: true,
+      enableRateLimit: true,
+    })
+
+    const quickScore = parseQuickScoreResponse(result.content)
+    await storeQuickScore(debateId, quickScore)
+
+    logger.info('Quick score generated', { debateId, latencyMs: result.latencyMs })
+
+    return { success: true, quickScore, cached: false }
+  } catch (error) {
+    logger.error('Failed to generate quick score', error instanceof Error ? error : null, {
+      debateId,
+    })
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate quick score',
+      cached: false,
+    }
+  }
+}
+
+/**
+ * Generate or retrieve judge analysis for a completed debate.
+ * When quickScores provided, anchors full analysis to those exact scores.
  */
 export async function getJudgeAnalysis(
   debateId: string,
-  forceRegenerate: boolean = false
+  forceRegenerate: boolean = false,
+  quickScores?: QuickScore
 ): Promise<JudgeAnalysisResponse> {
   const startTime = Date.now()
 
+  // Get cached quick score if not provided
+  const storedQuickScore = await getStoredQuickScore(debateId)
+  const cachedQuickScore = quickScores ?? storedQuickScore ?? undefined
+
   if (!forceRegenerate) {
-    const cachedAnalysis = analysisCache.get(debateId)
+    const cachedAnalysis = await getStoredAnalysis(debateId)
     if (cachedAnalysis) {
-      return {
+      const response: JudgeAnalysisResponse = {
         success: true,
         analysis: cachedAnalysis,
         cached: true,
+        quickScoreCached: !!cachedQuickScore,
       }
+      if (cachedQuickScore) {
+        response.quickScore = cachedQuickScore
+      }
+      return response
     }
   }
 
@@ -227,14 +421,18 @@ export async function getJudgeAnalysis(
   // Return mock analysis in mock mode to avoid API calls
   if (isMockMode()) {
     const analysis = generateMockJudgeAnalysis(debateId, forModel, againstModel)
-    analysisCache.set(debateId, analysis)
+    await storeAnalysis(debateId, analysis)
 
-    return {
+    const mockResponse: JudgeAnalysisResponse = {
       success: true,
       analysis,
       cached: false,
       generationTimeMs: Date.now() - startTime,
     }
+    if (cachedQuickScore) {
+      mockResponse.quickScore = cachedQuickScore
+    }
+    return mockResponse
   }
 
   const debateHistory: DebateHistoryEntry[] = engineState.completedTurns.map((turn, index) => ({
@@ -246,13 +444,15 @@ export async function getJudgeAnalysis(
   }))
 
   try {
+    // Pass quick scores to anchor full analysis to same values
     const prompt = buildJudgeAnalysisPrompt(
       session.topic,
       getFormatDisplayName(session.format),
       debateHistory,
       forModel,
       againstModel,
-      session.customRules
+      session.customRules,
+      cachedQuickScore
     )
 
     const result = await generate({
@@ -260,8 +460,9 @@ export async function getJudgeAnalysis(
       params: {
         systemPrompt: JUDGE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
-        maxTokens: 8000,
+        maxTokens: 4000,
         temperature: 0.3,
+        model: 'gpt-4o',
       },
       enableRetry: true,
       enableRateLimit: true,
@@ -269,14 +470,20 @@ export async function getJudgeAnalysis(
 
     const analysis = parseJudgeResponse(debateId, result.content, forModel, againstModel)
 
-    analysisCache.set(debateId, analysis)
+    await storeAnalysis(debateId, analysis)
 
-    return {
+    logger.info('Full analysis generated', { debateId, latencyMs: result.latencyMs })
+
+    const successResponse: JudgeAnalysisResponse = {
       success: true,
       analysis,
       cached: false,
       generationTimeMs: Date.now() - startTime,
     }
+    if (cachedQuickScore) {
+      successResponse.quickScore = cachedQuickScore
+    }
+    return successResponse
   } catch (error) {
     logger.error(
       'JudgeService failed to generate analysis',
@@ -456,22 +663,22 @@ function buildParticipantScores(
 }
 
 /**
- * Clear cached analysis for a debate
+ * Check if analysis is cached for a debate (async - checks persistent store)
  */
-export function clearAnalysisCache(debateId: string): void {
-  analysisCache.delete(debateId)
+export async function isAnalysisCached(debateId: string): Promise<boolean> {
+  return hasStoredAnalysis(debateId)
 }
 
 /**
- * Check if analysis is cached for a debate
+ * Check if quick score is cached for a debate (async - checks persistent store)
  */
-export function isAnalysisCached(debateId: string): boolean {
-  return analysisCache.has(debateId)
+export async function isQuickScoreCached(debateId: string): Promise<boolean> {
+  return hasStoredQuickScore(debateId)
 }
 
 /**
- * Get all cached debate IDs
+ * Get cached quick score for a debate (async - checks persistent store)
  */
-export function getCachedAnalysisIds(): string[] {
-  return Array.from(analysisCache.keys())
+export async function getCachedQuickScore(debateId: string): Promise<QuickScore | null> {
+  return getStoredQuickScore(debateId)
 }
