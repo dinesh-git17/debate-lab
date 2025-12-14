@@ -93,14 +93,12 @@ export function RevealSection({ className }: RevealSectionProps) {
             onClick={handleReveal}
             disabled={!canReveal || isRevealing}
             className={cn(
-              'relative px-8 py-4 rounded-xl font-semibold text-lg',
-              'bg-gradient-to-r from-indigo-500 to-purple-600',
-              'text-white shadow-lg',
-              'transform transition-all duration-300',
-              'hover:scale-105 hover:shadow-xl',
-              'focus:outline-none focus:ring-4 focus:ring-indigo-500/30',
-              'disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
-              isRevealing && 'animate-pulse'
+              'relative px-8 py-3.5 rounded-full font-medium',
+              'bg-primary text-primary-foreground',
+              'transition-all duration-200',
+              'hover:bg-primary/90 hover:scale-[1.02]',
+              'focus:outline-none focus:ring-2 focus:ring-primary/30',
+              'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
             )}
           >
             {isRevealing ? (
@@ -128,18 +126,7 @@ export function RevealSection({ className }: RevealSectionProps) {
                 Revealing...
               </span>
             ) : (
-              <span className="flex items-center gap-2">
-                <span>Reveal the Models</span>
-                <span className="text-2xl">🎭</span>
-              </span>
-            )}
-
-            {/* Sparkle effects */}
-            {!isRevealing && (
-              <>
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping" />
-                <span className="absolute -bottom-1 -left-1 w-2 h-2 bg-pink-400 rounded-full animate-ping animation-delay-300" />
-              </>
+              <span>Reveal the Models</span>
             )}
           </button>
         </div>

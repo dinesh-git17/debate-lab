@@ -16,18 +16,23 @@ interface SummaryCardProps {
 export function SummaryCard({ className }: SummaryCardProps) {
   const claudeSummary = useSummaryStore((s) => s.claudeSummary)
   const isSummaryLoading = useSummaryStore((s) => s.isSummaryLoading)
-  const topic = useSummaryStore((s) => s.topic)
 
   return (
     <section className={cn('w-full', className)}>
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-violet-500/10">
-            <span className="text-xl">🎭</span>
+            <svg
+              className="w-5 h-5 text-violet-600 dark:text-violet-400"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M13.827 3.52l5.313 16.96h-3.72L14.157 17H9.843l-1.263 3.48H4.86L10.173 3.52h3.654zm-.534 10.639L12 9.441l-1.293 4.718h2.586z" />
+            </svg>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Claude&apos;s Summary</h2>
+          <h2 className="text-2xl font-bold text-foreground">Summary</h2>
         </div>
-        <p className="text-muted-foreground">A neutral analysis of the debate by Claude</p>
+        <p className="text-muted-foreground">A neutral analysis of the debate</p>
       </div>
 
       <div
@@ -52,12 +57,7 @@ export function SummaryCard({ className }: SummaryCardProps) {
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="text-4xl mb-4">📝</div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Summary Not Available</h3>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Claude&apos;s neutral summary of the debate on &ldquo;{topic}&rdquo; is not yet
-              available. This feature generates an objective analysis of both sides&apos; arguments.
-            </p>
+            <p className="text-muted-foreground">Summary not available for this debate.</p>
           </div>
         )}
       </div>

@@ -11,7 +11,6 @@ import { useEffect, useCallback, useRef } from 'react'
 
 import { RevealSection } from '@/components/summary/reveal-section'
 import { ShareSection } from '@/components/summary/share-section'
-import { StatisticsDashboard } from '@/components/summary/statistics-dashboard'
 import { SummaryCard } from '@/components/summary/summary-card'
 import { SummaryNavigation } from '@/components/summary/summary-navigation'
 import { clientLogger } from '@/lib/client-logger'
@@ -88,7 +87,19 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md text-center">
-          <div className="text-5xl mb-4">😕</div>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-destructive"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Failed to Load Summary</h1>
           <p className="text-muted-foreground mb-6">
             {error ?? 'An unexpected error occurred while loading the debate summary.'}
@@ -113,8 +124,6 @@ export function SummaryPageClient({ initialData, shareUrl, shortCode }: SummaryP
       <div className="max-w-5xl mx-auto px-4 py-8">
         <SummaryNavigation className="mb-12" />
         <RevealSection className="mb-16" />
-        <hr className="border-border my-12" />
-        <StatisticsDashboard className="mb-16" />
         <hr className="border-border my-12" />
         <SummaryCard className="mb-16" />
         <hr className="border-border my-12" />
