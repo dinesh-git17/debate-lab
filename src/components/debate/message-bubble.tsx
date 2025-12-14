@@ -121,17 +121,25 @@ function SpeakerIcon({ type, className }: { type: string; className?: string }) 
   }
 }
 
+// Debug flag - set to true to enable height wrapper logging
+const DEBUG_HEIGHT_WRAPPER = false
+
 function SmoothHeightWrapper({
   children,
   isExpanding,
+  debugLabel,
 }: {
   children: React.ReactNode
   isExpanding: boolean
+  debugLabel?: string
 }) {
   const contentRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState<number | 'auto'>('auto')
   const rafIdRef = useRef<number | null>(null)
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastMeasuredRef = useRef<number>(0)
+  const measureCountRef = useRef<number>(0)
 
   // Buffer to account for sub-pixel rendering differences
   const HEIGHT_BUFFER_PX = 4
@@ -155,6 +163,37 @@ function SmoothHeightWrapper({
             // Use getBoundingClientRect for more accurate measurement
             const rect = entry.target.getBoundingClientRect()
             const newHeight = Math.ceil(rect.height) + HEIGHT_BUFFER_PX
+            measureCountRef.current++
+
+            if (DEBUG_HEIGHT_WRAPPER && debugLabel) {
+              const scrollHeight = (entry.target as HTMLElement).scrollHeight
+              const delta = newHeight - lastMeasuredRef.current
+              const isTruncated = scrollHeight > newHeight
+
+              // eslint-disable-next-line no-console
+              console.log(
+                `%c[HeightWrapper] ${debugLabel}`,
+                isTruncated ? 'color: #ff6b6b; font-weight: bold' : 'color: #69db7c',
+                {
+                  measured: newHeight,
+                  scrollHeight,
+                  delta: delta !== 0 ? delta : '-',
+                  truncated: isTruncated ? '⚠️ YES' : 'no',
+                  measureCount: measureCountRef.current,
+                  time: performance.now().toFixed(1),
+                }
+              )
+
+              if (isTruncated) {
+                // eslint-disable-next-line no-console
+                console.warn(
+                  `%c[TRUNCATION DETECTED] ${debugLabel}: wrapper=${newHeight}px, content=${scrollHeight}px, missing=${scrollHeight - newHeight}px`,
+                  'color: #ff6b6b; font-weight: bold; font-size: 12px'
+                )
+              }
+            }
+
+            lastMeasuredRef.current = newHeight
             setHeight(newHeight)
           }
         })
@@ -171,25 +210,52 @@ function SmoothHeightWrapper({
         clearTimeout(timeoutIdRef.current)
       }
     }
-  }, [isExpanding])
+  }, [isExpanding, debugLabel])
 
   useEffect(() => {
     if (!isExpanding) {
       setHeight('auto')
+      measureCountRef.current = 0
     }
   }, [isExpanding])
 
-  // Only use overflow:hidden during active transitions, visible otherwise
-  const isTransitioning = isExpanding && typeof height === 'number'
+  // Track if we're actively animating (for debug logging)
+  const isAnimating = isExpanding && typeof height === 'number'
+
+  // Debug: Log height changes (no longer checking for truncation since we use min-height)
+  useEffect(() => {
+    if (!DEBUG_HEIGHT_WRAPPER || !debugLabel || !isAnimating) return
+
+    const logStatus = () => {
+      if (!wrapperRef.current || !contentRef.current) return
+
+      const wrapperHeight = wrapperRef.current.getBoundingClientRect().height
+      const contentHeight = contentRef.current.scrollHeight
+
+      // eslint-disable-next-line no-console
+      console.log(`%c[HeightWrapper] ${debugLabel} status`, 'color: #69db7c', {
+        minHeight: height,
+        actualHeight: Math.round(wrapperHeight),
+        contentHeight,
+        mode: 'min-height (no clipping possible)',
+      })
+    }
+
+    const timeoutId = setTimeout(logStatus, ANIMATION_CONFIG.HEIGHT_TRANSITION.DURATION_MS + 50)
+    return () => clearTimeout(timeoutId)
+  }, [isAnimating, height, debugLabel])
 
   return (
     <div
+      ref={wrapperRef}
+      data-debug-label={debugLabel}
+      data-min-height={height}
+      data-animating={isAnimating}
       style={{
-        height: height === 'auto' ? 'auto' : height,
-        overflow: isTransitioning ? 'hidden' : 'visible',
-        transition: isExpanding
-          ? `height ${ANIMATION_CONFIG.HEIGHT_TRANSITION.DURATION_MS}ms ${ANIMATION_CONFIG.HEIGHT_TRANSITION.EASING}`
-          : 'none',
+        // Just use auto height - let content determine size naturally
+        // The smooth character reveal handles all visual animation
+        // No height animation needed - it was causing clipping issues
+        overflow: 'visible',
       }}
     >
       <div ref={contentRef}>{children}</div>
@@ -203,6 +269,7 @@ function MessageContent({
   isStreaming,
   isComplete,
   speaker,
+  turnType,
   onAnimationComplete,
   skipAnimation,
   bodyFontSize,
@@ -213,6 +280,7 @@ function MessageContent({
   isStreaming: boolean
   isComplete: boolean
   speaker: TurnSpeaker
+  turnType: string
   onAnimationComplete?: (() => void) | undefined
   skipAnimation?: boolean
   bodyFontSize: number
@@ -243,12 +311,15 @@ function MessageContent({
 
   const isExpanding = isStreaming || isRevealing
 
+  // Debug label for height wrapper logging (e.g., "MOD:transition" or "FOR:opening")
+  const debugLabel = `${speaker.toUpperCase().slice(0, 3)}:${turnType.replace('moderator_', '').slice(0, 10)}`
+
   return (
     <div className="prose prose-invert max-w-none">
       {isTyping ? (
         <ThinkingIndicator speaker={speaker} />
       ) : (
-        <SmoothHeightWrapper isExpanding={isExpanding}>
+        <SmoothHeightWrapper isExpanding={isExpanding} debugLabel={debugLabel}>
           <div
             className="font-normal antialiased"
             style={{
@@ -895,6 +966,7 @@ export const MessageBubble = memo(function MessageBubble({
                 isStreaming={message.isStreaming}
                 isComplete={message.isComplete}
                 speaker={message.speaker}
+                turnType={message.turnType}
                 onAnimationComplete={handleAnimationComplete}
                 skipAnimation={skipAnimation}
                 bodyFontSize={responsiveTypography.body.fontSize}
