@@ -24,6 +24,7 @@ import {
   SPEAKER_ACTIVE_GRADIENTS,
   SPEAKER_ACTIVE_SHADOWS,
   SPEAKER_INACTIVE_SHADOWS,
+  SPEAKER_COMPLETED_SHADOWS,
   SPEAKER_PILL_STYLES,
   SPEAKER_PHASE_CHIP_STYLES,
   SPEAKER_SURFACE_TINT,
@@ -628,7 +629,7 @@ export const MessageBubble = memo(function MessageBubble({
               boxShadow: isCompleted
                 ? isHovered
                   ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${responsiveShadow.highlight}, ${activeShadow}, ${GLASS_CONFIG.innerGlow.sides}, ${GLASS_CONFIG.innerGlow.top}` // Completed + hover: full effect
-                  : `${responsiveShadow.highlight}, ${SPEAKER_INACTIVE_SHADOWS}, ${GLASS_CONFIG.innerGlow.sides}` // Completed: subtle thickness
+                  : `${responsiveShadow.highlight}, ${SPEAKER_COMPLETED_SHADOWS[message.speaker]}, ${GLASS_CONFIG.innerGlow.sides}` // Completed: settled, calm
                 : isActive
                   ? `${SPEAKER_RIM_LIGHT[message.speaker]}, ${responsiveShadow.highlight}, ${activeShadow}, ${GLASS_CONFIG.innerGlow.sides}, ${GLASS_CONFIG.innerGlow.top}` // Active: full glass effect
                   : `${responsiveShadow.highlight}, ${SPEAKER_INACTIVE_SHADOWS}, ${GLASS_CONFIG.innerGlow.sides}`,

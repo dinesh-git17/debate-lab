@@ -1,7 +1,7 @@
 // speaker-config.ts
 /**
- * Apple-inspired luminosity color system for debate speaker differentiation.
- * FOR uses aqua/cyan tones, AGAINST uses lavender/violet, MODERATOR uses silver/indigo.
+ * Apple-inspired material color system for debate speaker differentiation.
+ * FOR uses cool teal-blue (rational), AGAINST uses warm amber (grounded), MOD uses neutral silver.
  */
 
 import type { SpeakerConfig } from '@/types/debate-ui'
@@ -9,31 +9,31 @@ import type { TurnSpeaker } from '@/types/turn'
 
 export const APPLE_COLORS = {
   for: {
-    primary: 'hsl(187, 72%, 58%)', // Core aqua
-    secondary: 'hsl(195, 85%, 48%)', // Deeper cyan
-    highlight: 'hsl(180, 65%, 72%)', // Bright highlight
-    hsl: 'hsl(187, 72%, 58%)',
-    rgb: 'rgb(64, 196, 210)',
-    rgba: (alpha: number) => `rgba(64, 196, 210, ${alpha})`,
-    rgba2: (alpha: number) => `rgba(32, 164, 210, ${alpha})`,
+    primary: 'hsl(192, 45%, 52%)', // Cool teal-blue (iOS system accent)
+    secondary: 'hsl(195, 50%, 45%)', // Deeper teal
+    highlight: 'hsl(190, 38%, 68%)', // Soft teal highlight
+    hsl: 'hsl(192, 45%, 52%)',
+    rgb: 'rgb(73, 148, 164)',
+    rgba: (alpha: number) => `rgba(73, 148, 164, ${alpha})`,
+    rgba2: (alpha: number) => `rgba(58, 138, 158, ${alpha})`,
   },
   against: {
-    primary: 'hsl(270, 60%, 65%)', // Core lavender
-    secondary: 'hsl(285, 70%, 55%)', // Electric violet
-    highlight: 'hsl(260, 55%, 78%)', // Soft highlight
-    hsl: 'hsl(270, 60%, 65%)',
-    rgb: 'rgb(168, 128, 212)',
-    rgba: (alpha: number) => `rgba(168, 128, 212, ${alpha})`,
-    rgba2: (alpha: number) => `rgba(190, 100, 210, ${alpha})`,
+    primary: 'hsl(25, 50%, 52%)', // Warm amber/terracotta (grounded, skeptical)
+    secondary: 'hsl(20, 55%, 45%)', // Deeper rust
+    highlight: 'hsl(28, 42%, 68%)', // Soft peach highlight
+    hsl: 'hsl(25, 50%, 52%)',
+    rgb: 'rgb(184, 128, 92)',
+    rgba: (alpha: number) => `rgba(184, 128, 92, ${alpha})`,
+    rgba2: (alpha: number) => `rgba(176, 112, 74, ${alpha})`,
   },
   moderator: {
-    primary: 'hsl(225, 25%, 62%)', // Cool silver-blue
-    secondary: 'hsl(230, 30%, 52%)', // Deeper indigo
-    highlight: 'hsl(220, 20%, 75%)', // Soft silver highlight
-    hsl: 'hsl(225, 25%, 62%)',
-    rgb: 'rgb(128, 138, 172)',
-    rgba: (alpha: number) => `rgba(128, 138, 172, ${alpha})`,
-    rgba2: (alpha: number) => `rgba(108, 118, 162, ${alpha})`,
+    primary: 'hsl(220, 12%, 58%)', // True neutral silver
+    secondary: 'hsl(222, 15%, 48%)', // Deeper slate
+    highlight: 'hsl(218, 10%, 72%)', // Soft silver highlight
+    hsl: 'hsl(220, 12%, 58%)',
+    rgb: 'rgb(133, 139, 156)',
+    rgba: (alpha: number) => `rgba(133, 139, 156, ${alpha})`,
+    rgba2: (alpha: number) => `rgba(113, 119, 140, ${alpha})`,
   },
 } as const
 
@@ -41,73 +41,73 @@ export const SPEAKER_CONFIGS: Record<TurnSpeaker, SpeakerConfig> = {
   for: {
     label: 'FOR (Affirmative)',
     shortLabel: 'FOR',
-    color: 'text-[hsl(187,72%,68%)]',
+    color: 'text-[hsl(190,38%,68%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(187,72%,58%)]',
+    borderColor: 'bg-[hsl(192,45%,52%)]',
     icon: 'thumbs-up',
     position: 'left',
-    chipBorder: 'border-[hsl(187,72%,58%)]/20',
-    chipBg: 'bg-[hsl(187,72%,58%)]/5',
-    glowColor: 'shadow-[hsl(187,72%,58%)]/10',
+    chipBorder: 'border-[hsl(192,45%,52%)]/20',
+    chipBg: 'bg-[hsl(192,45%,52%)]/5',
+    glowColor: 'shadow-[hsl(192,45%,52%)]/10',
   },
   against: {
     label: 'AGAINST (Negative)',
     shortLabel: 'AGAINST',
-    color: 'text-[hsl(270,60%,75%)]',
+    color: 'text-[hsl(28,42%,68%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(270,60%,65%)]',
+    borderColor: 'bg-[hsl(25,50%,52%)]',
     icon: 'thumbs-down',
     position: 'right',
-    chipBorder: 'border-[hsl(270,60%,65%)]/20',
-    chipBg: 'bg-[hsl(270,60%,65%)]/5',
-    glowColor: 'shadow-[hsl(270,60%,65%)]/10',
+    chipBorder: 'border-[hsl(25,50%,52%)]/20',
+    chipBg: 'bg-[hsl(25,50%,52%)]/5',
+    glowColor: 'shadow-[hsl(25,50%,52%)]/10',
   },
   moderator: {
     label: 'Moderator',
     shortLabel: 'MOD',
-    color: 'text-[hsl(225,25%,72%)]',
+    color: 'text-[hsl(218,10%,72%)]',
     bgColor: 'bg-white/[0.01]',
-    borderColor: 'bg-[hsl(225,25%,62%)]',
+    borderColor: 'bg-[hsl(220,12%,58%)]',
     icon: 'scale',
     position: 'center',
-    chipBorder: 'border-[hsl(225,25%,62%)]/20',
-    chipBg: 'bg-[hsl(225,25%,62%)]/5',
-    glowColor: 'shadow-[hsl(225,25%,62%)]/10',
+    chipBorder: 'border-[hsl(220,12%,58%)]/20',
+    chipBg: 'bg-[hsl(220,12%,58%)]/5',
+    glowColor: 'shadow-[hsl(220,12%,58%)]/10',
   },
 }
 
 export const SPEAKER_AMBIENT_GLOW: Record<TurnSpeaker, string> = {
   for: `radial-gradient(
     ellipse 140% 120% at 50% 0%,
-    rgba(80, 110, 160, 0.08) 0%,
-    rgba(70, 100, 150, 0.07) 15%,
-    rgba(60, 90, 140, 0.06) 30%,
-    rgba(50, 75, 120, 0.04) 45%,
-    rgba(40, 60, 100, 0.03) 60%,
-    rgba(30, 45, 80, 0.02) 75%,
-    rgba(20, 30, 50, 0.01) 88%,
+    rgba(73, 148, 164, 0.07) 0%,
+    rgba(68, 140, 156, 0.06) 15%,
+    rgba(62, 130, 145, 0.05) 30%,
+    rgba(55, 115, 130, 0.035) 45%,
+    rgba(45, 100, 115, 0.025) 60%,
+    rgba(35, 80, 95, 0.015) 75%,
+    rgba(25, 60, 75, 0.008) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
   against: `radial-gradient(
     ellipse 140% 120% at 50% 0%,
-    rgba(140, 90, 115, 0.08) 0%,
-    rgba(130, 85, 108, 0.07) 15%,
-    rgba(115, 75, 95, 0.06) 30%,
-    rgba(100, 65, 85, 0.04) 45%,
-    rgba(80, 55, 70, 0.03) 60%,
-    rgba(60, 40, 55, 0.02) 75%,
-    rgba(40, 28, 38, 0.01) 88%,
+    rgba(184, 128, 92, 0.07) 0%,
+    rgba(175, 120, 85, 0.06) 15%,
+    rgba(160, 110, 78, 0.05) 30%,
+    rgba(145, 98, 70, 0.035) 45%,
+    rgba(125, 85, 60, 0.025) 60%,
+    rgba(100, 68, 48, 0.015) 75%,
+    rgba(75, 52, 38, 0.008) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
   moderator: `radial-gradient(
     ellipse 140% 120% at 50% 0%,
-    rgba(140, 125, 90, 0.07) 0%,
-    rgba(130, 115, 85, 0.06) 15%,
-    rgba(115, 100, 75, 0.05) 30%,
-    rgba(95, 85, 65, 0.04) 45%,
-    rgba(75, 68, 52, 0.03) 60%,
-    rgba(55, 50, 40, 0.02) 75%,
-    rgba(38, 34, 28, 0.01) 88%,
+    rgba(133, 139, 156, 0.06) 0%,
+    rgba(125, 130, 148, 0.05) 15%,
+    rgba(115, 120, 138, 0.04) 30%,
+    rgba(100, 105, 122, 0.03) 45%,
+    rgba(85, 90, 105, 0.02) 60%,
+    rgba(70, 75, 88, 0.012) 75%,
+    rgba(55, 58, 68, 0.006) 88%,
     transparent 100%
   )`.replace(/\s+/g, ' '),
 }
@@ -188,9 +188,9 @@ export const SPEAKER_GRADIENTS: Record<TurnSpeaker, string> = {
 }
 
 export const SPEAKER_BADGE_COLORS: Record<TurnSpeaker, string> = {
-  for: `text-[hsl(187,72%,68%)] border-[hsl(187,72%,58%)]/35 bg-[hsl(187,72%,58%)]/10`,
-  against: `text-[hsl(270,60%,75%)] border-[hsl(270,60%,65%)]/35 bg-[hsl(270,60%,65%)]/10`,
-  moderator: `text-[hsl(225,25%,72%)] border-[hsl(225,25%,62%)]/35 bg-[hsl(225,25%,62%)]/10`,
+  for: `text-[hsl(190,38%,68%)] border-[hsl(192,45%,52%)]/35 bg-[hsl(192,45%,52%)]/10`,
+  against: `text-[hsl(28,42%,68%)] border-[hsl(25,50%,52%)]/35 bg-[hsl(25,50%,52%)]/10`,
+  moderator: `text-[hsl(218,10%,72%)] border-[hsl(220,12%,58%)]/35 bg-[hsl(220,12%,58%)]/10`,
 }
 
 export const SPEAKER_ACTIVE_SHADOWS: Record<TurnSpeaker, string> = {
@@ -221,6 +221,27 @@ export const SPEAKER_INACTIVE_SHADOWS = [
   'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
   '0 8px 24px -4px rgba(0, 0, 0, 0.2)',
 ].join(', ')
+
+export const SPEAKER_COMPLETED_SHADOWS: Record<TurnSpeaker, string> = {
+  for: [
+    `inset 0 1px 0 ${APPLE_COLORS.for.rgba(0.15)}`,
+    'inset 1px 0 0 rgba(255, 255, 255, 0.03)',
+    '0 1px 2px rgba(0, 0, 0, 0.12)',
+    '0 8px 20px -6px rgba(0, 0, 0, 0.22)',
+  ].join(', '),
+  against: [
+    `inset 0 1px 0 ${APPLE_COLORS.against.rgba(0.15)}`,
+    'inset 1px 0 0 rgba(255, 255, 255, 0.03)',
+    '0 1px 2px rgba(0, 0, 0, 0.12)',
+    '0 8px 20px -6px rgba(0, 0, 0, 0.22)',
+  ].join(', '),
+  moderator: [
+    `inset 0 1px 0 ${APPLE_COLORS.moderator.rgba(0.12)}`,
+    'inset 1px 0 0 rgba(255, 255, 255, 0.025)',
+    '0 1px 2px rgba(0, 0, 0, 0.12)',
+    '0 8px 20px -6px rgba(0, 0, 0, 0.22)',
+  ].join(', '),
+}
 
 export const SPEAKER_PILL_STYLES: Record<
   TurnSpeaker,
