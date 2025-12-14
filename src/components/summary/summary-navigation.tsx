@@ -22,11 +22,14 @@ export function SummaryNavigation({ className }: SummaryNavigationProps) {
   return (
     <nav className={cn('w-full', className)}>
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <Link href="/" className="hover:text-foreground transition-colors">
+        <Link href="/" className="hover:text-foreground transition-colors cursor-pointer">
           Home
         </Link>
         <span>/</span>
-        <Link href={`/debate/${debateId}`} className="hover:text-foreground transition-colors">
+        <Link
+          href={`/debate/${debateId}`}
+          className="hover:text-foreground transition-colors cursor-pointer"
+        >
           Debate
         </Link>
         <span>/</span>
@@ -48,7 +51,7 @@ export function SummaryNavigation({ className }: SummaryNavigationProps) {
         <Link
           href={`/debate/${debateId}`}
           className={cn(
-            'flex items-center gap-2 px-5 py-2.5 rounded-full',
+            'flex items-center gap-2 px-5 py-2.5 rounded-full cursor-pointer',
             'bg-white/[0.03] text-foreground/80',
             'border border-white/[0.08]',
             'hover:bg-white/[0.06] hover:text-foreground',
@@ -71,7 +74,7 @@ export function SummaryNavigation({ className }: SummaryNavigationProps) {
         <Link
           href={`/debate/${debateId}/judge`}
           className={cn(
-            'flex items-center gap-2 px-5 py-2.5 rounded-full',
+            'flex items-center gap-2 px-5 py-2.5 rounded-full cursor-pointer',
             'bg-white/[0.03] text-foreground/80',
             'border border-white/[0.08]',
             'hover:bg-white/[0.06] hover:text-foreground',
@@ -97,7 +100,7 @@ export function SummaryNavigation({ className }: SummaryNavigationProps) {
         <Link
           href="/"
           className={cn(
-            'flex items-center gap-2 px-5 py-2.5 rounded-full',
+            'flex items-center gap-2 px-5 py-2.5 rounded-full cursor-pointer',
             'bg-primary text-primary-foreground',
             'hover:bg-primary/90',
             'transition-all duration-200',

@@ -6,7 +6,9 @@
 
 'use client'
 
+import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
+import { FaCircleInfo } from 'react-icons/fa6'
 import { SocialIcon } from 'react-social-icons'
 
 import { clientLogger } from '@/lib/client-logger'
@@ -29,12 +31,14 @@ export function ShareSection({
   const topic = useSummaryStore((s) => s.topic)
   const assignment = useSummaryStore((s) => s.assignment)
   const revealState = useSummaryStore((s) => s.revealState)
+  const judgeAnalysis = useSummaryStore((s) => s.judgeAnalysis)
 
   const [copied, setCopied] = useState(false)
   const [embedCopied, setEmbedCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<'social' | 'embed'>('social')
   const [shareUrl, setShareUrl] = useState(initialShareUrl ?? '')
   const [canNativeShare, setCanNativeShare] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     setCanNativeShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function')
@@ -281,38 +285,78 @@ export function ShareSection({
               transition: 'transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
           >
-            <div className="w-1/2 flex items-center justify-center gap-3 pt-2">
-              <button
-                onClick={() => handleShare('twitter')}
-                className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
-                aria-label="Share on X"
-              >
-                <SocialIcon network="x" style={{ height: 40, width: 40 }} />
-              </button>
+            <div className="w-1/2 flex flex-col items-center gap-6 pt-2">
+              <div className="flex flex-col items-center gap-6">
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => handleShare('twitter')}
+                    className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
+                    aria-label="Share on X"
+                  >
+                    <SocialIcon network="x" style={{ height: 40, width: 40 }} />
+                  </button>
 
-              <button
-                onClick={() => handleShare('linkedin')}
-                className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
-                aria-label="Share on LinkedIn"
-              >
-                <SocialIcon network="linkedin" style={{ height: 40, width: 40 }} />
-              </button>
+                  <button
+                    onClick={() => handleShare('linkedin')}
+                    className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
+                    aria-label="Share on LinkedIn"
+                  >
+                    <SocialIcon network="linkedin" style={{ height: 40, width: 40 }} />
+                  </button>
 
-              <button
-                onClick={() => handleShare('facebook')}
-                className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
-                aria-label="Share on Facebook"
-              >
-                <SocialIcon network="facebook" style={{ height: 40, width: 40 }} />
-              </button>
+                  <button
+                    onClick={() => handleShare('facebook')}
+                    className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
+                    aria-label="Share on Facebook"
+                  >
+                    <SocialIcon network="facebook" style={{ height: 40, width: 40 }} />
+                  </button>
 
-              <button
-                onClick={() => handleShare('reddit')}
-                className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
-                aria-label="Share on Reddit"
-              >
-                <SocialIcon network="reddit" style={{ height: 40, width: 40 }} />
-              </button>
+                  <button
+                    onClick={() => handleShare('reddit')}
+                    className="cursor-pointer hover:scale-110 transition-transform duration-300 ease-out"
+                    aria-label="Share on Reddit"
+                  >
+                    <SocialIcon network="reddit" style={{ height: 40, width: 40 }} />
+                  </button>
+                </div>
+
+                {/* Preview toggle */}
+                <button
+                  onClick={() => setShowPreview(!showPreview)}
+                  className={cn(
+                    'flex items-center gap-1.5 text-xs transition-colors duration-200 cursor-pointer',
+                    showPreview
+                      ? 'text-foreground/70'
+                      : 'text-foreground/40 hover:text-foreground/60'
+                  )}
+                >
+                  <FaCircleInfo className="w-3.5 h-3.5" />
+                  <span>{showPreview ? 'Hide preview' : 'Preview share card'}</span>
+                </button>
+
+                {/* OG Image Preview */}
+                <AnimatePresence>
+                  {showPreview && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, height: 'auto', scale: 1, y: 0 }}
+                      exit={{ opacity: 0, height: 0, scale: 0.95, y: -10 }}
+                      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                      className="w-full max-w-lg overflow-hidden"
+                    >
+                      <div className="rounded-xl overflow-hidden border border-white/[0.08] shadow-lg">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`${origin}/api/og?topic=${encodeURIComponent(topic ?? 'AI Debate')}&format=standard&for=${encodeURIComponent(assignment?.for.displayName ?? 'AI')}&against=${encodeURIComponent(assignment?.against.displayName ?? 'AI')}&turns=4${judgeAnalysis ? `&forScore=${judgeAnalysis.forAnalysis.totalScore}&againstScore=${judgeAnalysis.againstAnalysis.totalScore}` : ''}`}
+                          alt="Share preview"
+                          className="w-full h-auto"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
             <div className="w-1/2 flex items-start justify-center px-4 pt-2">

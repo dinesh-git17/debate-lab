@@ -6,6 +6,7 @@
 
 'use client'
 
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useCallback, useRef } from 'react'
 
@@ -19,6 +20,46 @@ import { useSummaryStore } from '@/store/summary-store'
 
 import type { JudgeAnalysisResponse } from '@/types/judge'
 import type { SummaryResponse } from '@/types/summary'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+}
+
+const sectionVariants = {
+  hidden: {
+    opacity: 0,
+    y: 20,
+    scale: 0.98,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1] as const,
+    },
+  },
+}
+
+const dividerVariants = {
+  hidden: { opacity: 0, scaleX: 0 },
+  visible: {
+    opacity: 1,
+    scaleX: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1] as const,
+    },
+  },
+}
 
 interface SummaryPageClientProps {
   initialData: SummaryResponse
@@ -120,15 +161,34 @@ export function SummaryPageClient({ initialData, shareUrl }: SummaryPageClientPr
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <SummaryNavigation className="mb-12" />
-        <RevealSection className="mb-16" />
-        <hr className="border-border my-12" />
-        <DebateHighlightsCard className="mb-16" />
-        <hr className="border-border my-12" />
-        <ShareSection debateId={initialData.debateId} shareUrl={shareUrl} className="mb-16" />
+      <motion.div
+        className="max-w-5xl mx-auto px-4 py-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={sectionVariants}>
+          <SummaryNavigation className="mb-12" />
+        </motion.div>
+
+        <motion.div variants={sectionVariants}>
+          <RevealSection className="mb-16" />
+        </motion.div>
+
+        <motion.hr className="border-border my-12 origin-left" variants={dividerVariants} />
+
+        <motion.div variants={sectionVariants}>
+          <DebateHighlightsCard className="mb-16" />
+        </motion.div>
+
+        <motion.hr className="border-border my-12 origin-left" variants={dividerVariants} />
+
+        <motion.div variants={sectionVariants}>
+          <ShareSection debateId={initialData.debateId} shareUrl={shareUrl} className="mb-16" />
+        </motion.div>
+
         <div className="h-16" />
-      </div>
+      </motion.div>
     </div>
   )
 }

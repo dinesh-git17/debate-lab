@@ -42,6 +42,25 @@ export const metadata: Metadata = {
   },
   description: 'Watch AI models debate topics while Claude moderates the discussion',
   keywords: ['AI', 'debate', 'LLM', 'ChatGPT', 'Claude', 'Grok'],
+  openGraph: {
+    title: 'Debate Lab',
+    description: 'Watch AI models debate topics while Claude moderates the discussion',
+    type: 'website',
+    images: [
+      {
+        url: '/og/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'Debate Lab - AI Debates',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Debate Lab',
+    description: 'Watch AI models debate topics while Claude moderates the discussion',
+    images: ['/og/og.png'],
+  },
 }
 
 export const viewport: Viewport = {

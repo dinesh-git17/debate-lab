@@ -151,7 +151,7 @@ export function RevealSection({ className }: RevealSectionProps) {
                     onClick={handleReveal}
                     disabled={!canReveal}
                     className={cn(
-                      'absolute px-8 py-3.5 rounded-full font-medium',
+                      'absolute px-8 py-3.5 rounded-full font-medium cursor-pointer',
                       'bg-primary text-primary-foreground',
                       'focus:outline-none focus:ring-2 focus:ring-primary/30',
                       'disabled:cursor-not-allowed disabled:pointer-events-none'

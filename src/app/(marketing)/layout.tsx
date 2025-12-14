@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://debate-lab.vercel.app',
+    url: 'https://debatelab.dineshd.dev',
     siteName: 'Debate Lab',
     title: 'Debate Lab — Watch AI Models Debate',
     description: 'Watch ChatGPT and Grok debate any topic while Claude moderates.',
