@@ -18,10 +18,12 @@ import { cn } from '@/lib/utils'
 import { useDebateViewStore } from '@/store/debate-view-store'
 
 import { MessageBubble } from './message-bubble'
+import { SkeletonCard } from './skeleton-card'
 import { SummaryHint } from './summary-hint'
 
 import type { BackgroundCategory } from '@/lib/topic-backgrounds'
 import type { DebateMessage } from '@/types/debate-ui'
+import type { TurnSpeaker } from '@/types/turn'
 
 /** Spring physics state for smooth scroll centering. */
 interface SpringState {
@@ -336,47 +338,43 @@ function EmptyState() {
 }
 
 function WaitingState() {
+  const isMobile = useIsMobile()
+
+  // Alternating speaker pattern for skeleton cards
+  const skeletonSpeakers: TurnSpeaker[] = ['moderator', 'for', 'against']
+
+  // Top fade mask for consistency with loaded state
+  const maskGradient =
+    'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black 100%)'
+
   return (
-    <div className="flex h-full flex-col items-center justify-center">
-      <motion.div
-        className="flex flex-col items-center gap-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
+    <div className="relative h-full">
+      <div
+        className="overflow-y-auto px-4 h-full"
+        style={{
+          maskImage: maskGradient,
+          WebkitMaskImage: maskGradient,
+        }}
       >
-        {/* Pulsing dot indicator */}
-        <motion.div
-          className="flex gap-1.5"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+        <div
+          className={cn('relative flex flex-col', isMobile ? 'pt-36 pb-6 mx-auto' : 'pt-40 pb-6')}
+          style={{
+            width: isMobile ? 'calc(100vw - 32px)' : undefined,
+            maxWidth: isMobile ? 'calc(100vw - 32px)' : 'clamp(480px, 55vw, 680px)',
+            marginLeft: isMobile ? undefined : '48.5%',
+            transform: isMobile ? undefined : 'translateX(-50%)',
+          }}
         >
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              className="h-2 w-2 rounded-full bg-zinc-500"
-              animate={{
-                opacity: [0.3, 1, 0.3],
-                scale: [0.85, 1, 0.85],
-              }}
-              transition={{
-                duration: 1.4,
-                repeat: Infinity,
-                delay: i * 0.2,
-                ease: 'easeInOut',
-              }}
-            />
-          ))}
-        </motion.div>
-        <motion.p
-          className="text-sm text-zinc-500"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          Waiting for messages...
-        </motion.p>
-      </motion.div>
+          <AnimatePresence mode="popLayout">
+            {skeletonSpeakers.map((speaker, index) => (
+              <SkeletonCard key={`skeleton-${index}`} speaker={speaker} index={index} />
+            ))}
+          </AnimatePresence>
+
+          {/* Bottom spacer */}
+          <div className={cn('h-28', isMobile && 'safe-area-inset-bottom')} aria-hidden="true" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -746,36 +744,10 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     }
   }, [hasMessages, initialStatus])
 
-  if (messages.length === 0) {
-    // Show empty state with "Start Debate" only when debate hasn't started
-    if (status === 'ready') {
-      return (
-        <div
-          className={cn('h-full', className)}
-          role="status"
-          aria-live="polite"
-          aria-label="Waiting for debate to begin"
-        >
-          <EmptyState />
-        </div>
-      )
-    }
-
-    // Show waiting state when debate is active/completed but messages haven't loaded yet
-    // This handles the case where page is refreshed - messages are being hydrated from server
-    if (status === 'active' || status === 'completed') {
-      return (
-        <div
-          className={cn('h-full', className)}
-          role="status"
-          aria-live="polite"
-          aria-label="Loading debate messages"
-        >
-          <WaitingState />
-        </div>
-      )
-    }
-  }
+  // Determine which view state to show
+  const showEmptyState = messages.length === 0 && status === 'ready'
+  const showWaitingState = messages.length === 0 && (status === 'active' || status === 'completed')
+  const showMessageList = messages.length > 0
 
   // Use dvh for dynamic viewport height on mobile (prevents browser chrome jump)
   const heightStyle = isMobile
@@ -786,84 +758,141 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
   const maskGradient =
     'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black 100%)'
 
+  // Early return for empty state (no transition needed - this is the initial state)
+  if (showEmptyState) {
+    return (
+      <div
+        className={cn('h-full', className)}
+        role="status"
+        aria-live="polite"
+        aria-label="Waiting for debate to begin"
+      >
+        <EmptyState />
+      </div>
+    )
+  }
+
+  // Material resolution: skeleton becomes ethereal as content sharpens into focus
+  const RESOLUTION_TIMING = {
+    duration: 0.28,
+    ease: [0.22, 0.61, 0.36, 1] as const,
+  }
+
   return (
     <div className={cn('relative', !isMobile && 'h-full', className)} style={heightStyle}>
-      <div
-        ref={containerRef}
-        className="overflow-y-auto px-4"
-        style={{
-          height: '100%',
-          scrollBehavior: 'auto',
-          scrollSnapType: status === 'completed' ? 'y proximity' : undefined,
-          // Prevent scroll-snap from snapping past the header area in completed state
-          scrollPaddingTop: status === 'completed' ? (isMobile ? 144 : 160) : undefined,
-          maskImage: maskGradient,
-          WebkitMaskImage: maskGradient,
-        }}
-        role="log"
-        aria-live="polite"
-        aria-label="Debate messages"
-      >
-        <div
-          className={cn(
-            'relative flex flex-col',
-            messages.length === 1
-              ? 'min-h-full justify-center'
-              : isMobile
-                ? status === 'completed'
-                  ? 'pt-36 pb-6'
-                  : 'pt-20 pb-6'
-                : status === 'completed'
-                  ? 'pt-40 pb-6'
-                  : 'pt-24 pb-6',
-            isMobile && 'mx-auto'
-          )}
-          style={{
-            width: isMobile ? 'calc(100vw - 32px)' : undefined,
-            maxWidth: isMobile ? 'calc(100vw - 32px)' : 'clamp(480px, 55vw, 680px)',
-            marginLeft: isMobile ? undefined : '48.5%',
-            transform: isMobile ? undefined : 'translateX(-50%)',
-          }}
-        >
-          {messages.map((message, index) => {
-            const isLastMessage = index === messages.length - 1
-            const isFirstMessage = index === 0
-            const shouldSkipAnimation = displayedIds.has(message.id)
-            const depthIndex = status === 'completed' ? 0 : messages.length - 1 - index
-            const previousMessage = index > 0 ? messages[index - 1] : null
-            const isPreviousCardHovered = previousMessage
-              ? hoveredMessageId === previousMessage.id
-              : false
-            const shouldCascade = isInitialCascade && status === 'completed' && shouldSkipAnimation
+      {/* Skeleton loading state - dissolves ethereally (blur out, fade) */}
+      <AnimatePresence>
+        {showWaitingState && (
+          <motion.div
+            key="waiting-state"
+            className="absolute inset-0 z-10"
+            initial={{ opacity: 1, filter: 'blur(0px) contrast(1)' }}
+            animate={{ opacity: 1, filter: 'blur(0px) contrast(1)' }}
+            exit={{
+              opacity: 0,
+              filter: 'blur(6px) contrast(0.85)',
+              transition: RESOLUTION_TIMING,
+            }}
+          >
+            <WaitingState />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            return (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                showTimestamp={message.isComplete}
-                onAnimationComplete={() => handleAnimationComplete(message.id)}
-                isActive={isLastMessage || status === 'completed'}
-                isFirst={isFirstMessage}
-                skipAnimation={shouldSkipAnimation}
-                depthIndex={depthIndex}
-                isCompleted={status === 'completed'}
-                onHoverChange={handleMessageHover}
-                isPreviousCardHovered={isPreviousCardHovered}
-                {...(shouldCascade ? { cascadeIndex: index } : {})}
-              />
-            )
-          })}
+      {/* Message list - sharpens into focus (blur in, gain contrast) */}
+      <AnimatePresence>
+        {showMessageList && (
+          <motion.div
+            key="message-list"
+            className="h-full"
+            initial={{ opacity: 0.4, filter: 'blur(4px) contrast(0.9)' }}
+            animate={{ opacity: 1, filter: 'blur(0px) contrast(1)' }}
+            transition={RESOLUTION_TIMING}
+          >
+            <div
+              ref={containerRef}
+              className="overflow-y-auto px-4"
+              style={{
+                height: '100%',
+                scrollBehavior: 'auto',
+                scrollSnapType: status === 'completed' ? 'y proximity' : undefined,
+                scrollPaddingTop: status === 'completed' ? (isMobile ? 144 : 160) : undefined,
+                maskImage: maskGradient,
+                WebkitMaskImage: maskGradient,
+              }}
+              role="log"
+              aria-live="polite"
+              aria-label="Debate messages"
+            >
+              <div
+                className={cn(
+                  'relative flex flex-col',
+                  messages.length === 1
+                    ? 'min-h-full justify-center'
+                    : isMobile
+                      ? status === 'completed'
+                        ? 'pt-36 pb-6'
+                        : 'pt-20 pb-6'
+                      : status === 'completed'
+                        ? 'pt-40 pb-6'
+                        : 'pt-24 pb-6',
+                  isMobile && 'mx-auto'
+                )}
+                style={{
+                  width: isMobile ? 'calc(100vw - 32px)' : undefined,
+                  maxWidth: isMobile ? 'calc(100vw - 32px)' : 'clamp(480px, 55vw, 680px)',
+                  marginLeft: isMobile ? undefined : '48.5%',
+                  transform: isMobile ? undefined : 'translateX(-50%)',
+                }}
+              >
+                {messages.map((message, index) => {
+                  const isLastMessage = index === messages.length - 1
+                  const isFirstMessage = index === 0
+                  const shouldSkipAnimation = displayedIds.has(message.id)
+                  const depthIndex = status === 'completed' ? 0 : messages.length - 1 - index
+                  const previousMessage = index > 0 ? messages[index - 1] : null
+                  const isPreviousCardHovered = previousMessage
+                    ? hoveredMessageId === previousMessage.id
+                    : false
+                  // Cascade animation triggers on initial page load with completed debate only
+                  // Material resolution transition uses blur/contrast, not staggered entrance
+                  const shouldCascade =
+                    isInitialCascade && status === 'completed' && shouldSkipAnimation
 
-          <AnimatePresence>
-            {status === 'completed' && <SummaryHint className="-mt-2" />}
-          </AnimatePresence>
+                  return (
+                    <MessageBubble
+                      key={message.id}
+                      message={message}
+                      showTimestamp={message.isComplete}
+                      onAnimationComplete={() => handleAnimationComplete(message.id)}
+                      isActive={isLastMessage || status === 'completed'}
+                      isFirst={isFirstMessage}
+                      skipAnimation={shouldSkipAnimation}
+                      depthIndex={depthIndex}
+                      isCompleted={status === 'completed'}
+                      onHoverChange={handleMessageHover}
+                      isPreviousCardHovered={isPreviousCardHovered}
+                      {...(shouldCascade ? { cascadeIndex: index } : {})}
+                    />
+                  )
+                })}
 
-          {/* Bottom spacer - clears the floating dock (32px from bottom + ~56px dock height + buffer) */}
-          <div className={cn('h-28', isMobile && 'safe-area-inset-bottom')} aria-hidden="true" />
+                <AnimatePresence>
+                  {status === 'completed' && <SummaryHint className="-mt-2" />}
+                </AnimatePresence>
 
-          <div id="scroll-anchor" aria-hidden="true" />
-        </div>
-      </div>
+                {/* Bottom spacer - clears the floating dock */}
+                <div
+                  className={cn('h-28', isMobile && 'safe-area-inset-bottom')}
+                  aria-hidden="true"
+                />
+
+                <div id="scroll-anchor" aria-hidden="true" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

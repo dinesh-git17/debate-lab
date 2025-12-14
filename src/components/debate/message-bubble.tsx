@@ -419,13 +419,13 @@ export const MessageBubble = memo(function MessageBubble({
   // Spotlight spring config - slower than tilt for visible inertial lag
   const spotlightSpringConfig = { damping: 30, stiffness: 90, mass: 1 }
 
-  // Scale tilt amplitude based on content length - shorter cards get full tilt, longer cards get reduced tilt
+  // Scale tilt amplitude based on content length - shorter cards get full tilt, longer cards get subtle tilt
   const contentLength = message.content.length
   const rotateAmplitude = useMemo(() => {
-    const maxAmplitude = 8
-    const minAmplitude = 4.5
-    const shortThreshold = 200
-    const longThreshold = 800
+    const maxAmplitude = 6 // Short cards: noticeable but not dramatic
+    const minAmplitude = 2.5 // Long cards: subtle but present
+    const shortThreshold = 150
+    const longThreshold = 600
 
     if (contentLength <= shortThreshold) return maxAmplitude
     if (contentLength >= longThreshold) return minAmplitude
