@@ -1,25 +1,15 @@
 // src/components/debate/apple-background.tsx
 /**
- * Ambient background layer for debate views with vignette and speaker-aware tint.
- * Creates subtle environmental depth that shifts based on active speaker.
+ * Ambient background layer for debate views with vignette effect.
+ * Creates subtle environmental depth that draws focus to center.
  */
 
 'use client'
 
-import { APPLE_COLORS } from '@/lib/speaker-config'
 import { cn } from '@/lib/utils'
-
-import type { TurnSpeaker } from '@/types/turn'
 
 interface AppleBackgroundProps {
   className?: string
-  activeSpeaker?: TurnSpeaker | null
-}
-
-const SPEAKER_AMBIENT_TINTS: Record<TurnSpeaker, string> = {
-  for: APPLE_COLORS.for.rgba(0.035),
-  against: APPLE_COLORS.against.rgba(0.035),
-  moderator: APPLE_COLORS.moderator.rgba(0.025),
 }
 
 const VIGNETTE_GRADIENT = `
@@ -32,9 +22,7 @@ const VIGNETTE_GRADIENT = `
   )
 `.replace(/\s+/g, ' ')
 
-export function AppleBackground({ className, activeSpeaker }: AppleBackgroundProps) {
-  const ambientTint = activeSpeaker ? SPEAKER_AMBIENT_TINTS[activeSpeaker] : 'transparent'
-
+export function AppleBackground({ className }: AppleBackgroundProps) {
   return (
     <div className={cn('pointer-events-none fixed inset-0', className)} aria-hidden="true">
       {/* Base solid color */}
@@ -42,15 +30,6 @@ export function AppleBackground({ className, activeSpeaker }: AppleBackgroundPro
         className="absolute inset-0"
         style={{
           background: 'hsl(var(--gradient-void))',
-        }}
-      />
-
-      {/* Speaker-aware ambient tint - barely perceptible, slow transition */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse 120% 100% at 50% 30%, ${ambientTint} 0%, transparent 70%)`,
-          transition: 'background 800ms ease-out',
         }}
       />
 

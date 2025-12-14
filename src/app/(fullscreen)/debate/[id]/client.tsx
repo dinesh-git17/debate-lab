@@ -25,7 +25,6 @@ import { useDebateViewStore } from '@/store/debate-view-store'
 import type { DebateHistoryResponse } from '@/app/api/debate/[id]/history/route'
 import type { DebatePhase } from '@/types/debate'
 import type { DebateMessage } from '@/types/debate-ui'
-import type { TurnSpeaker } from '@/types/turn'
 
 interface DebatePageClientProps {
   debateId: string
@@ -68,11 +67,7 @@ export function DebatePageClient({
   const router = useRouter()
   const { setDebateInfo, setStatus, setProgress, hydrateMessages, reset } = useDebateViewStore()
   const status = useDebateViewStore((s) => s.status)
-  const messages = useDebateViewStore((s) => s.messages)
   const isMobile = useIsMobile()
-
-  // Derive active speaker from last message (streaming or complete)
-  const activeSpeaker: TurnSpeaker | null = messages[messages.length - 1]?.speaker ?? null
 
   // Track exit card visibility for animation sequencing
   const [showExitCard, setShowExitCard] = useState(false)
@@ -188,7 +183,7 @@ export function DebatePageClient({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
       >
-        <AppleBackground className="z-0" activeSpeaker={activeSpeaker} />
+        <AppleBackground className="z-0" />
         <DebateHeader debateId={debateId} />
         <main className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-6">
           <DebateEndedCard />
@@ -205,7 +200,7 @@ export function DebatePageClient({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
     >
-      <AppleBackground className="z-0" activeSpeaker={activeSpeaker} />
+      <AppleBackground className="z-0" />
 
       <DebateHeader debateId={debateId} />
 
