@@ -1,53 +1,72 @@
 /**
  * PDF design tokens and shared styles.
- * Print-optimized typography and layout constants for debate exports.
+ * Apple-inspired typography and layout constants for debate exports.
  */
 
 import { StyleSheet } from '@react-pdf/renderer'
 
 export const colors = {
   text: {
-    primary: '#1a1a1a',
-    secondary: '#666666',
-    muted: '#999999',
+    primary: '#1d1d1f',
+    secondary: '#424245',
+    muted: '#86868b',
   },
   speaker: {
     for: '#2563eb',
     against: '#dc2626',
     moderator: '#7c3aed',
   },
-  border: '#e5e5e5',
+  border: '#E5E5EA',
   background: '#ffffff',
+  card: '#F5F5F7',
+  accent: '#007AFF',
 } as const
 
 export const typography = {
   fontFamily: 'Helvetica',
   fontSize: {
-    title: 24,
-    subtitle: 14,
-    sectionHeader: 16,
-    speakerLabel: 11,
-    body: 11,
+    title: 28,
+    subtitle: 12,
+    sectionHeader: 11,
+    speakerName: 10,
+    body: 10,
     caption: 9,
+    brandSmall: 9,
     footer: 8,
+    timestamp: 8,
   },
   lineHeight: {
     tight: 1.3,
-    normal: 1.6,
-    relaxed: 1.8,
+    normal: 1.5,
+    relaxed: 1.6,
+  },
+  letterSpacing: {
+    wide: 0.08,
   },
 } as const
 
 export const spacing = {
   page: {
-    top: 60,
-    bottom: 60,
-    left: 60,
-    right: 60,
+    top: 50,
+    bottom: 50,
+    left: 48,
+    right: 48,
   },
-  section: 24,
-  paragraph: 12,
-  small: 6,
+  section: 16,
+  paragraph: 8,
+  small: 4,
+  card: {
+    padding: 14,
+    marginBottom: 12,
+    borderRadius: 8,
+  },
+  metadata: {
+    rowGap: 4,
+    marginBottom: 20,
+  },
+  footer: {
+    paddingTop: 10,
+  },
 } as const
 
 export const styles = StyleSheet.create({
@@ -61,75 +80,109 @@ export const styles = StyleSheet.create({
     paddingLeft: 0,
     paddingRight: 0,
   },
-  editorialHeader: {
-    position: 'relative',
-    height: 140,
-    marginTop: -spacing.page.top,
-    marginBottom: spacing.section,
-  },
-  headerBanner: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 140,
-    objectFit: 'cover',
-  },
-  headerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
-  headerContent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: spacing.page.left,
-    paddingVertical: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerLogo: {
-    width: 120,
-    height: 'auto',
-    marginBottom: 8,
-  },
-  headerTagline: {
-    fontSize: 8,
-    color: 'rgba(255, 255, 255, 0.7)',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-  },
   contentWrapper: {
     paddingHorizontal: spacing.page.left,
   },
-  header: {
+
+  // Document Header
+  documentHeader: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.page.left,
     marginBottom: spacing.section,
   },
-  brandText: {
-    fontSize: typography.fontSize.caption,
-    color: colors.text.muted,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: spacing.paragraph,
+  documentLogo: {
+    height: 80,
+    marginBottom: 12,
   },
-  title: {
+  documentTitle: {
     fontSize: typography.fontSize.title,
     fontWeight: 'bold',
     color: colors.text.primary,
     lineHeight: typography.lineHeight.tight,
-    marginBottom: spacing.small,
   },
-  metadata: {
+
+  // Metadata Block (stacked vertical layout)
+  metadataBlock: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopStyle: 'solid',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    borderBottomStyle: 'solid',
+    paddingVertical: 10,
+    marginBottom: spacing.metadata.marginBottom,
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.metadata.rowGap,
+  },
+  metadataRowLast: {
+    flexDirection: 'row',
+    marginBottom: 0,
+  },
+  metadataLabel: {
+    fontSize: typography.fontSize.caption,
+    fontWeight: 'bold',
+    color: colors.text.secondary,
+    width: 70,
+  },
+  metadataValue: {
     fontSize: typography.fontSize.caption,
     color: colors.text.secondary,
-    marginTop: spacing.small,
+    flex: 1,
   },
+
+  // Speaker Card
+  speakerCard: {
+    backgroundColor: colors.card,
+    borderRadius: spacing.card.borderRadius,
+    padding: spacing.card.padding,
+    marginBottom: spacing.card.marginBottom,
+  },
+  speakerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  speakerIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  speakerIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 8,
+  },
+  speakerName: {
+    fontSize: typography.fontSize.speakerName,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+  },
+  speakerTimestamp: {
+    fontSize: typography.fontSize.timestamp,
+    color: colors.text.muted,
+  },
+  speakerContent: {
+    fontSize: typography.fontSize.body,
+    lineHeight: typography.lineHeight.relaxed,
+    color: colors.text.primary,
+  },
+  keyArgument: {
+    borderLeftWidth: 2,
+    borderLeftColor: colors.accent,
+    borderLeftStyle: 'solid',
+    paddingLeft: 10,
+    marginTop: 8,
+  },
+  keyArgumentText: {
+    fontSize: typography.fontSize.body,
+    lineHeight: typography.lineHeight.normal,
+    color: colors.text.secondary,
+    fontStyle: 'italic',
+  },
+
+  // Section styles
   divider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -142,44 +195,22 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typography.fontSize.sectionHeader,
     fontWeight: 'bold',
-    color: colors.text.primary,
+    color: colors.text.muted,
     marginBottom: spacing.paragraph,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  turnBlock: {
-    marginBottom: spacing.section,
-  },
-  speakerLabel: {
-    fontSize: typography.fontSize.speakerLabel,
-    fontWeight: 'bold',
-    marginBottom: spacing.small,
-  },
-  speakerFor: {
-    color: colors.speaker.for,
-  },
-  speakerAgainst: {
-    color: colors.speaker.against,
-  },
-  speakerModerator: {
-    color: colors.speaker.moderator,
-  },
-  turnContent: {
-    fontSize: typography.fontSize.body,
-    lineHeight: typography.lineHeight.relaxed,
-    color: colors.text.primary,
-    textAlign: 'justify',
-  },
-  timestamp: {
-    fontSize: typography.fontSize.caption,
-    color: colors.text.muted,
-    marginTop: spacing.small,
-  },
+
+  // Footer
   footer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 24,
     left: spacing.page.left,
     right: spacing.page.right,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopStyle: 'solid',
+    paddingTop: spacing.footer.paddingTop,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -192,6 +223,8 @@ export const styles = StyleSheet.create({
     fontSize: typography.fontSize.footer,
     color: colors.text.muted,
   },
+
+  // Summary Section
   summarySection: {
     marginTop: spacing.section,
     paddingTop: spacing.paragraph,
@@ -204,6 +237,8 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.speaker.moderator,
     marginBottom: spacing.paragraph,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   summaryContent: {
     fontSize: typography.fontSize.body,

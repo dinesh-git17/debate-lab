@@ -1,11 +1,11 @@
 /**
  * Main PDF document component for debate transcript exports.
- * Assembles header, turns, and footer into a complete document.
+ * Assembles header, metadata, speaker cards, and footer into a complete document.
  */
 
-import { Document, Page, View, Text } from '@react-pdf/renderer'
+import { Document, Page, Text, View } from '@react-pdf/renderer'
 
-import { EditorialHeader, Header, PageFooter, TurnBlock } from './components'
+import { DocumentHeader, MetadataBar, PageFooter, SpeakerCard } from './components'
 import { styles } from './styles'
 
 import type { DebateMessage } from '@/types/debate-ui'
@@ -26,6 +26,12 @@ type PhaseGroup = {
   messages: DebateMessage[]
 }
 
+interface Participants {
+  aiA: string
+  aiB: string
+  moderator?: string | undefined
+}
+
 const PHASE_ORDER: Record<string, number> = {
   Introduction: 0,
   'Opening Arguments': 1,
@@ -33,7 +39,8 @@ const PHASE_ORDER: Record<string, number> = {
   'Cross-Examination': 3,
   Rebuttals: 4,
   'Closing Arguments': 5,
-  Summary: 6,
+  Transitions: 6,
+  Interventions: 7,
 }
 
 function getTurnPhase(turnType: TurnType): string {
@@ -65,6 +72,23 @@ function groupMessagesByPhase(messages: DebateMessage[]): PhaseGroup[] {
     .sort((a, b) => (PHASE_ORDER[a.phase] ?? 99) - (PHASE_ORDER[b.phase] ?? 99))
 }
 
+function getParticipants(includeModeratorTurns: boolean): Participants {
+  return {
+    aiA: 'ChatGPT (FOR)',
+    aiB: 'Grok (AGAINST)',
+    moderator: includeModeratorTurns ? 'Claude (Moderator)' : undefined,
+  }
+}
+
+function getSpeakerIcon(speaker: 'for' | 'against' | 'moderator', baseUrl: string): string {
+  const iconMap = {
+    for: '/models/chatgpt.png',
+    against: '/models/grok.png',
+    moderator: '/models/claude-logo.png',
+  }
+  return `${baseUrl}${iconMap[speaker]}`
+}
+
 export function DebateDocument({
   topic,
   format,
@@ -74,36 +98,40 @@ export function DebateDocument({
   baseUrl,
 }: DebateDocumentProps): React.ReactElement {
   const filteredMessages = config.includeModeratorTurns
-    ? messages
+    ? messages.filter((m) => m.turnType !== 'moderator_summary')
     : messages.filter((m) => m.speaker !== 'moderator')
 
   const groupedMessages = groupMessagesByPhase(filteredMessages)
+  const participants = getParticipants(config.includeModeratorTurns)
 
-  const bannerUrl = `${baseUrl}/logo/pdf_banner.jpg`
-  const logoUrl = `${baseUrl}/logo/logo-dark.png`
+  const logoUrl = `${baseUrl}/logo/logo.png`
 
   return (
     <Document title={`Debate: ${topic}`} author="Debate Lab" subject={topic}>
       <Page size="LETTER" style={styles.page}>
-        <EditorialHeader bannerUrl={bannerUrl} logoUrl={logoUrl} />
+        <DocumentHeader logoUrl={logoUrl} />
 
         <View style={styles.contentWrapper}>
-          <Header topic={topic} format={format} exportedAt={new Date()} />
+          <MetadataBar
+            topic={topic}
+            date={new Date()}
+            format={format}
+            participants={participants}
+          />
 
           {groupedMessages.map((group, groupIndex) => (
             <View key={group.phase} style={styles.sectionGroup}>
               {groupIndex > 0 && <View style={styles.divider} minPresenceAhead={100} />}
-              {groupIndex > 0 && (
-                <Text style={styles.sectionTitle} minPresenceAhead={80}>
-                  {group.phase}
-                </Text>
-              )}
+              <Text style={styles.sectionTitle} minPresenceAhead={80}>
+                {group.phase}
+              </Text>
               {group.messages.map((message) => (
                 <View key={message.id} wrap={false}>
-                  <TurnBlock
+                  <SpeakerCard
                     speaker={message.speaker}
                     speakerLabel={message.speakerLabel}
                     content={message.content}
+                    iconUrl={getSpeakerIcon(message.speaker, baseUrl)}
                     timestamp={message.timestamp}
                     includeTimestamp={config.includeTimestamps}
                   />
@@ -120,7 +148,7 @@ export function DebateDocument({
           )}
         </View>
 
-        <PageFooter />
+        <PageFooter format={format} />
       </Page>
     </Document>
   )

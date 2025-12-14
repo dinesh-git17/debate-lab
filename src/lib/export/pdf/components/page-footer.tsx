@@ -1,19 +1,23 @@
 /**
- * PDF page footer with branding and page numbers.
- * Renders at the bottom of each page.
+ * PDF page footer with branding, format, and page numbers.
+ * Renders at the bottom of each page with top border separator.
  */
 
-import { View, Text } from '@react-pdf/renderer'
+import { Text, View } from '@react-pdf/renderer'
 
 import { styles } from '../styles'
 
-export function PageFooter(): React.ReactElement {
+interface PageFooterProps {
+  format: string
+}
+
+export function PageFooter({ format }: PageFooterProps): React.ReactElement {
   return (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerBrand}>Debate Lab</Text>
+      <Text style={styles.footerBrand}>Debate Lab • {format}</Text>
       <Text
         style={styles.pageNumber}
-        render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
+        render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
       />
     </View>
   )

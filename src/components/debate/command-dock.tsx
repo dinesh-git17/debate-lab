@@ -6,11 +6,12 @@
 
 'use client'
 
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Download, Play, Plus, FileText, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { FaStop } from 'react-icons/fa'
 
 import { ConfirmModal } from '@/components/ui/confirm-modal'
@@ -276,6 +277,12 @@ export function CommandDock({ debateId }: CommandDockProps) {
   const [showEndModal, setShowEndModal] = useState(false)
   const [showNewModal, setShowNewModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [exportStatus, setExportStatus] = useState<'idle' | 'generating' | 'done'>('idle')
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const isActive = status === 'active'
 
@@ -357,18 +364,28 @@ export function CommandDock({ debateId }: CommandDockProps) {
     router.push('/debate/new')
   }
 
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'markdown' | 'json'>('pdf')
+
   const handleExport = useCallback(
     async (config: ExportConfig) => {
-      const summaryMessage = messages.find((m) => m.turnType === 'moderator_summary')
-      await exportTranscript(
-        debateId,
-        topic,
-        format,
-        status,
-        messages,
-        config,
-        summaryMessage?.content
-      )
+      setExportFormat(config.format)
+      setExportStatus('generating')
+      try {
+        const summaryMessage = messages.find((m) => m.turnType === 'moderator_summary')
+        await exportTranscript(
+          debateId,
+          topic,
+          format,
+          status,
+          messages,
+          config,
+          summaryMessage?.content
+        )
+        setExportStatus('done')
+        setTimeout(() => setExportStatus('idle'), 2500)
+      } catch {
+        setExportStatus('idle')
+      }
     },
     [debateId, topic, format, status, messages]
   )
@@ -505,6 +522,57 @@ export function CommandDock({ debateId }: CommandDockProps) {
         onClose={() => setShowExportModal(false)}
         onExport={handleExport}
       />
+
+      {/* PDF Export Toast - rendered via portal to escape transform context */}
+      {isMounted &&
+        createPortal(
+          <AnimatePresence>
+            {exportStatus !== 'idle' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className={cn(
+                  'fixed bottom-6 left-6 z-[60]',
+                  'hidden md:flex items-center gap-3',
+                  'px-4 py-3 rounded-xl',
+                  'bg-[#1a1a1b]/95 backdrop-blur-xl',
+                  'border border-white/[0.08]',
+                  'shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
+                )}
+              >
+                {exportStatus === 'generating' ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+                    <span className="text-sm text-white/80 font-medium">
+                      Generating{' '}
+                      {exportFormat === 'markdown' ? 'Markdown' : exportFormat.toUpperCase()}...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-4 h-4 rounded-full bg-green-500/80 flex items-center justify-center">
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-white/80 font-medium">
+                      {exportFormat === 'markdown' ? 'Markdown' : exportFormat.toUpperCase()}{' '}
+                      exported
+                    </span>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
     </>
   )
 }

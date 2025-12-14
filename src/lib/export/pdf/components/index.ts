@@ -2,8 +2,8 @@
  * PDF component exports.
  */
 
-export { EditorialHeader } from './editorial-header'
-export { Header } from './header'
+export { DocumentHeader } from './document-header'
+export { MetadataBar } from './metadata-bar'
 export { PageFooter } from './page-footer'
 export { SectionDivider } from './section-divider'
-export { TurnBlock } from './turn-block'
+export { SpeakerCard } from './speaker-card'
