@@ -3,7 +3,7 @@
 /**
  * Supported LLM providers
  */
-export type LLMProviderType = 'openai' | 'anthropic' | 'xai'
+export type LLMProviderType = 'openai' | 'anthropic' | 'xai' | 'gemini' | 'deepseek'
 
 /**
  * Role in conversation

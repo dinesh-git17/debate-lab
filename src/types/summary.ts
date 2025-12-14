@@ -1,6 +1,7 @@
 // src/types/summary.ts
 
 import type { JudgeAnalysis } from './judge'
+import type { JuryDeliberation, JuryPhase } from './jury'
 import type { LLMProviderType } from './llm'
 import type { TurnSpeaker, TurnType } from './turn'
 
@@ -95,6 +96,10 @@ export interface SummaryState {
   assignment: RevealedAssignment | null
   judgeAnalysis: JudgeAnalysis | null
   isAnalysisLoading: boolean
+  juryDeliberation: JuryDeliberation | null
+  isJuryLoading: boolean
+  juryError: string | null
+  juryPhase: JuryPhase
 }
 
 /**
@@ -127,6 +132,18 @@ export const MODEL_CONFIGS: Record<LLMProviderType, Omit<ModelIdentity, 'model'>
     displayName: 'Grok',
     icon: '⚡',
     color: 'amber',
+  },
+  gemini: {
+    provider: 'gemini',
+    displayName: 'Gemini',
+    icon: '✨',
+    color: 'blue',
+  },
+  deepseek: {
+    provider: 'deepseek',
+    displayName: 'DeepSeek',
+    icon: '🔍',
+    color: 'teal',
   },
 }
 

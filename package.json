@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",
+    "@google/generative-ai": "^0.24.1",
     "@next/bundle-analyzer": "^16.0.5",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-pdf/renderer": "^4.3.1",

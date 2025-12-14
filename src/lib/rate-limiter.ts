@@ -30,6 +30,14 @@ const PROVIDER_LIMITS: Record<LLMProviderType, RateLimitConfig> = {
     tokensPerMinute: 60000,
     requestsPerMinute: 300,
   },
+  gemini: {
+    tokensPerMinute: 1000000,
+    requestsPerMinute: 1000,
+  },
+  deepseek: {
+    tokensPerMinute: 60000,
+    requestsPerMinute: 300,
+  },
 }
 
 const buckets = new Map<LLMProviderType, RateLimitBucket>()

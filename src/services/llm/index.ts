@@ -19,12 +19,15 @@ export { BaseLLMProvider } from './base-provider'
 export { OpenAIProvider } from './openai-provider'
 export { AnthropicProvider } from './anthropic-provider'
 export { XAIProvider } from './xai-provider'
+export { GeminiProvider } from './gemini-provider'
+export { DeepSeekProvider } from './deepseek-provider'
 
 export {
   checkAllProvidersHealth,
   getAllProviderInfo,
   getConfiguredProviders,
   getDebateProvider,
+  getJurorProvider,
   getProvider,
   resetProviders,
 } from './provider-factory'

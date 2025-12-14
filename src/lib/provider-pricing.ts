@@ -19,6 +19,14 @@ export const PROVIDER_PRICING: Record<LLMProviderType, { input: number; output: 
     input: 0.005,
     output: 0.015,
   },
+  gemini: {
+    input: 0.075,
+    output: 0.3,
+  },
+  deepseek: {
+    input: 0.14,
+    output: 0.28,
+  },
 }
 
 export function calculateCost(

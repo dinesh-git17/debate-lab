@@ -5,6 +5,7 @@ import { create } from 'zustand'
 import { getModelIdentity } from '@/types/summary'
 
 import type { JudgeAnalysis } from '@/types/judge'
+import type { JuryDeliberation, JuryPhase } from '@/types/jury'
 import type { RevealedAssignment, SummaryResponse, SummaryState } from '@/types/summary'
 
 interface SummaryActions {
@@ -18,6 +19,12 @@ interface SummaryActions {
 
   setJudgeAnalysis: (analysis: JudgeAnalysis) => void
   setAnalysisLoading: (loading: boolean) => void
+
+  setJuryDeliberation: (deliberation: JuryDeliberation) => void
+  setJuryLoading: (loading: boolean) => void
+  setJuryError: (error: string | null) => void
+  setJuryPhase: (phase: JuryPhase) => void
+  resetJury: () => void
 
   reset: () => void
 }
@@ -36,6 +43,10 @@ const initialState: SummaryState = {
   assignment: null,
   judgeAnalysis: null,
   isAnalysisLoading: false,
+  juryDeliberation: null,
+  isJuryLoading: false,
+  juryError: null,
+  juryPhase: 'idle',
 }
 
 export const useSummaryStore = create<SummaryStore>()((set, get) => ({
@@ -88,6 +99,30 @@ export const useSummaryStore = create<SummaryStore>()((set, get) => ({
   setJudgeAnalysis: (analysis) => set({ judgeAnalysis: analysis, isAnalysisLoading: false }),
 
   setAnalysisLoading: (loading) => set({ isAnalysisLoading: loading }),
+
+  setJuryDeliberation: (deliberation) =>
+    set({
+      juryDeliberation: deliberation,
+      isJuryLoading: false,
+      juryError: null,
+      juryPhase: deliberation.phase,
+    }),
+
+  setJuryLoading: (loading) =>
+    set({ isJuryLoading: loading, juryError: loading ? null : get().juryError }),
+
+  setJuryError: (error) =>
+    set({ juryError: error, isJuryLoading: false, juryPhase: error ? 'error' : 'idle' }),
+
+  setJuryPhase: (phase) => set({ juryPhase: phase }),
+
+  resetJury: () =>
+    set({
+      juryDeliberation: null,
+      isJuryLoading: false,
+      juryError: null,
+      juryPhase: 'idle',
+    }),
 
   reset: () => set(initialState),
 }))

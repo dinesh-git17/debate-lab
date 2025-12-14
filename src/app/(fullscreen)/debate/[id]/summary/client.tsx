@@ -10,6 +10,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useCallback, useRef } from 'react'
 
+import { EvidenceReviewSection } from '@/components/jury'
 import { DebateHighlightsCard } from '@/components/summary/debate-highlights-card'
 import { RevealSection } from '@/components/summary/reveal-section'
 import { ShareSection } from '@/components/summary/share-section'
@@ -179,6 +180,12 @@ export function SummaryPageClient({ initialData, shareUrl }: SummaryPageClientPr
 
         <motion.div variants={sectionVariants}>
           <DebateHighlightsCard className="mb-16" />
+        </motion.div>
+
+        <motion.hr className="border-border my-12 origin-left" variants={dividerVariants} />
+
+        <motion.div variants={sectionVariants}>
+          <EvidenceReviewSection className="mb-16" />
         </motion.div>
 
         <motion.hr className="border-border my-12 origin-left" variants={dividerVariants} />
