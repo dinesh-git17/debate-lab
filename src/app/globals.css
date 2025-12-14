@@ -543,6 +543,11 @@ body {
   animation: breathe-glow 3s ease-in-out infinite;
 }
 
+/* Safe area utilities for notched devices */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Cinematic gradient text - Apple-style metallic/glass hero typography */
 .text-gradient-cinematic {
   background: linear-gradient(

@@ -581,10 +581,11 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
 
           if (nextElement) {
             const containerRect = container.getBoundingClientRect()
+            const usableHeight = containerRect.height - ANIMATION_CONFIG.AUTO_SCROLL.DOCK_CLEARANCE
             const elementTop = nextElement.offsetTop
 
             const targetScrollTop =
-              elementTop - containerRect.height * ANIMATION_CONFIG.AUTO_SCROLL.CENTER_OFFSET
+              elementTop - usableHeight * ANIMATION_CONFIG.AUTO_SCROLL.CENTER_OFFSET
 
             if (targetScrollTop > container.scrollTop) {
               smoothScrollTo(container, targetScrollTop)
@@ -604,7 +605,7 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     let rafId: number | null = null
     let isRunning = true
 
-    const { LERP_FACTOR, CENTER_TARGET, MIN_CONTENT_CHARS } = ANIMATION_CONFIG.AUTO_SCROLL
+    const { LERP_FACTOR, CENTER_TARGET, DOCK_CLEARANCE } = ANIMATION_CONFIG.AUTO_SCROLL
 
     const checkAndScroll = () => {
       if (!isRunning) return
@@ -629,27 +630,11 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
         return
       }
 
-      // Check minimum content threshold to avoid bouncing on short initial content
-      const contentLength = activeElement.textContent?.length ?? 0
-      if (contentLength < MIN_CONTENT_CHARS) {
-        // Fall back to keeping bottom visible for short content
-        const { scrollTop, scrollHeight, clientHeight } = container
-        const maxScroll = scrollHeight - clientHeight
-        const distanceFromBottom = maxScroll - scrollTop
-
-        if (distanceFromBottom > 1) {
-          container.scrollTop = scrollTop + distanceFromBottom * LERP_FACTOR
-          scrollLockUntil.current = Date.now() + 50
-        }
-
-        rafId = requestAnimationFrame(checkAndScroll)
-        return
-      }
-
-      // Calculate target: center of active message at CENTER_TARGET of viewport
+      // Calculate target: center of active message in usable viewport (accounting for dock)
       const containerRect = container.getBoundingClientRect()
+      const usableHeight = containerRect.height - DOCK_CLEARANCE
       const elementCenterInContainer = activeElement.offsetTop + activeElement.offsetHeight / 2
-      const viewportCenterOffset = containerRect.height * CENTER_TARGET
+      const viewportCenterOffset = usableHeight * CENTER_TARGET
 
       const targetScrollTop = elementCenterInContainer - viewportCenterOffset
       const clampedTarget = Math.max(
@@ -787,16 +772,17 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
     <div className={cn('relative', !isMobile && 'h-full', className)} style={heightStyle}>
       <div
         ref={containerRef}
-        className="overflow-y-auto px-4 h-full"
+        className="overflow-y-auto px-4"
         style={{
+          height: 'calc(100% - 124px)',
           scrollBehavior: 'auto',
           scrollSnapType: status === 'completed' ? 'y proximity' : undefined,
           // Prevent scroll-snap from snapping past the header area in completed state
           scrollPaddingTop: status === 'completed' ? (isMobile ? 144 : 160) : undefined,
           maskImage:
-            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
+            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 24px), transparent 100%)',
           WebkitMaskImage:
-            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 96px), transparent 100%)',
+            'linear-gradient(to bottom, transparent 0px, transparent 60px, black 76px, black calc(100% - 24px), transparent 100%)',
         }}
         role="log"
         aria-live="polite"
@@ -856,13 +842,7 @@ export function MessageList({ className, autoScroll = true, initialStatus }: Mes
             {status === 'completed' && <SummaryHint className="-mt-2" />}
           </AnimatePresence>
 
-          <div
-            className={isMobile ? 'h-40' : 'h-24'}
-            style={{
-              paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined,
-            }}
-            aria-hidden="true"
-          />
+          <div className={cn('h-8', isMobile && 'safe-area-inset-bottom')} aria-hidden="true" />
 
           <div id="scroll-anchor" aria-hidden="true" />
         </div>
