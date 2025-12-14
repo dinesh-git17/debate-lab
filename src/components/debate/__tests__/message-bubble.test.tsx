@@ -13,25 +13,6 @@ vi.mock('@/components/ui/markdown', () => ({
   Markdown: ({ content }: { content: string }) => <div data-testid="markdown">{content}</div>,
 }))
 
-// Mock the useChunkedDisplay hook to return synchronous values
-vi.mock('@/hooks/use-chunked-display', () => ({
-  useChunkedDisplay: ({
-    rawContent,
-    isStreaming,
-    isComplete,
-  }: {
-    rawContent: string
-    isStreaming: boolean
-    isComplete: boolean
-  }) => ({
-    displayContent: rawContent,
-    isBuffering: isStreaming && !isComplete,
-    isTyping: isStreaming && rawContent.length === 0,
-    revealAll: () => {},
-    progress: 100,
-  }),
-}))
-
 // Mock the useSmoothReveal hook to return content immediately (skip animation in tests)
 vi.mock('@/hooks/use-smooth-reveal', () => ({
   useSmoothReveal: ({
