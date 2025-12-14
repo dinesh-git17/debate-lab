@@ -11,6 +11,7 @@ import { getFormatDisplayName } from '@/lib/prompts/moderator-system'
 import { MAX_TOTAL_SCORE, SCORING_RUBRICS, validateCategoryScore } from '@/lib/scoring-rubric'
 import { getSession } from '@/lib/session-store'
 import { generate } from '@/services/llm'
+import { isMockMode } from '@/services/mock-debate-engine'
 
 import type {
   CategoryScore,
@@ -25,6 +26,133 @@ import type { DebateHistoryEntry } from '@/types/prompts'
 import type { TurnSpeaker } from '@/types/turn'
 
 const analysisCache = new Map<string, JudgeAnalysis>()
+
+/**
+ * Generate mock judge analysis for testing without API calls
+ */
+function generateMockJudgeAnalysis(
+  debateId: string,
+  forModel: string,
+  againstModel: string
+): JudgeAnalysis {
+  const buildMockParticipantScores = (
+    speaker: 'for' | 'against',
+    label: string,
+    model: string
+  ): ParticipantScores => {
+    const baseScore = 70 + Math.floor(Math.random() * 20)
+    const categoryScores: CategoryScore[] = SCORING_RUBRICS.map((rubric) => {
+      const percentage = baseScore + Math.floor(Math.random() * 10) - 5
+      const score = Math.round((percentage / 100) * rubric.maxScore)
+      return {
+        category: rubric.category,
+        label: rubric.label,
+        score: validateCategoryScore(rubric.category, score),
+        maxScore: rubric.maxScore,
+        percentage,
+        feedback: `Strong performance in ${rubric.label.toLowerCase()} with clear demonstration of the core criteria.`,
+      }
+    })
+
+    const totalScore = categoryScores.reduce((sum, cs) => sum + cs.score, 0)
+    const percentage = Math.round((totalScore / MAX_TOTAL_SCORE) * 100)
+
+    return {
+      speaker,
+      label,
+      model,
+      totalScore,
+      maxPossibleScore: MAX_TOTAL_SCORE,
+      percentage,
+      categoryScores,
+      strengths: [
+        'Maintained a clear and consistent argumentative framework throughout',
+        'Effectively used examples to support key claims',
+        'Demonstrated strong understanding of the topic complexity',
+      ],
+      weaknesses: [
+        'Could have addressed counterarguments more directly in some sections',
+        'Some opportunities for deeper engagement with opposing evidence were missed',
+      ],
+      standoutMoments: [
+        'The opening framework was particularly well-structured and set a strong foundation',
+        'Effective pivot during rebuttal phase to address opponent strongest points',
+      ],
+    }
+  }
+
+  const forAnalysis = buildMockParticipantScores('for', 'FOR (Affirmative)', forModel)
+  const againstAnalysis = buildMockParticipantScores('against', 'AGAINST (Negative)', againstModel)
+
+  const avgPercentage = (forAnalysis.percentage + againstAnalysis.percentage) / 2
+  const debateQuality =
+    avgPercentage >= 85
+      ? 'excellent'
+      : avgPercentage >= 70
+        ? 'good'
+        : avgPercentage >= 55
+          ? 'fair'
+          : 'developing'
+
+  return {
+    debateId,
+    generatedAt: new Date(),
+    overviewSummary:
+      'This was a well-structured debate with both participants demonstrating strong argumentation skills. The exchange featured substantive engagement with the core issues and effective use of evidence to support competing positions.',
+    debateQuality,
+    debateQualityExplanation:
+      'Both debaters maintained professional discourse while presenting nuanced arguments. The debate featured genuine clash on key issues with effective rebuttals from both sides.',
+    forAnalysis,
+    againstAnalysis,
+    keyClashPoints: [
+      {
+        topic: 'Core Framework Disagreement',
+        description:
+          'A fundamental disagreement about the appropriate framework for evaluating this issue',
+        forArgument:
+          'Argued for a principled approach based on established precedent and systematic analysis',
+        againstArgument:
+          'Countered with a pragmatic framework emphasizing real-world outcomes and practical considerations',
+        analysis:
+          'Both frameworks have merit. The clash highlighted genuine tension between theoretical ideals and practical implementation.',
+      },
+      {
+        topic: 'Evidence Interpretation',
+        description: 'Competing interpretations of the available data and research',
+        forArgument: 'Cited specific studies supporting the affirmative position',
+        againstArgument: 'Challenged methodology and offered alternative interpretations',
+        analysis:
+          'This clash demonstrated the complexity of empirical questions in policy debates where data can support multiple conclusions.',
+      },
+    ],
+    turningMoments: [
+      'The rebuttal phase marked a shift in momentum as both sides directly engaged with core disagreements',
+      'Cross-examination revealed key assumptions that shaped the remainder of the debate',
+    ],
+    missedOpportunities: [
+      'Neither side fully explored the implications of their position for edge cases',
+      'Some strong arguments made early were not adequately developed in later turns',
+    ],
+    whatWorkedWell: [
+      'Clear structure and signposting made arguments easy to follow',
+      'Both sides maintained respectful discourse while being assertive',
+      'Effective use of examples to make abstract concepts concrete',
+    ],
+    areasForImprovement: [
+      'More direct engagement with the strongest opposing arguments',
+      'Better time allocation to develop key points more thoroughly',
+      'Clearer impact calculus comparing competing considerations',
+    ],
+    lessonsForDebaters: [
+      'Establish clear frameworks early to organize the debate productively',
+      'Prioritize quality over quantity when making arguments',
+      'Direct clash on key issues is more persuasive than parallel argumentation',
+    ],
+    judgeNotes:
+      'This analysis is based on mock debate content for testing purposes. In a real debate, scoring would reflect the actual quality of arguments presented.',
+    disclaimer: '[MOCK MODE] This is simulated analysis for testing. ' + JUDGE_DISCLAIMER,
+  }
+}
 
 /**
  * Generate or retrieve judge analysis for a completed debate
@@ -81,14 +209,6 @@ export async function getJudgeAnalysis(
     }
   }
 
-  const debateHistory: DebateHistoryEntry[] = engineState.completedTurns.map((turn, index) => ({
-    speaker: turn.speaker,
-    speakerLabel: turn.speaker === 'moderator' ? 'MODERATOR' : turn.speaker.toUpperCase(),
-    turnType: turn.config.type,
-    content: turn.content,
-    turnNumber: index + 1,
-  }))
-
   const modelNames: Record<string, string> = {
     chatgpt: 'ChatGPT',
     grok: 'Grok',
@@ -96,6 +216,27 @@ export async function getJudgeAnalysis(
 
   const forModel = modelNames[session.assignment.forPosition] ?? 'Unknown'
   const againstModel = modelNames[session.assignment.againstPosition] ?? 'Unknown'
+
+  // Return mock analysis in mock mode to avoid API calls
+  if (isMockMode()) {
+    const analysis = generateMockJudgeAnalysis(debateId, forModel, againstModel)
+    analysisCache.set(debateId, analysis)
+
+    return {
+      success: true,
+      analysis,
+      cached: false,
+      generationTimeMs: Date.now() - startTime,
+    }
+  }
+
+  const debateHistory: DebateHistoryEntry[] = engineState.completedTurns.map((turn, index) => ({
+    speaker: turn.speaker,
+    speakerLabel: turn.speaker === 'moderator' ? 'MODERATOR' : turn.speaker.toUpperCase(),
+    turnType: turn.config.type,
+    content: turn.content,
+    turnNumber: index + 1,
+  }))
 
   try {
     const prompt = buildJudgeAnalysisPrompt(
@@ -108,11 +249,11 @@ export async function getJudgeAnalysis(
     )
 
     const result = await generate({
-      provider: 'openai', // Using OpenAI instead of Anthropic
+      provider: 'openai',
       params: {
         systemPrompt: JUDGE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
-        maxTokens: 8000, // Increased from 4000 - judge analysis is comprehensive
+        maxTokens: 8000,
         temperature: 0.3,
       },
       enableRetry: true,
