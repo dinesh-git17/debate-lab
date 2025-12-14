@@ -15,10 +15,8 @@ import { logger } from '@/lib/logging'
 import {
   ARBITER_SYSTEM_PROMPT,
   buildArbiterPrompt,
-  buildDeliberationPrompt,
   buildExtractionPrompt,
   buildScoringPrompt,
-  DELIBERATION_SYSTEM_PROMPT,
   EVIDENCE_EXTRACTION_SYSTEM_PROMPT,
   JUROR_SCORING_SYSTEM_PROMPT,
 } from '@/lib/prompts/jury-prompts'
@@ -28,7 +26,6 @@ import { isMockMode } from '@/services/mock-debate-engine'
 
 import type {
   ArbiterResolution,
-  DeliberationExchange,
   EvidenceCategory,
   EvidenceCategoryType,
   ExtractedClaim,
@@ -129,23 +126,8 @@ function generateMockJuryDeliberation(debateId: string): JuryDeliberation {
     },
   ]
 
-  const deliberationLog: DeliberationExchange[] = [
-    {
-      round: 1,
-      speaker: 'gemini',
-      content:
-        'Reviewing DeepSeek evaluation. I note a 3-point difference on evidence_strength for claim F1. Their concern about source attribution is valid.',
-      timestamp: new Date(),
-    },
-    {
-      round: 1,
-      speaker: 'deepseek',
-      content:
-        'Reviewing Gemini evaluation. The specific statistic in F1 does add credibility. I can adjust upward by 1 point.',
-      adjustedScores: [{ claimId: 'F1', category: 'evidence_strength', newScore: 19 }],
-      timestamp: new Date(),
-    },
-  ]
+  // Deliberation phase removed for optimization - arbiter handles summary directly
+  const deliberationLog: JuryDeliberation['deliberationLog'] = []
 
   const avgForScore = (geminiEval.totalForScore + deepseekEval.totalForScore) / 2
   const avgAgainstScore = (geminiEval.totalAgainstScore + deepseekEval.totalAgainstScore) / 2
@@ -275,17 +257,15 @@ async function getJurorEvaluation(
 }
 
 /**
- * Phase 3: Run structured deliberation between jurors
+ * Identify score disagreements between jurors (>10% difference)
+ * Used by arbiter to focus resolution on contentious areas.
  */
-async function runDeliberation(
+function identifyDisagreements(
   geminiEval: JurorEvaluation,
-  deepseekEval: JurorEvaluation,
-  claims: ExtractedClaim[]
-): Promise<{ disagreements: ScoreDisagreement[]; log: DeliberationExchange[] }> {
+  deepseekEval: JurorEvaluation
+): ScoreDisagreement[] {
   const disagreements: ScoreDisagreement[] = []
-  const log: DeliberationExchange[] = []
 
-  // Identify score disagreements (>10% difference)
   for (const category of JURY_SCORING_RUBRICS) {
     const geminiFor = geminiEval.forScores.find((s) => s.category === category.category)
     const deepseekFor = deepseekEval.forScores.find((s) => s.category === category.category)
@@ -305,99 +285,7 @@ async function runDeliberation(
     }
   }
 
-  if (disagreements.length === 0) {
-    return { disagreements, log }
-  }
-
-  // Gemini reviews DeepSeek's scores
-  try {
-    const geminiDelibPrompt = buildDeliberationPrompt(geminiEval, deepseekEval, claims)
-    const geminiDelibResult = await generate({
-      provider: 'gemini',
-      params: {
-        systemPrompt: DELIBERATION_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: geminiDelibPrompt }],
-        maxTokens: 2000,
-        temperature: 0.3,
-      },
-      enableRetry: true,
-      enableRateLimit: true,
-    })
-
-    const geminiDelib = parseJsonResponse<{
-      observations: {
-        claimId: string
-        category: string
-        myResponse: string
-        adjustedScore?: number
-      }[]
-      summary: string
-    }>(geminiDelibResult.content)
-
-    log.push({
-      round: 1,
-      speaker: 'gemini',
-      content: geminiDelib.summary ?? '',
-      adjustedScores: geminiDelib.observations
-        ?.filter((o) => o.adjustedScore !== undefined)
-        .map((o) => ({
-          claimId: o.claimId,
-          category: o.category as EvidenceCategoryType,
-          newScore: o.adjustedScore!,
-        })),
-      timestamp: new Date(),
-    })
-  } catch (error) {
-    logger.warn('Gemini deliberation failed, continuing with original scores', {
-      error: error instanceof Error ? error.message : String(error),
-    })
-  }
-
-  // DeepSeek reviews Gemini's scores
-  try {
-    const deepseekDelibPrompt = buildDeliberationPrompt(deepseekEval, geminiEval, claims)
-    const deepseekDelibResult = await generate({
-      provider: 'deepseek',
-      params: {
-        systemPrompt: DELIBERATION_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: deepseekDelibPrompt }],
-        maxTokens: 2000,
-        temperature: 0.3,
-      },
-      enableRetry: true,
-      enableRateLimit: true,
-    })
-
-    const deepseekDelib = parseJsonResponse<{
-      observations: {
-        claimId: string
-        category: string
-        myResponse: string
-        adjustedScore?: number
-      }[]
-      summary: string
-    }>(deepseekDelibResult.content)
-
-    log.push({
-      round: 1,
-      speaker: 'deepseek',
-      content: deepseekDelib.summary ?? '',
-      adjustedScores: deepseekDelib.observations
-        ?.filter((o) => o.adjustedScore !== undefined)
-        .map((o) => ({
-          claimId: o.claimId,
-          category: o.category as EvidenceCategoryType,
-          newScore: o.adjustedScore!,
-        })),
-      timestamp: new Date(),
-    })
-  } catch (error) {
-    logger.warn('DeepSeek deliberation failed, continuing with original scores', {
-      error: error instanceof Error ? error.message : String(error),
-    })
-  }
-
-  return { disagreements, log }
+  return disagreements
 }
 
 /**
@@ -535,13 +423,9 @@ export async function getJuryDeliberation(
       getJurorEvaluation('deepseek', session.topic, extractedClaims),
     ])
 
-    // Phase 3: Structured deliberation
-    logger.info('Jury: Starting deliberation', { debateId })
-    const { disagreements, log: deliberationLog } = await runDeliberation(
-      geminiEvaluation,
-      deepseekEvaluation,
-      extractedClaims
-    )
+    // Phase 3: Identify disagreements (deliberation API calls removed for optimization)
+    const disagreements = identifyDisagreements(geminiEvaluation, deepseekEvaluation)
+    const deliberationLog: JuryDeliberation['deliberationLog'] = []
 
     // Phase 4: Arbiter resolution
     logger.info('Jury: Resolving final scores', {
