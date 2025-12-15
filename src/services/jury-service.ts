@@ -1,6 +1,6 @@
 /**
  * Jury deliberation service for evidence-based fact checking.
- * Orchestrates Gemini and DeepSeek as independent jurors evaluating factual accuracy.
+ * GPT-4o-mini extracts claims, Gemini/DeepSeek score independently, Gemini arbitrates.
  */
 
 import { getEngineState } from '@/lib/engine-store'
@@ -183,12 +183,13 @@ async function extractClaims(
   const prompt = buildExtractionPrompt(topic, debateTranscript)
 
   const result = await generate({
-    provider: 'xai',
+    provider: 'openai',
     params: {
       systemPrompt: EVIDENCE_EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
       maxTokens: 4000,
       temperature: 0.2,
+      model: 'gpt-4o-mini',
     },
     enableRetry: true,
     enableRateLimit: true,
@@ -298,9 +299,8 @@ async function resolveScores(
 ): Promise<ArbiterResolution> {
   const prompt = buildArbiterPrompt(geminiEval, deepseekEval, disagreements)
 
-  // Use Grok as neutral arbiter
   const result = await generate({
-    provider: 'xai',
+    provider: 'gemini',
     params: {
       systemPrompt: ARBITER_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
