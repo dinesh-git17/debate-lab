@@ -1,7 +1,7 @@
 // src/services/judge-service.ts
 /**
  * Two-tier judge analysis service for debate evaluation.
- * Quick scores (GPT-4o-mini) provide instant results, full analysis (GPT-4o) follows.
+ * Quick scores and full analysis both use GPT-4o-mini for cost efficiency.
  */
 
 import { getEngineState } from '@/lib/engine-store'
@@ -462,7 +462,7 @@ export async function getJudgeAnalysis(
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 4000,
         temperature: 0.3,
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
       },
       enableRetry: true,
       enableRateLimit: true,
