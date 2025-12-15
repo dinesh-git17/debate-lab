@@ -16,7 +16,7 @@ import { getDebateProvider, getProvider } from './provider-factory'
 import type { GenerateParams, GenerateResult, LLMProviderType, StreamChunk } from '@/types/llm'
 
 export interface GenerateOptions {
-  provider: LLMProviderType | 'chatgpt' | 'grok' | 'claude'
+  provider: LLMProviderType | 'chatgpt' | 'grok' | 'claude' | 'gemini'
   params: GenerateParams
   enableRetry?: boolean | undefined
   enableRateLimit?: boolean | undefined
@@ -28,8 +28,8 @@ export interface GenerateOptions {
 export async function generate(options: GenerateOptions): Promise<GenerateResult> {
   const { provider: providerName, params, enableRetry = true, enableRateLimit = true } = options
 
-  const provider = ['chatgpt', 'grok', 'claude'].includes(providerName)
-    ? getDebateProvider(providerName as 'chatgpt' | 'grok' | 'claude')
+  const provider = ['chatgpt', 'grok', 'claude', 'gemini'].includes(providerName)
+    ? getDebateProvider(providerName as 'chatgpt' | 'grok' | 'claude' | 'gemini')
     : getProvider(providerName as LLMProviderType)
 
   if (!provider.isConfigured()) {
@@ -115,8 +115,8 @@ export async function* generateStream(
 ): AsyncGenerator<StreamChunk, GenerateResult, unknown> {
   const { provider: providerName, params, enableRateLimit = true } = options
 
-  const provider = ['chatgpt', 'grok', 'claude'].includes(providerName)
-    ? getDebateProvider(providerName as 'chatgpt' | 'grok' | 'claude')
+  const provider = ['chatgpt', 'grok', 'claude', 'gemini'].includes(providerName)
+    ? getDebateProvider(providerName as 'chatgpt' | 'grok' | 'claude' | 'gemini')
     : getProvider(providerName as LLMProviderType)
 
   if (!provider.isConfigured()) {
@@ -204,8 +204,8 @@ export function estimateTokens(
   messages: { role: string; content: string }[],
   maxOutputTokens: number
 ): number {
-  const provider = ['chatgpt', 'grok', 'claude'].includes(providerName)
-    ? getDebateProvider(providerName as 'chatgpt' | 'grok' | 'claude')
+  const provider = ['chatgpt', 'grok', 'claude', 'gemini'].includes(providerName)
+    ? getDebateProvider(providerName as 'chatgpt' | 'grok' | 'claude' | 'gemini')
     : getProvider(providerName as LLMProviderType)
 
   return provider.countMessagesTokens(systemPrompt, messages) + maxOutputTokens

@@ -151,7 +151,7 @@ export async function getCurrentTurnInfo(debateId: string): Promise<CurrentTurnI
 
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -182,7 +182,7 @@ export async function getNextTurnInfo(
 
   let provider: TurnProvider
   if (nextTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, nextTurn.speaker)
   }
@@ -500,6 +500,8 @@ function mapTurnProviderToLLMProvider(provider: TurnProvider): LLMProviderType {
       return 'xai'
     case 'claude':
       return 'anthropic'
+    case 'gemini':
+      return 'gemini'
   }
 }
 
@@ -529,7 +531,7 @@ export async function checkTurnBudget(
 
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -661,7 +663,7 @@ export async function executeNextTurn(debateId: string): Promise<{
   // Determine provider for this turn
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }

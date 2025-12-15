@@ -1,6 +1,8 @@
 // src/services/topic-sanitizer.ts
-
-import OpenAI from 'openai'
+/**
+ * Topic polish service using Gemini 2.0-flash-lite for cost-efficient text refinement.
+ * Falls back to basic capitalization if the API fails.
+ */
 
 import { logger } from '@/lib/logging'
 
@@ -13,36 +15,7 @@ export interface SanitizeTopicResult {
   error?: string
 }
 
-let openaiClient: OpenAI | null = null
-
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY not configured')
-    }
-    openaiClient = new OpenAI({ apiKey, timeout: TIMEOUT_MS })
-  }
-  return openaiClient
-}
-
-/**
- * Lightly polishes a debate topic while preserving its original tone and personality.
- * Uses GPT-4o-mini for speed and cost efficiency.
- * Falls back to basic capitalization if the API fails.
- */
-export async function sanitizeTopic(rawTopic: string): Promise<SanitizeTopicResult> {
-  const originalTopic = rawTopic.trim()
-
-  try {
-    const client = getOpenAIClient()
-
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a debate topic editor. LIGHTLY polish user input while PRESERVING its original tone, meaning, and personality.
+const POLISH_PROMPT = `You are a debate topic editor. LIGHTLY polish user input while PRESERVING its original tone, meaning, and personality.
 
 CRITICAL — PRESERVE:
 - Original tone (playful, serious, provocative)
@@ -77,21 +50,66 @@ Input: pineapple on pizza is a war crime
 Output: Is pineapple on pizza a culinary war crime?
 
 Input: should you tell your friend their breath stinks
-Output: Should you tell your friend their breath stinks?`,
-        },
-        {
-          role: 'user',
-          content: `Lightly polish this debate topic (preserve tone and meaning): "${originalTopic}"`,
-        },
-      ],
-      max_tokens: 75,
-      temperature: 0.3,
-    })
+Output: Should you tell your friend their breath stinks?`
 
-    let sanitizedTopic = response.choices[0]?.message?.content?.trim()
+/**
+ * Lightly polishes a debate topic while preserving its original tone and personality.
+ * Uses Gemini 2.0-flash-lite for speed and cost efficiency.
+ * Falls back to basic capitalization if the API fails.
+ */
+export async function sanitizeTopic(rawTopic: string): Promise<SanitizeTopicResult> {
+  const originalTopic = rawTopic.trim()
+  const apiKey = process.env.GOOGLE_API_KEY
+
+  if (!apiKey) {
+    logger.warn('No Google API key, using fallback')
+    return {
+      success: false,
+      sanitizedTopic: originalTopic.charAt(0).toUpperCase() + originalTopic.slice(1),
+      originalTopic,
+      error: 'GOOGLE_API_KEY not configured',
+    }
+  }
+
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${POLISH_PROMPT}\n\nPolish this debate topic (preserve tone and meaning): "${originalTopic}"`,
+                },
+              ],
+            },
+          ],
+          generationConfig: { maxOutputTokens: 100, temperature: 0.2 },
+        }),
+        signal: controller.signal,
+      }
+    )
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`)
+    }
+
+    const data = (await response.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+    }
+
+    let sanitizedTopic = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
 
     if (!sanitizedTopic) {
-      throw new Error('Empty response from API')
+      throw new Error('Empty response from Gemini')
     }
 
     // Strip any quotes the model might have added

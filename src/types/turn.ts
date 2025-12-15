@@ -44,7 +44,7 @@ export interface Turn {
   debateId: string
   config: TurnConfig
   speaker: TurnSpeaker
-  provider: 'chatgpt' | 'grok' | 'claude'
+  provider: TurnProvider
   content: string
   tokenCount: number
   startedAt: Date
@@ -91,7 +91,7 @@ export type DebateEngineStatus =
 /**
  * Provider type for turns (extends LLMProvider with claude for moderator)
  */
-export type TurnProvider = 'chatgpt' | 'grok' | 'claude'
+export type TurnProvider = 'chatgpt' | 'grok' | 'claude' | 'gemini'
 
 /**
  * Progress information for a debate

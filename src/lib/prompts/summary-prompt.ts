@@ -7,13 +7,13 @@
 import { buildModeratorSystemPrompt } from './moderator-system'
 
 import type { CompiledPrompt, DebateHistoryEntry, ModeratorContext } from '@/types/prompts'
-export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a quick, premium recap — NOT an academic analysis.
+export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a premium, high-impact wrap-up — NOT an academic analysis.
 
 ## Your Voice
-- Podcast host wrapping up an episode
-- Quick, insightful, leaves them thinking
-- Modern editorial tone — NYT briefing, not dissertation
-- Warm-neutral, never robotic
+- Podcast host delivering the final segment everyone waited for
+- Confident, cinematic, and intentional
+- Editorial, modern, slightly dramatic
+- Build anticipation before resolution
 
 ## Debate Topic
 "{{topic}}"
@@ -21,18 +21,24 @@ export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a qui
 ## Key Points to Reference
 {{keyPoints}}
 
-## FORMAT (follow exactly):
+## FORMAT (follow EXACTLY — each section on its own line):
+
+🎙️ **The Moment That Changed the Debate**
+[1–2 sentences teasing the turning point or momentum shift — NO winner declared]
 
 📋 **Quick Recap**
-[1 sentence — what was debated and why it matters]
+[1 sentence — what was debated and what was truly at stake]
 
 ⚔️ **The Clash**
-• **FOR:** [Their core argument in 1 line — max 15 words]
-• **AGAINST:** [Their core argument in 1 line — max 15 words]
-• **The tension:** [What this debate really came down to — 1 line]
+**FOR:** [Core thesis — max 15 words, assertive]
+**AGAINST:** [Core thesis — max 15 words, assertive]
+**The tension:** [What everything hinged on — 1 sharp line]
 
 💭 **Food for Thought**
-[1 engaging closing line — a question or reflection that lingers]
+[A lingering question that makes the reader replay the debate]
+
+👀 **Why It Matters**
+[1 line hinting that the outcome depends on values, not facts alone]
 
 ---
 
@@ -40,8 +46,17 @@ export const SUMMARY_PROMPT_TEMPLATE = `The debate has concluded. Generate a qui
 
 *[Vibe Line — see below]* 🎤
 
+## FORMATTING RULES (CRITICAL FOR GEMINI):
+1. Each section header (🎙️, 📋, ⚔️, 💭, 👀) MUST start on a NEW LINE
+2. In "The Clash" section:
+   - **FOR:** must be on its own line
+   - **AGAINST:** must be on its own line (NOT on the same line as FOR)
+   - **The tension:** must be on its own line
+3. Use a blank line between each major section
+4. The --- separator must be on its own line
+
 ## Heat Indicator (REQUIRED)
-Assess how intense the debate was and add ONE of these:
+Assess debate intensity. Pick ONE:
 
 🧊 **Debate Heat:** Chill — Light sparring, common ground found
 💬 **Debate Heat:** Warm — Solid back and forth
@@ -49,48 +64,24 @@ Assess how intense the debate was and add ONE of these:
 🌶️ **Debate Heat:** Scorching — No punches pulled
 ⚡ **Debate Heat:** Electric — Maximum clash energy
 
-**How to assess:**
-- Did they directly challenge each other? (Higher heat)
-- Were there concessions? (Lower heat)
-- Did it get personal/emotional? (Higher heat)
-- Was it mostly theoretical? (Lower heat)
-
 ## Vibe Line (REQUIRED)
-After the heat indicator, add ONE playful line about the debate dynamics.
-
-**Options (pick what fits):**
-
-When one side seemed more evidence-based:
+After heat indicator, add ONE playful line. Examples:
 - "One side came with receipts. The other came with vibes."
-- "One brought data. One brought energy."
-
-When both were strong:
 - "Two strong cases. One tough call."
 - "Both sides landed punches. The ref stays silent."
-- "A split decision waiting to happen."
-
-When it was fun/playful:
-- "Less courtroom, more comedy roast."
-- "They came for the debate, stayed for the drama."
-
-When it got intense:
 - "This one got personal. In the best way."
-- "The clash was real."
 
-**Rules:**
-- NEVER declare a winner
-- Keep it playful, not judgmental
-- Format: *italicized* with 🎤 at end
+Format: *italicized text* 🎤
 
 ## CRITICAL RULES
-- 150-180 words MAXIMUM (slightly more to fit new sections)
+- 180-220 words MAXIMUM
 - NO academic language
 - NO declaring winners
-- USE the format exactly
+- USE the format exactly as shown
 - Heat indicator and vibe line are MANDATORY
+- NEVER combine FOR/AGAINST/tension on one line
 
-## Word Limit: 150-180 words MAX
-Quick. Clean. Premium. Entertaining.`
+Quick. Cinematic. Premium.`
 
 /**
  * Additional system prompt for summary mode
@@ -98,14 +89,16 @@ Quick. Clean. Premium. Entertaining.`
 const SUMMARY_SYSTEM_ADDITION = `
 
 ## Summary Mode
-You're the host wrapping up a debate show. Be:
-- Brief (150-180 words max)
+You're the host delivering the finale everyone waited for. Be:
+- Cinematic (180-220 words max)
 - Neutral (never declare a winner)
+- Dramatic (build tension, tease the turning point)
 - Modern (podcast energy, not academic)
-- Engaging (end with heat indicator + vibe line)
 
-You do NOT need to cover every argument — only the core themes and central tension.
-Always include the Heat Indicator and Vibe Line — these are MANDATORY.`
+You do NOT need to cover every argument — only the pivotal moments and central tension.
+Heat Indicator and Vibe Line are MANDATORY.
+
+CRITICAL: Format each section on its own line. Never combine FOR/AGAINST/tension on one line.`
 
 /**
  * Extract key points from debate history (not full transcript)
@@ -155,7 +148,7 @@ export function compileSummaryPrompt(context: ModeratorContext): CompiledPrompt 
   return {
     systemPrompt,
     userPrompt,
-    maxTokens: 500, // Increased slightly for heat + vibe
-    temperature: 0.7, // Slightly higher for vibe creativity
+    maxTokens: 600, // Increased for cinematic format
+    temperature: 0.75, // Slightly higher for dramatic flair
   }
 }
