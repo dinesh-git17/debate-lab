@@ -28,6 +28,7 @@ export interface GenerateParams {
   temperature?: number | undefined
   stopSequences?: string[] | undefined
   stream?: boolean | undefined
+  model?: string | undefined
 }
 
 /**

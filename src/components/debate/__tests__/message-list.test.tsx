@@ -52,7 +52,7 @@ describe('MessageList', () => {
       render(<MessageList />)
 
       expect(screen.getByRole('button', { name: 'Start Debate' })).toBeInTheDocument()
-      expect(screen.getByText('Dual Debate')).toBeInTheDocument()
+      expect(screen.getByText('General')).toBeInTheDocument()
     })
 
     it('should have status role for accessibility in empty state', () => {

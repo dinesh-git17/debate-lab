@@ -21,7 +21,7 @@ import {
   shouldEndDueToBudget,
 } from '@/services/budget-manager'
 import { getFullDebateSession, updateDebateStatus } from '@/services/debate-service'
-import { getJudgeAnalysis } from '@/services/judge-service'
+import { getJudgeAnalysis, getQuickScore } from '@/services/judge-service'
 import { generateStream } from '@/services/llm/llm-service'
 import {
   buildModeratorContext,
@@ -151,7 +151,7 @@ export async function getCurrentTurnInfo(debateId: string): Promise<CurrentTurnI
 
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -182,7 +182,7 @@ export async function getNextTurnInfo(
 
   let provider: TurnProvider
   if (nextTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, nextTurn.speaker)
   }
@@ -500,6 +500,8 @@ function mapTurnProviderToLLMProvider(provider: TurnProvider): LLMProviderType {
       return 'xai'
     case 'claude':
       return 'anthropic'
+    case 'gemini':
+      return 'gemini'
   }
 }
 
@@ -529,7 +531,7 @@ export async function checkTurnBudget(
 
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -661,7 +663,7 @@ export async function executeNextTurn(debateId: string): Promise<{
   // Determine provider for this turn
   let provider: TurnProvider
   if (currentTurn.speaker === 'moderator') {
-    provider = 'chatgpt' // Use OpenAI for moderator
+    provider = 'gemini' // Use Gemini 2.0 Flash for moderator (cost-efficient)
   } else {
     provider = getProviderForPosition(session.assignment, currentTurn.speaker)
   }
@@ -999,13 +1001,16 @@ export async function runDebateLoop(debateId: string): Promise<{
         totalCost: budgetStatus.usage?.totalCostUsd ?? 0,
       })
 
-      // Preload judge analysis in background so it's ready when user visits summary
-      getJudgeAnalysis(debateId).catch((err) => {
-        const log = createDebateLogger(debateId)
-        log.warn('Failed to preload judge analysis', {
-          error: err instanceof Error ? err.message : String(err),
+      // Preload judge scoring in background so it's ready when user visits summary
+      // Fire quick score first (fast, ~1-2 sec), then full analysis with anchored scores
+      getQuickScore(debateId)
+        .then(() => getJudgeAnalysis(debateId))
+        .catch((err) => {
+          const log = createDebateLogger(debateId)
+          log.warn('Failed to preload judge analysis', {
+            error: err instanceof Error ? err.message : String(err),
+          })
         })
-      })
 
       const completedTurns = context.sequencer.getProgress().currentTurn
       const completedDurationMs = Date.now() - loopStartTime
@@ -1066,13 +1071,16 @@ export async function runDebateLoop(debateId: string): Promise<{
       })
       recordDebateCompleted(finalTurnCount, finalDurationMs)
 
-      // Preload judge analysis in background so it's ready when user visits summary
-      getJudgeAnalysis(debateId).catch((err) => {
-        const log = createDebateLogger(debateId)
-        log.warn('Failed to preload judge analysis', {
-          error: err instanceof Error ? err.message : String(err),
+      // Preload judge scoring in background so it's ready when user visits summary
+      // Fire quick score first (fast, ~1-2 sec), then full analysis with anchored scores
+      getQuickScore(debateId)
+        .then(() => getJudgeAnalysis(debateId))
+        .catch((err) => {
+          const log = createDebateLogger(debateId)
+          log.warn('Failed to preload judge analysis', {
+            error: err instanceof Error ? err.message : String(err),
+          })
         })
-      })
 
       return { success: true }
     }

@@ -590,27 +590,16 @@ const VALID_CATEGORIES = [
 ] as const
 
 export async function classifyTopicSemantically(topic: string): Promise<BackgroundCategory> {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.GOOGLE_API_KEY
   if (!apiKey) {
-    serverLog.warn('No API key, returning default')
+    serverLog.warn('No Google API key, returning default')
     return 'default'
   }
 
   try {
-    serverLog.info('Calling GPT-4o-mini for semantic classification', { topic })
+    serverLog.info('Calling Gemini 2.0-flash for semantic classification', { topic })
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a topic classifier. Given a debate topic, classify it into exactly ONE of these categories:
+    const prompt = `You are a topic classifier. Given a debate topic, classify it into exactly ONE of these categories:
 ${VALID_CATEGORIES.join(', ')}
 
 Rules:
@@ -637,29 +626,33 @@ Categories explained:
 - lifestyle: Personal choices, productivity, travel, living situations
 - popculture: Marvel/DC, anime, memes, internet culture, fandoms
 - philosophy: Existence, consciousness, reality, abstract thought experiments
-- humor: Silly debates like "is a hotdog a sandwich"`,
-          },
-          {
-            role: 'user',
-            content: `Classify this debate topic: "${topic}"`,
-          },
-        ],
-        max_tokens: 20,
-        temperature: 0,
-      }),
-    })
+- humor: Silly debates like "is a hotdog a sandwich"
+
+Classify this debate topic: "${topic}"`
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 20, temperature: 0.2 },
+        }),
+      }
+    )
 
     if (!response.ok) {
-      serverLog.warn('API error', { status: response.status })
+      serverLog.warn('Gemini API error', { status: response.status })
       return 'default'
     }
 
     const data = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
     }
-    const content = data.choices?.[0]?.message?.content?.trim().toLowerCase()
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase()
 
-    serverLog.info('GPT-4o-mini response', { response: content })
+    serverLog.info('Gemini 2.0-flash response', { response: content })
 
     if (content && VALID_CATEGORIES.includes(content as (typeof VALID_CATEGORIES)[number])) {
       serverLog.info('Semantic result', { category: content })

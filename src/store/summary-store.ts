@@ -1,10 +1,34 @@
 // src/store/summary-store.ts
+/**
+ * Zustand store for debate summary page state.
+ * Manages reveal animations, judge analysis, and jury deliberation.
+ */
 
 import { create } from 'zustand'
 
 import { getModelIdentity } from '@/types/summary'
 
-import type { JudgeAnalysis } from '@/types/judge'
+const REVEAL_STORAGE_PREFIX = 'debate:revealed:'
+
+function isRevealedInStorage(debateId: string): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return localStorage.getItem(`${REVEAL_STORAGE_PREFIX}${debateId}`) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function saveRevealedToStorage(debateId: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(`${REVEAL_STORAGE_PREFIX}${debateId}`, 'true')
+  } catch {
+    // Storage unavailable or full
+  }
+}
+
+import type { JudgeAnalysis, QuickScore } from '@/types/judge'
 import type { JuryDeliberation, JuryPhase } from '@/types/jury'
 import type { RevealedAssignment, SummaryResponse, SummaryState } from '@/types/summary'
 
@@ -17,7 +41,8 @@ interface SummaryActions {
   completeReveal: () => void
   resetReveal: () => void
 
-  setJudgeAnalysis: (analysis: JudgeAnalysis) => void
+  setQuickScore: (quickScore: QuickScore) => void
+  setJudgeAnalysis: (analysis: JudgeAnalysis, quickScore?: QuickScore) => void
   setAnalysisLoading: (loading: boolean) => void
 
   setJuryDeliberation: (deliberation: JuryDeliberation) => void
@@ -41,6 +66,7 @@ const initialState: SummaryState = {
   statistics: null,
   revealState: 'hidden',
   assignment: null,
+  quickScore: null,
   judgeAnalysis: null,
   isAnalysisLoading: false,
   juryDeliberation: null,
@@ -65,6 +91,8 @@ export const useSummaryStore = create<SummaryStore>()((set, get) => ({
       }
     }
 
+    const wasRevealed = isRevealedInStorage(data.debateId)
+
     set({
       debateId: data.debateId,
       topic: data.topic,
@@ -74,7 +102,7 @@ export const useSummaryStore = create<SummaryStore>()((set, get) => ({
       turns: data.turns,
       statistics: data.statistics,
       assignment,
-      revealState: 'hidden',
+      revealState: wasRevealed ? 'revealed' : 'hidden',
       // Show skeleton for non-cancelled debates while analysis loads
       isAnalysisLoading: data.status !== 'cancelled',
     })
@@ -89,6 +117,10 @@ export const useSummaryStore = create<SummaryStore>()((set, get) => ({
   },
 
   completeReveal: () => {
+    const { debateId } = get()
+    if (debateId) {
+      saveRevealedToStorage(debateId)
+    }
     set({ revealState: 'revealed' })
   },
 
@@ -96,7 +128,15 @@ export const useSummaryStore = create<SummaryStore>()((set, get) => ({
     set({ revealState: 'hidden' })
   },
 
-  setJudgeAnalysis: (analysis) => set({ judgeAnalysis: analysis, isAnalysisLoading: false }),
+  setQuickScore: (quickScore) => set({ quickScore }),
+
+  setJudgeAnalysis: (analysis, quickScore) => {
+    const update: Partial<SummaryState> = { judgeAnalysis: analysis, isAnalysisLoading: false }
+    if (quickScore) {
+      update.quickScore = quickScore
+    }
+    set(update)
+  },
 
   setAnalysisLoading: (loading) => set({ isAnalysisLoading: loading }),
 

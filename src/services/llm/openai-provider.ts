@@ -82,10 +82,12 @@ export class OpenAIProvider extends BaseLLMProvider {
   async generate(params: GenerateParams): Promise<GenerateResult> {
     const client = this.getClient()
     const startTime = Date.now()
+    const modelToUse = params.model ?? OPENAI_MODEL
+    const isNanoModel = modelToUse.includes('nano')
 
     try {
       const response = await client.chat.completions.create({
-        model: OPENAI_MODEL,
+        model: modelToUse,
         messages: [
           { role: 'system', content: params.systemPrompt },
           ...params.messages.map((m) => ({
@@ -94,7 +96,8 @@ export class OpenAIProvider extends BaseLLMProvider {
           })),
         ],
         max_completion_tokens: params.maxTokens,
-        temperature: params.temperature ?? 0.7,
+        // nano models don't support custom temperature
+        ...(isNanoModel ? {} : { temperature: params.temperature ?? 0.7 }),
         ...(params.stopSequences ? { stop: params.stopSequences } : {}),
       })
 
@@ -110,7 +113,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         finishReason,
         latencyMs: Date.now() - startTime,
         provider: 'openai',
-        model: OPENAI_MODEL,
+        model: modelToUse,
       }
     } catch (error) {
       throw this.handleError(error)
@@ -119,10 +122,12 @@ export class OpenAIProvider extends BaseLLMProvider {
 
   async *generateStream(params: GenerateParams): AsyncGenerator<StreamChunk, void, unknown> {
     const client = this.getClient()
+    const modelToUse = params.model ?? OPENAI_MODEL
+    const isNanoModel = modelToUse.includes('nano')
 
     try {
       const stream = await client.chat.completions.create({
-        model: OPENAI_MODEL,
+        model: modelToUse,
         messages: [
           { role: 'system', content: params.systemPrompt },
           ...params.messages.map((m) => ({
@@ -131,7 +136,8 @@ export class OpenAIProvider extends BaseLLMProvider {
           })),
         ],
         max_completion_tokens: params.maxTokens,
-        temperature: params.temperature ?? 0.7,
+        // nano models don't support custom temperature
+        ...(isNanoModel ? {} : { temperature: params.temperature ?? 0.7 }),
         ...(params.stopSequences ? { stop: params.stopSequences } : {}),
         stream: true,
       })

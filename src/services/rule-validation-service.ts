@@ -111,8 +111,8 @@ export async function validateCustomRules(rules: string[]): Promise<ValidationRe
 
   try {
     const completion = await client.chat.completions.create({
-      model: 'gpt-4o',
-      max_tokens: 1024,
+      model: 'gpt-5-mini',
+      max_completion_tokens: 1024,
       temperature: 0,
       messages: [
         {

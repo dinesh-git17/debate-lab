@@ -67,7 +67,7 @@ export function getJurorProvider(role: 'gemini' | 'deepseek'): BaseLLMProvider {
 /**
  * Get provider for a debate role
  */
-export function getDebateProvider(role: 'chatgpt' | 'grok' | 'claude'): BaseLLMProvider {
+export function getDebateProvider(role: 'chatgpt' | 'grok' | 'claude' | 'gemini'): BaseLLMProvider {
   switch (role) {
     case 'chatgpt':
       return getProvider('openai')
@@ -75,6 +75,8 @@ export function getDebateProvider(role: 'chatgpt' | 'grok' | 'claude'): BaseLLMP
       return getProvider('xai')
     case 'claude':
       return getProvider('anthropic')
+    case 'gemini':
+      return getProvider('gemini')
   }
 }
 

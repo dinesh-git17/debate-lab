@@ -66,6 +66,29 @@ const FORMAT_DISPLAY_NAMES: Record<string, string> = {
   'lincoln-douglas': 'Lincoln-Douglas',
 }
 
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  ai: 'AI & Tech',
+  technology: 'Technology',
+  politics: 'Politics',
+  science: 'Science',
+  ethics: 'Ethics',
+  environment: 'Environment',
+  economics: 'Economics',
+  medicine: 'Medicine',
+  education: 'Education',
+  culture: 'Culture',
+  religion: 'Religion',
+  arts: 'Arts',
+  food: 'Food',
+  animals: 'Animals',
+  sports: 'Sports',
+  lifestyle: 'Lifestyle',
+  popculture: 'Pop Culture',
+  philosophy: 'Philosophy',
+  humor: 'Humor',
+  default: 'General',
+}
+
 function EmptyState() {
   const [isLoading, setIsLoading] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -77,6 +100,9 @@ function EmptyState() {
   const setError = useDebateViewStore((s) => s.setError)
 
   const formatDisplayName = FORMAT_DISPLAY_NAMES[format] ?? format
+  const categoryDisplayName = backgroundCategory
+    ? (CATEGORY_DISPLAY_NAMES[backgroundCategory] ?? 'General')
+    : 'General'
 
   const category = backgroundCategory as BackgroundCategory | undefined
   const topicGradient = category
@@ -256,7 +282,7 @@ function EmptyState() {
             ease: [0.22, 0.61, 0.36, 1],
           }}
         >
-          Dual Debate
+          {categoryDisplayName}
         </motion.div>
       </motion.div>
 

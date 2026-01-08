@@ -1,18 +1,22 @@
 /**
  * Jury deliberation service for evidence-based fact checking.
- * Orchestrates Gemini and DeepSeek as independent jurors evaluating factual accuracy.
+ * GPT-4o-mini extracts claims, Gemini/DeepSeek score independently, Gemini arbitrates.
  */
 
 import { getEngineState } from '@/lib/engine-store'
 import { JURY_DISCLAIMER, JURY_SCORING_RUBRICS, MAX_JURY_SCORE } from '@/lib/jury-scoring-rubric'
+import {
+  deleteDeliberation,
+  getStoredDeliberation,
+  hasStoredDeliberation,
+  storeDeliberation,
+} from '@/lib/jury-store'
 import { logger } from '@/lib/logging'
 import {
   ARBITER_SYSTEM_PROMPT,
   buildArbiterPrompt,
-  buildDeliberationPrompt,
   buildExtractionPrompt,
   buildScoringPrompt,
-  DELIBERATION_SYSTEM_PROMPT,
   EVIDENCE_EXTRACTION_SYSTEM_PROMPT,
   JUROR_SCORING_SYSTEM_PROMPT,
 } from '@/lib/prompts/jury-prompts'
@@ -22,7 +26,6 @@ import { isMockMode } from '@/services/mock-debate-engine'
 
 import type {
   ArbiterResolution,
-  DeliberationExchange,
   EvidenceCategory,
   EvidenceCategoryType,
   ExtractedClaim,
@@ -32,8 +35,6 @@ import type {
   JuryDeliberationResponse,
   ScoreDisagreement,
 } from '@/types/jury'
-
-const deliberationCache = new Map<string, JuryDeliberation>()
 
 /**
  * Generate mock jury deliberation for testing without API calls
@@ -125,23 +126,8 @@ function generateMockJuryDeliberation(debateId: string): JuryDeliberation {
     },
   ]
 
-  const deliberationLog: DeliberationExchange[] = [
-    {
-      round: 1,
-      speaker: 'gemini',
-      content:
-        'Reviewing DeepSeek evaluation. I note a 3-point difference on evidence_strength for claim F1. Their concern about source attribution is valid.',
-      timestamp: new Date(),
-    },
-    {
-      round: 1,
-      speaker: 'deepseek',
-      content:
-        'Reviewing Gemini evaluation. The specific statistic in F1 does add credibility. I can adjust upward by 1 point.',
-      adjustedScores: [{ claimId: 'F1', category: 'evidence_strength', newScore: 19 }],
-      timestamp: new Date(),
-    },
-  ]
+  // Deliberation phase removed for optimization - arbiter handles summary directly
+  const deliberationLog: JuryDeliberation['deliberationLog'] = []
 
   const avgForScore = (geminiEval.totalForScore + deepseekEval.totalForScore) / 2
   const avgAgainstScore = (geminiEval.totalAgainstScore + deepseekEval.totalAgainstScore) / 2
@@ -163,7 +149,13 @@ function generateMockJuryDeliberation(debateId: string): JuryDeliberation {
       evidenceFavors === 'inconclusive'
         ? 'Both positions presented comparable evidence quality. Scores within 5% margin.'
         : `Evidence ${evidenceFavors === 'for' ? 'favored the affirmative' : 'favored the negative'} position based on ${evidenceFavors === 'for' ? 'stronger source attribution' : 'more consistent logical framework'}.`,
-    penaltyNotes: ['Minor penalty applied for unsupported claim F2 (-2 points)'],
+    deliberationSummary: [
+      'Both jurors independently evaluated factual claims from each position.',
+      'Minor disagreement on evidence strength was resolved through deliberation.',
+      'The affirmative position demonstrated stronger source attribution overall.',
+      'Penalties were applied to claims presented without supporting evidence.',
+    ],
+    penaltyNotes: ['Minor penalty applied for unsupported claim (-2 points)'],
     disclaimer: '[MOCK MODE] ' + JURY_DISCLAIMER,
   }
 
@@ -191,12 +183,13 @@ async function extractClaims(
   const prompt = buildExtractionPrompt(topic, debateTranscript)
 
   const result = await generate({
-    provider: 'xai',
+    provider: 'openai',
     params: {
       systemPrompt: EVIDENCE_EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
       maxTokens: 4000,
       temperature: 0.2,
+      model: 'gpt-4o-mini',
     },
     enableRetry: true,
     enableRateLimit: true,
@@ -265,17 +258,15 @@ async function getJurorEvaluation(
 }
 
 /**
- * Phase 3: Run structured deliberation between jurors
+ * Identify score disagreements between jurors (>10% difference)
+ * Used by arbiter to focus resolution on contentious areas.
  */
-async function runDeliberation(
+function identifyDisagreements(
   geminiEval: JurorEvaluation,
-  deepseekEval: JurorEvaluation,
-  claims: ExtractedClaim[]
-): Promise<{ disagreements: ScoreDisagreement[]; log: DeliberationExchange[] }> {
+  deepseekEval: JurorEvaluation
+): ScoreDisagreement[] {
   const disagreements: ScoreDisagreement[] = []
-  const log: DeliberationExchange[] = []
 
-  // Identify score disagreements (>10% difference)
   for (const category of JURY_SCORING_RUBRICS) {
     const geminiFor = geminiEval.forScores.find((s) => s.category === category.category)
     const deepseekFor = deepseekEval.forScores.find((s) => s.category === category.category)
@@ -295,99 +286,7 @@ async function runDeliberation(
     }
   }
 
-  if (disagreements.length === 0) {
-    return { disagreements, log }
-  }
-
-  // Gemini reviews DeepSeek's scores
-  try {
-    const geminiDelibPrompt = buildDeliberationPrompt(geminiEval, deepseekEval, claims)
-    const geminiDelibResult = await generate({
-      provider: 'gemini',
-      params: {
-        systemPrompt: DELIBERATION_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: geminiDelibPrompt }],
-        maxTokens: 2000,
-        temperature: 0.3,
-      },
-      enableRetry: true,
-      enableRateLimit: true,
-    })
-
-    const geminiDelib = parseJsonResponse<{
-      observations: {
-        claimId: string
-        category: string
-        myResponse: string
-        adjustedScore?: number
-      }[]
-      summary: string
-    }>(geminiDelibResult.content)
-
-    log.push({
-      round: 1,
-      speaker: 'gemini',
-      content: geminiDelib.summary ?? '',
-      adjustedScores: geminiDelib.observations
-        ?.filter((o) => o.adjustedScore !== undefined)
-        .map((o) => ({
-          claimId: o.claimId,
-          category: o.category as EvidenceCategoryType,
-          newScore: o.adjustedScore!,
-        })),
-      timestamp: new Date(),
-    })
-  } catch (error) {
-    logger.warn('Gemini deliberation failed, continuing with original scores', {
-      error: error instanceof Error ? error.message : String(error),
-    })
-  }
-
-  // DeepSeek reviews Gemini's scores
-  try {
-    const deepseekDelibPrompt = buildDeliberationPrompt(deepseekEval, geminiEval, claims)
-    const deepseekDelibResult = await generate({
-      provider: 'deepseek',
-      params: {
-        systemPrompt: DELIBERATION_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: deepseekDelibPrompt }],
-        maxTokens: 2000,
-        temperature: 0.3,
-      },
-      enableRetry: true,
-      enableRateLimit: true,
-    })
-
-    const deepseekDelib = parseJsonResponse<{
-      observations: {
-        claimId: string
-        category: string
-        myResponse: string
-        adjustedScore?: number
-      }[]
-      summary: string
-    }>(deepseekDelibResult.content)
-
-    log.push({
-      round: 1,
-      speaker: 'deepseek',
-      content: deepseekDelib.summary ?? '',
-      adjustedScores: deepseekDelib.observations
-        ?.filter((o) => o.adjustedScore !== undefined)
-        .map((o) => ({
-          claimId: o.claimId,
-          category: o.category as EvidenceCategoryType,
-          newScore: o.adjustedScore!,
-        })),
-      timestamp: new Date(),
-    })
-  } catch (error) {
-    logger.warn('DeepSeek deliberation failed, continuing with original scores', {
-      error: error instanceof Error ? error.message : String(error),
-    })
-  }
-
-  return { disagreements, log }
+  return disagreements
 }
 
 /**
@@ -400,9 +299,8 @@ async function resolveScores(
 ): Promise<ArbiterResolution> {
   const prompt = buildArbiterPrompt(geminiEval, deepseekEval, disagreements)
 
-  // Use Grok as neutral arbiter
   const result = await generate({
-    provider: 'xai',
+    provider: 'gemini',
     params: {
       systemPrompt: ARBITER_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
@@ -426,6 +324,10 @@ async function resolveScores(
     evidenceFavors: parsed.evidenceFavors ?? 'inconclusive',
     confidenceLevel: parsed.confidenceLevel ?? 'moderate',
     rationale: parsed.rationale ?? 'Resolution based on averaged juror scores.',
+    deliberationSummary: parsed.deliberationSummary ?? [
+      'Jurors completed independent evaluation of both positions.',
+      'Final scores represent the arbiter-resolved consensus.',
+    ],
     penaltyNotes: parsed.penaltyNotes ?? [],
     disclaimer: JURY_DISCLAIMER,
   }
@@ -441,7 +343,7 @@ export async function getJuryDeliberation(
   const startTime = Date.now()
 
   if (!forceRegenerate) {
-    const cached = deliberationCache.get(debateId)
+    const cached = await getStoredDeliberation(debateId)
     if (cached) {
       return {
         success: true,
@@ -480,7 +382,7 @@ export async function getJuryDeliberation(
   // Return mock deliberation in mock mode
   if (isMockMode()) {
     const deliberation = generateMockJuryDeliberation(debateId)
-    deliberationCache.set(debateId, deliberation)
+    await storeDeliberation(debateId, deliberation)
 
     return {
       success: true,
@@ -521,13 +423,9 @@ export async function getJuryDeliberation(
       getJurorEvaluation('deepseek', session.topic, extractedClaims),
     ])
 
-    // Phase 3: Structured deliberation
-    logger.info('Jury: Starting deliberation', { debateId })
-    const { disagreements, log: deliberationLog } = await runDeliberation(
-      geminiEvaluation,
-      deepseekEvaluation,
-      extractedClaims
-    )
+    // Phase 3: Identify disagreements (deliberation API calls removed for optimization)
+    const disagreements = identifyDisagreements(geminiEvaluation, deepseekEvaluation)
+    const deliberationLog: JuryDeliberation['deliberationLog'] = []
 
     // Phase 4: Arbiter resolution
     logger.info('Jury: Resolving final scores', {
@@ -553,7 +451,12 @@ export async function getJuryDeliberation(
       processingTimeMs: Date.now() - startTime,
     }
 
-    deliberationCache.set(debateId, deliberation)
+    await storeDeliberation(debateId, deliberation)
+
+    logger.info('Jury deliberation generated and cached', {
+      debateId,
+      processingTimeMs: deliberation.processingTimeMs,
+    })
 
     return {
       success: true,
@@ -603,13 +506,13 @@ function parseJsonResponse<T>(response: string): T {
 /**
  * Clear cached deliberation for a debate
  */
-export function clearDeliberationCache(debateId: string): void {
-  deliberationCache.delete(debateId)
+export async function clearDeliberationCache(debateId: string): Promise<void> {
+  await deleteDeliberation(debateId)
 }
 
 /**
  * Check if deliberation is cached for a debate
  */
-export function isDeliberationCached(debateId: string): boolean {
-  return deliberationCache.has(debateId)
+export async function isDeliberationCached(debateId: string): Promise<boolean> {
+  return hasStoredDeliberation(debateId)
 }

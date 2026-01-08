@@ -1,6 +1,6 @@
 /**
  * Prompt templates for the evidence-based jury deliberation system.
- * These prompts guide AI jurors through claim extraction, scoring, and deliberation.
+ * These prompts guide AI jurors through claim extraction, scoring, and arbiter resolution.
  */
 
 import { JURY_SCORING_RUBRICS, MAX_JURY_SCORE } from '../jury-scoring-rubric'
@@ -156,87 +156,6 @@ Evaluate each side using the scoring rubric. Return only the JSON object.`
 }
 
 /**
- * System prompt for deliberation phase
- */
-export const DELIBERATION_SYSTEM_PROMPT = `You are reviewing another juror's evaluation scores. Your task is to identify claim-level disagreements and determine if adjustments are warranted.
-
-## Deliberation Rules
-
-1. Focus ONLY on specific claims and scoring categories
-2. You may adjust your scores if the other juror's justification reveals evidence you missed
-3. You may NOT adjust based on:
-   - Persuasion or rhetoric
-   - General impressions
-   - Anything not tied to specific claim IDs
-
-4. For each disagreement, provide:
-   - The claim ID in question
-   - The scoring category
-   - Your original reasoning
-   - Whether you adjust (and why)
-
-5. Be concise and precise - this is deliberation, not debate
-
-## Output Format
-
-Return a JSON object with this structure:
-{
-  "observations": [
-    {
-      "claimId": "F1",
-      "category": "factual_accuracy",
-      "myOriginalScore": 20,
-      "theirScore": 15,
-      "theirJustification": "Their reasoning",
-      "myResponse": "Whether I agree/disagree and why",
-      "adjustedScore": null | number
-    }
-  ],
-  "summary": "Brief overall assessment of score alignment"
-}`
-
-/**
- * Build the deliberation prompt with both evaluations
- */
-export function buildDeliberationPrompt(
-  myEvaluation: JurorEvaluation,
-  theirEvaluation: JurorEvaluation,
-  _claims: ExtractedClaim[]
-): string {
-  const formatEvaluation = (eval_: JurorEvaluation): string => {
-    const formatScores = (scores: JurorEvaluation['forScores']): string =>
-      scores
-        .map(
-          (
-            s
-          ) => `  ${s.category}: ${s.score}/${JURY_SCORING_RUBRICS.find((r) => r.category === s.category)?.maxScore}
-    Justification: ${s.justification}
-    Referenced: ${s.referencedClaims.join(', ')}`
-        )
-        .join('\n\n')
-
-    return `FOR Scores (Total: ${eval_.totalForScore}):
-${formatScores(eval_.forScores)}
-
-AGAINST Scores (Total: ${eval_.totalAgainstScore}):
-${formatScores(eval_.againstScores)}
-
-Confidence: ${eval_.confidence}
-Notes: ${eval_.notes}`
-  }
-
-  return `## My Evaluation
-${formatEvaluation(myEvaluation)}
-
-## Other Juror's Evaluation (${theirEvaluation.jurorName})
-${formatEvaluation(theirEvaluation)}
-
----
-
-Review the other juror's scores and justifications. Identify any disagreements and determine if you should adjust your scores. Return only the JSON object.`
-}
-
-/**
  * System prompt for arbiter resolution phase
  */
 export const ARBITER_SYSTEM_PROMPT = `You are a neutral arbiter resolving juror disagreements. Your role is procedural, not substantive.
@@ -268,6 +187,16 @@ Use neutral, legal-document tone:
 - "Demonstrated stronger support..." NOT "Beat..."
 - "Contained fewer inaccuracies..." NOT "Was more truthful..."
 
+## Deliberation Summary Guidelines
+
+Provide a brief summary of the juror deliberation process for end users:
+- Write 3-5 bullet points summarizing key observations
+- Use plain language accessible to non-experts
+- Do NOT reference internal claim IDs (F1, A3, etc.) - describe claims in plain terms
+- Do NOT use emojis
+- Focus on what the jurors agreed/disagreed on and how it was resolved
+- Maintain formal, arbiter-like tone
+
 ## Output Format
 
 Return a JSON object with this structure:
@@ -277,6 +206,11 @@ Return a JSON object with this structure:
   "evidenceFavors": "for" | "against" | "inconclusive",
   "confidenceLevel": "high" | "moderate" | "low",
   "rationale": "Explanation of how scores were resolved",
+  "deliberationSummary": [
+    "Both jurors agreed that the affirmative position provided stronger source citations",
+    "Minor disagreement on statistical claim accuracy was resolved in favor of the lower score",
+    "The negative position received penalties for several unsupported assertions"
+  ],
   "penaltyNotes": ["List of any penalties applied"],
   "disclaimer": "Standard disclaimer about AI evaluation limitations"
 }`
