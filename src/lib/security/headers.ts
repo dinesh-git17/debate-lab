@@ -37,7 +37,13 @@ function buildCsp(): string {
       'https://*.sentry.io',
     ],
     'frame-src': ["'self'"],
-    'frame-ancestors': ["'none'"],
+    'frame-ancestors': [
+      "'self'",
+      'https://dineshd.dev',
+      'https://*.dineshd.dev',
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
     'form-action': ["'self'"],
     'base-uri': ["'self'"],
     'object-src': ["'none'"],
@@ -96,7 +102,6 @@ function buildPermissionsPolicy(): string {
 export function getSecurityHeaders(): SecurityHeaders {
   return {
     'Content-Security-Policy': buildCsp(),
-    'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': buildPermissionsPolicy(),

@@ -85,7 +85,7 @@ function buildCsp(request: NextRequest): string {
     "font-src 'self' data:",
     `connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.x.ai wss://*.pusher.com https://*.pusher.com https://vercel.live https://*.vercel.com https://*.sentry.io${isLocal ? ' ws://localhost:* http://localhost:*' : ''}`,
     "frame-src 'self'",
-    "frame-ancestors 'none'",
+    "frame-ancestors 'self' https://dineshd.dev https://*.dineshd.dev http://localhost:3000 http://localhost:3001",
     "form-action 'self'",
     "base-uri 'self'",
     "object-src 'none'",
@@ -101,7 +101,6 @@ function buildCsp(request: NextRequest): string {
 function applySecurityHeaders(response: NextResponse, request: NextRequest): void {
   const isLocal = isDevEnvironment(request)
   response.headers.set('Content-Security-Policy', buildCsp(request))
-  response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '1; mode=block')

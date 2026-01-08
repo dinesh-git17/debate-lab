@@ -82,7 +82,7 @@ export interface SecurityRateLimitStore {
 
 export interface SecurityHeaders {
   'Content-Security-Policy': string
-  'X-Frame-Options': string
+  'X-Frame-Options'?: string
   'X-Content-Type-Options': string
   'Referrer-Policy': string
   'Permissions-Policy': string
